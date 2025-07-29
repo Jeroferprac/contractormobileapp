@@ -1,0 +1,50 @@
+# Root .gitignore for full project (React Native + FastAPI)
+
+# Python (FastAPI)
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.env
+.env
+.env.*
+*.sqlite3
+
+# FastAPI virtual env (if any)
+venv/
+env/
+
+# React Native (frontend)
+node_modules/
+*.log
+*.tmp
+*.swp
+.expo/
+.expo-shared/
+ios/Pods/
+android/.gradle/
+android/app/build/
+android/.idea/
+*.keystore
+*.iml
+*.hprof
+*.DS_Store
+
+# OS and IDE junk
+.idea/
+.vscode/
+*.bak
+Thumbs.db
+.DS_Store
+*.log
+
+# Mac/Linux
+*.lock
+pnpm-lock.yaml
+
+# Build outputs
+dist/
+build/
+
+# Git
+.git/

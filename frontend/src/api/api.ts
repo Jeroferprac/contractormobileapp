@@ -27,7 +27,7 @@ const getBaseURL = (): string => {
 
 class ApiService {
   private api: AxiosInstance;
-  private useMock: boolean = false; // Using real API - no mock data
+  private useMock: boolean = true; // Using mock data for development
 
   constructor() {
     this.api = axios.create({
@@ -66,8 +66,8 @@ class ApiService {
         return response;
       },
       (error) => {
-        console.error('API Response Error:', error.response?.status, error.response?.data);
-        if (error.response?.status === 401) {
+        console.error('API Response Error:', error?.response?.status || 'No status', error?.response?.data || error?.message || 'Unknown error');
+        if (error?.response?.status === 401) {
           this.clearAuthToken();
         }
         return Promise.reject(error);
@@ -87,6 +87,25 @@ class ApiService {
   // ===== AUTHENTICATION ENDPOINTS =====
 
   async testConnection(): Promise<AxiosResponse<User>> {
+    if (this.useMock) {
+      // Return mock data
+      await new Promise(resolve => setTimeout(resolve, 500)); // Simulate delay
+      return {
+        data: {
+          id: '1',
+          firstName: 'John',
+          lastName: 'Doe',
+          email: 'john.doe@example.com',
+          phone: '+1234567890',
+          role: 'user',
+        },
+        status: 200,
+        statusText: 'OK',
+        headers: {},
+        config: {} as any,
+      } as AxiosResponse<User>;
+    }
+    
     try {
       const response = await this.api.get('/auth/me');
       console.log('API Connection Test:', response.data);
@@ -102,6 +121,29 @@ class ApiService {
   }
 
   async login(credentials: LoginRequest): Promise<AxiosResponse<AuthResponse>> {
+    if (this.useMock) {
+      // Return mock data
+      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate delay
+      return {
+        data: {
+          access_token: 'mock-jwt-token-12345',
+          token_type: 'bearer',
+          user: {
+            id: '1',
+            firstName: 'John',
+            lastName: 'Doe',
+            email: credentials.email,
+            phone: '+1234567890',
+            role: 'user',
+          },
+        },
+        status: 200,
+        statusText: 'OK',
+        headers: {},
+        config: {} as any,
+      } as AxiosResponse<AuthResponse>;
+    }
+    
     return this.api.post('/auth/login', credentials);
   }
 
@@ -110,6 +152,25 @@ class ApiService {
   }
 
   async getCurrentUser(): Promise<AxiosResponse<User>> {
+    if (this.useMock) {
+      // Return mock data
+      await new Promise(resolve => setTimeout(resolve, 500)); // Simulate delay
+      return {
+        data: {
+          id: '1',
+          firstName: 'John',
+          lastName: 'Doe',
+          email: 'john.doe@example.com',
+          phone: '+1234567890',
+          role: 'user',
+        },
+        status: 200,
+        statusText: 'OK',
+        headers: {},
+        config: {} as any,
+      } as AxiosResponse<User>;
+    }
+    
     return this.api.get('/auth/me');
   }
 

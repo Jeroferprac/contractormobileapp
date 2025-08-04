@@ -1,39 +1,50 @@
 export const COLORS = {
-  // Primary gradient colors
-  primary: '#FF6B35',
-  primaryDark: '#F7931E',
-  secondary: '#FF8C42',
+  // Primary Colors
+  primary: '#FF6B35',        // Orange
+  secondary: '#FFD700',      // Yellow
+  accent: '#FF8C42',         // Light Orange
   
-  // Background colors
+  // Background Colors
   background: '#FFFFFF',
-  backgroundDark: '#000000',
-  modalBackground: '#FFFFFF',
+  surface: '#F8F9FA',
+  card: '#FFFFFF',
   
-  // Text colors
-  textPrimary: '#000000',
-  textSecondary: '#8E8E93',
-  textLight: '#FFFFFF',
+  // Text Colors
+  text: {
+    primary: '#1A1A1A',
+    secondary: '#6C757D',
+    tertiary: '#ADB5BD',
+    light: '#FFFFFF',
+    dark: '#212529'
+  },
   
-  // Border colors
-  border: '#E5E5EA',
-  borderDark: '#2F3643',
-  modalBorder: '#FFFFFF1A',
+  // Status Colors
+  status: {
+    success: '#28A745',
+    warning: '#FFC107',
+    error: '#DC3545',
+    info: '#17A2B8',
+    verified: '#007BFF'
+  },
   
-  // Status colors
-  success: '#34C759',
-  error: '#FF3B30',
-  warning: '#FF9500',
-  info: '#007AFF',
+  // Border Colors
+  border: {
+    light: '#E9ECEF',
+    medium: '#DEE2E6',
+    dark: '#CED4DA'
+  },
   
-  // Gradient colors
-  gradientStart: '#FF6B35',
-  gradientEnd: '#F7931E',
+  // Gradient Colors
+  gradient: {
+    primary: ['#FF6B35', '#FF8C42'],
+    secondary: ['#FFD700', '#FFED4E'],
+    discount: ['#8B4513', '#FF6B35']
+  },
   
-  // Modal overlay
-  overlay: 'rgba(0, 0, 0, 0.5)',
-  
-  // Social login colors
-  apple: '#000000',
-  google: '#4285F4',
-  facebook: '#1877F2',
+  // Overlay Colors
+  overlay: {
+    dark: 'rgba(0, 0, 0, 0.7)',
+    light: 'rgba(255, 255, 255, 0.9)',
+    card: 'rgba(0, 0, 0, 0.8)'
+  }
 }; 

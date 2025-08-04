@@ -2,6 +2,8 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { Alert } from 'react-native';
 import apiService from '../api/api';
 import oauthService from '../services/OAuthService';
+import githubOAuthService from '../services/GitHubOAuthService';
+import storageService from '../utils/storage';
 import { User, LoginRequest, RegisterRequest } from '../types/api';
 
 interface AuthState {
@@ -43,8 +45,21 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const checkAuthStatus = async () => {
     try {
-      // TODO: Check AsyncStorage for existing token
-      setState(prev => ({ ...prev, isLoading: false }));
+      const [token, userData] = await Promise.all([
+        storageService.getAuthToken(),
+        storageService.getUserData(),
+      ]);
+
+      if (token && userData) {
+        setState({
+          isAuthenticated: true,
+          user: userData,
+          token,
+          isLoading: false,
+        });
+      } else {
+        setState(prev => ({ ...prev, isLoading: false }));
+      }
     } catch (error) {
       console.error('Auth check failed:', error);
       setState(prev => ({ ...prev, isLoading: false }));
@@ -66,7 +81,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         isLoading: false,
       });
       
-      // TODO: Store token in AsyncStorage
       console.log('Login successful:', user.email);
     } catch (error: any) {
       console.error('Login error:', error);
@@ -93,7 +107,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         isLoading: false,
       });
       
-      // TODO: Store token in AsyncStorage
       Alert.alert('Success', 'Account created successfully!');
       console.log('Registration successful:', user.email);
     } catch (error: any) {
@@ -107,11 +120,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const logout = async () => {
+    console.log('🔄 Starting logout process...');
+    
     try {
-      await apiService.logout();
-    } catch (error) {
-      console.error('Logout error:', error);
-    } finally {
+      // First clear storage
+      console.log('🧹 Clearing local auth data...');
+      await storageService.clearAuthData();
+      console.log('✅ Local auth data cleared');
+      
+      // Then update state
+      console.log('🔄 Updating auth state...');
       setState({
         isAuthenticated: false,
         user: null,
@@ -119,7 +137,28 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         isLoading: false,
       });
       setError(null);
-      // TODO: Clear token from AsyncStorage
+      console.log('✅ Auth state updated');
+      
+      // Finally call API in background
+      try {
+        console.log('📡 Calling logout API...');
+        await apiService.logout();
+        console.log('✅ Logout API call successful');
+      } catch (error) {
+        console.error('❌ Logout API error:', error);
+      }
+      
+      console.log('✅ Logout process completed');
+    } catch (error) {
+      console.error('❌ Logout error:', error);
+      // Force state update even if storage clearing fails
+      setState({
+        isAuthenticated: false,
+        user: null,
+        token: null,
+        isLoading: false,
+      });
+      setError(null);
     }
   };
 
@@ -140,7 +179,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setError(null);
 
       if (provider === 'github') {
-        await oauthService.startGitHubOAuth();
+        await githubOAuthService.startGitHubOAuth();
+        // If successful, the user will be automatically logged in
+        // Check auth status after OAuth completion
+        await checkAuthStatus();
       } else {
         Alert.alert('Coming Soon', `${provider} OAuth will be available soon!`);
       }
@@ -150,6 +192,24 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setError(errorMessage);
       Alert.alert('OAuth Failed', errorMessage);
     } finally {
+      setState(prev => ({ ...prev, isLoading: false }));
+    }
+  };
+
+  const handleOAuthCallback = async (result: any) => {
+    if (result.success) {
+      const { access_token, user } = result;
+      
+      setState({
+        isAuthenticated: true,
+        user,
+        token: access_token,
+        isLoading: false,
+      });
+      
+      console.log('OAuth login successful:', user.email);
+    } else {
+      setError(result.error || 'OAuth failed');
       setState(prev => ({ ...prev, isLoading: false }));
     }
   };

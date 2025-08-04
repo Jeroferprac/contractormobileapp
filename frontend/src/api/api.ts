@@ -1,5 +1,4 @@
 import axios, { AxiosInstance, AxiosResponse } from 'axios';
-import { Platform } from 'react-native';
 import { 
   User, 
   AuthResponse, 
@@ -10,20 +9,9 @@ import {
   Booking,
   ApiError 
 } from '../types/api';
-
-// Dynamic IP configuration based on platform
-const getBaseURL = (): string => {
-  const localIP = '192.168.31.45'; // Your backend IP address
-  const port = '8000'; // Your backend port
-  
-  if (Platform.OS === 'android') {
-    return `http://10.0.2.2:${port}/api/v1/`;
-  } else if (Platform.OS === 'ios') {
-    return `http://localhost:${port}/api/v1/`;
-  } else {
-    return `http://${localIP}:${port}/api/v1/`;
-  }
-};
+import { getBaseURL } from '../utils/network';
+import { API_CONFIG } from '../config/env';
+import storageService from '../utils/storage';
 
 class ApiService {
   private api: AxiosInstance;
@@ -32,7 +20,7 @@ class ApiService {
   constructor() {
     this.api = axios.create({
       baseURL: getBaseURL(),
-      timeout: 15000,
+      timeout: API_CONFIG.TIMEOUT,
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
@@ -45,10 +33,13 @@ class ApiService {
   private setupInterceptors(): void {
     // Request interceptor for auth tokens
     this.api.interceptors.request.use(
-      (config) => {
-        const token = this.getAuthToken();
+      async (config) => {
+        const token = await this.getAuthToken();
         if (token) {
           config.headers.Authorization = `Bearer ${token}`;
+          console.log('🔑 Token added to request:', config.url);
+        } else {
+          console.log('⚠️ No token found for request:', config.url);
         }
         console.log('API Request:', config.method?.toUpperCase(), config.url);
         return config;
@@ -65,23 +56,22 @@ class ApiService {
         console.log('API Response:', response.status, response.config.url);
         return response;
       },
-      (error) => {
+      async (error) => {
         console.error('API Response Error:', error.response?.status, error.response?.data);
         if (error.response?.status === 401) {
-          this.clearAuthToken();
+          await this.clearAuthToken();
         }
         return Promise.reject(error);
       }
     );
   }
 
-  private getAuthToken(): string | null {
-    // TODO: Implement token storage with AsyncStorage
-    return null;
+  private async getAuthToken(): Promise<string | null> {
+    return await storageService.getAuthToken();
   }
 
-  private clearAuthToken(): void {
-    // TODO: Implement token clearing
+  private async clearAuthToken(): Promise<void> {
+    await storageService.clearAuthData();
   }
 
   // ===== AUTHENTICATION ENDPOINTS =====
@@ -98,15 +88,60 @@ class ApiService {
   }
 
   async register(userData: RegisterRequest): Promise<AxiosResponse<AuthResponse>> {
-    return this.api.post('/auth/register', userData);
+    const response = await this.api.post('/auth/register', userData);
+    
+    // Store tokens if registration is successful
+    if (response.data.access_token) {
+      await storageService.setAuthToken(response.data.access_token);
+      if (response.data.refresh_token) {
+        await storageService.setRefreshToken(response.data.refresh_token);
+      }
+      if (response.data.user) {
+        await storageService.setUserData(response.data.user);
+      }
+    }
+    
+    return response;
   }
 
   async login(credentials: LoginRequest): Promise<AxiosResponse<AuthResponse>> {
-    return this.api.post('/auth/login', credentials);
+    const response = await this.api.post('/auth/login', credentials);
+    
+    // Store tokens if login is successful
+    if (response.data.access_token) {
+      await storageService.setAuthToken(response.data.access_token);
+      if (response.data.refresh_token) {
+        await storageService.setRefreshToken(response.data.refresh_token);
+      }
+      if (response.data.user) {
+        await storageService.setUserData(response.data.user);
+      }
+    }
+    
+    return response;
   }
 
-  async logout(): Promise<AxiosResponse<void>> {
-    return this.api.post('/auth/logout');
+  async logout(): Promise<AxiosResponse<any>> {
+    try {
+      // Debug: Check if token exists before logout
+      const token = await this.getAuthToken();
+      console.log('🔍 Token before logout:', token ? 'Token exists' : 'No token');
+      
+      const response = await this.api.post('/auth/logout');
+      console.log('✅ Logout API call successful');
+      return response;
+    } catch (error) {
+      console.error('❌ Logout API call failed:', error);
+      // Don't re-throw the error, just return a mock response
+      // This allows local logout to succeed even if API fails
+      return { 
+        data: {}, 
+        status: 200, 
+        statusText: 'OK',
+        headers: {},
+        config: {} as any
+      } as AxiosResponse<any>;
+    }
   }
 
   async getCurrentUser(): Promise<AxiosResponse<User>> {
@@ -122,11 +157,36 @@ class ApiService {
   }
 
   async oauthCallback(provider: string, code: string): Promise<AxiosResponse<AuthResponse>> {
-    return this.api.post(`/auth/oauth/${provider}/callback`, { code });
+    const response = await this.api.post(`/auth/oauth/${provider}/callback`, { code });
+    
+    // Store tokens if OAuth callback is successful
+    if (response.data.access_token) {
+      await storageService.setAuthToken(response.data.access_token);
+      if (response.data.refresh_token) {
+        await storageService.setRefreshToken(response.data.refresh_token);
+      }
+      if (response.data.user) {
+        await storageService.setUserData(response.data.user);
+      }
+    }
+    
+    return response;
   }
 
   async refreshToken(): Promise<AxiosResponse<{ access_token: string; token_type: string }>> {
-    return this.api.post('/auth/refresh');
+    const refreshToken = await storageService.getRefreshToken();
+    if (!refreshToken) {
+      throw new Error('No refresh token available');
+    }
+    
+    const response = await this.api.post('/auth/refresh', { refresh_token: refreshToken });
+    
+    // Update stored tokens
+    if (response.data.access_token) {
+      await storageService.setAuthToken(response.data.access_token);
+    }
+    
+    return response;
   }
 
   // ===== USER ENDPOINTS =====

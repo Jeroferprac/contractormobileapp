@@ -1,340 +1,334 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
-  StyleSheet,
-  ScrollView,
-  SafeAreaView,
-  StatusBar,
+  TextInput,
   TouchableOpacity,
+  StyleSheet,
   Alert,
+  Platform,
+  ScrollView,
 } from 'react-native';
-import { Button, Input } from '../components';
-import { COLORS } from '../constants/colors';
-import { SPACING, BORDER_RADIUS } from '../constants/spacing';
+import LinearGradient from 'react-native-linear-gradient';
+import Icon from 'react-native-vector-icons/Feather';
 import { useAuth } from '../context/AuthContext';
-import { EmailIcon, LockIcon, GitHubIcon } from '../components/icons';
+import { COLORS } from '../constants/colors';
+import { SPACING } from '../constants/spacing';
 
 interface LoginScreenProps {
   navigation: any;
 }
 
-export const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
-  const { login, isLoading, error, clearError, startOAuth } = useAuth();
-  const [formData, setFormData] = useState({
-    email: '',
-    password: '',
-  });
-  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
-
-  // Clear auth errors when component mounts
-  useEffect(() => {
-    clearError();
-  }, [clearError]);
-
-  const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-    if (formErrors[field]) {
-      setFormErrors(prev => ({ ...prev, [field]: '' }));
-    }
-  };
-
-  const validateForm = () => {
-    const newErrors: Record<string, string> = {};
-
-    if (!formData.email.trim()) {
-      newErrors.email = 'Email is required';
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = 'Please enter a valid email';
-    }
-
-    if (!formData.password) {
-      newErrors.password = 'Password is required';
-    } else if (formData.password.length < 6) {
-      newErrors.password = 'Password must be at least 6 characters';
-    }
-
-    setFormErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
+const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const { login, startOAuth } = useAuth();
 
   const handleLogin = async () => {
-    if (!validateForm()) return;
+    if (!email || !password) {
+      Alert.alert('Error', 'Please fill in all fields');
+      return;
+    }
 
+    setIsLoading(true);
     try {
-      await login(formData);
-      // Navigation will be handled by AuthContext state change
-    } catch (error) {
-      // Error is already handled in AuthContext
-      console.error('Login failed:', error);
+      await login({ email, password });
+    } catch (error: any) {
+      Alert.alert('Login Failed', error.message || 'Invalid credentials');
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const handleSocialLogin = async (provider: string) => {
+  const handleGitHubLogin = async () => {
+    setIsLoading(true);
     try {
-      await startOAuth(provider.toLowerCase());
-    } catch (error) {
-      console.error('Social login failed:', error);
+      await startOAuth('github');
+    } catch (error: any) {
+      Alert.alert('GitHub Login Failed', error.message || 'Failed to login with GitHub');
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const handleGuestLogin = () => {
-    Alert.alert(
-      'Guest Mode',
-      'You can explore the app without creating an account.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Continue', onPress: () => navigation.navigate('Home') }
-      ]
-    );
+  const handleForgotPassword = () => {
+    navigation.navigate('ForgotPassword');
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />
-      
-      <ScrollView 
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* Header */}
-        <View style={styles.header}>
-          <Text style={styles.logo}>Binyan</Text>
-          <Text style={styles.title}>Sign in</Text>
-        </View>
+    <View style={styles.container}>
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+        {/* Header - removed time and status icons */}
 
-        {/* Form */}
-        <View style={styles.form}>
-          <Input
-            placeholder="Email Address"
-            value={formData.email}
-            onChangeText={(text: string) => handleInputChange('email', text)}
-            icon={<EmailIcon size={20} color={COLORS.textSecondary} />}
-            keyboardType="email-address"
-            error={formErrors.email}
-            autoCapitalize="none"
-            autoCorrect={false}
-          />
-
-          <Input
-            placeholder="Password"
-            value={formData.password}
-            onChangeText={(text: string) => handleInputChange('password', text)}
-            icon={<LockIcon size={20} color={COLORS.textSecondary} />}
-            secureTextEntry
-            error={formErrors.password}
-            autoCapitalize="none"
-            autoCorrect={false}
-          />
-
-          {/* Forgot Password */}
-          <TouchableOpacity
-            style={styles.forgotPasswordContainer}
-            onPress={() => navigation.navigate('ForgotPassword')}
+        {/* Logo and Title */}
+        <View style={styles.logoContainer}>
+          <LinearGradient
+            colors={['#FF6B35', '#FF8E53']}
+            style={styles.logo}
           >
-            <Text style={styles.forgotPasswordText}>Forgot password?</Text>
-          </TouchableOpacity>
+            <Text style={styles.logoText}>Binyan</Text>
+          </LinearGradient>
+        </View>
 
-          {/* Sign in Button */}
-          <Button
-            title="Sign in"
-            onPress={handleLogin}
-            loading={isLoading}
-            variant="gradient"
-            style={styles.loginButton}
-            disabled={isLoading}
-          />
+        <Text style={styles.title}>Sign in</Text>
 
-          {/* Auth Error */}
-          {error && (
-            <View style={styles.errorContainer}>
-              <Text style={styles.errorText}>{error}</Text>
-            </View>
-          )}
+        {/* Input Fields */}
+        <View style={styles.inputContainer}>
+          <View style={styles.inputWrapper}>
+            <Icon name="mail" size={20} color="#666" style={styles.inputIcon} />
+            <TextInput
+              style={styles.input}
+              placeholder="Email Address"
+              placeholderTextColor="#999"
+              value={email}
+              onChangeText={setEmail}
+              keyboardType="email-address"
+              autoCapitalize="none"
+            />
+          </View>
 
-          {/* Terms and Privacy */}
-          <Text style={styles.termsText}>
-            If you continue, you agree to our{' '}
-            <Text style={styles.linkText}>Terms of Service</Text>
-            {' '}&{' '}
-            <Text style={styles.linkText}>Privacy Policy</Text>
-          </Text>
-
-          {/* Signup Link */}
-          <View style={styles.signupLinkContainer}>
-            <Text style={styles.signupLinkText}>
-              Don't have an account?{' '}
-              <TouchableOpacity onPress={() => navigation.navigate('Signup')}>
-                <Text style={styles.linkText}>Signup!</Text>
-              </TouchableOpacity>
-            </Text>
+          <View style={styles.inputWrapper}>
+            <Icon name="lock" size={20} color="#666" style={styles.inputIcon} />
+            <TextInput
+              style={styles.input}
+              placeholder="Password"
+              placeholderTextColor="#999"
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry={!showPassword}
+              autoCapitalize="none"
+            />
+            <TouchableOpacity
+              onPress={() => setShowPassword(!showPassword)}
+              style={styles.eyeIcon}
+            >
+              <Icon 
+                name={showPassword ? "eye-off" : "eye"} 
+                size={20} 
+                color="#666" 
+              />
+            </TouchableOpacity>
           </View>
         </View>
 
-        {/* Social Login */}
-        <View style={styles.socialSection}>
-          <View style={styles.divider}>
-            <View style={styles.dividerLine} />
-            <Text style={styles.dividerText}>OR</Text>
-            <View style={styles.dividerLine} />
-          </View>
-
-                     <View style={styles.socialButtons}>
-             <TouchableOpacity
-               style={styles.socialButton}
-               onPress={() => handleSocialLogin('github')}
-             >
-               <GitHubIcon size={24} color={COLORS.textPrimary} />
-             </TouchableOpacity>
-
-             <TouchableOpacity
-               style={styles.socialButton}
-               onPress={() => Alert.alert('Coming Soon', 'Google OAuth will be available soon!')}
-             >
-               <Text style={styles.socialButtonText}>G</Text>
-             </TouchableOpacity>
-
-             <TouchableOpacity
-               style={styles.socialButton}
-               onPress={() => Alert.alert('Coming Soon', 'Facebook OAuth will be available soon!')}
-             >
-               <Text style={styles.socialButtonText}>f</Text>
-             </TouchableOpacity>
-           </View>
-        </View>
-
-        {/* Guest Login */}
+        {/* Sign In Button */}
         <TouchableOpacity
-          style={styles.guestButton}
-          onPress={handleGuestLogin}
+          style={[styles.signInButton, isLoading && styles.disabledButton]}
+          onPress={handleLogin}
         >
-          <Text style={styles.guestText}>
-            Continue as <Text style={styles.linkText}>Guest</Text>
-          </Text>
+          <LinearGradient
+            colors={['#FF6B35', '#FF8E53']}
+            style={styles.gradientButton}
+          >
+            <Text style={styles.signInText}>
+              {isLoading ? 'Signing in...' : 'Sign in'}
+            </Text>
+          </LinearGradient>
+        </TouchableOpacity>
+
+        {/* Forgot Password */}
+        <TouchableOpacity onPress={handleForgotPassword} style={styles.forgotPassword}>
+          <Text style={styles.forgotPasswordText}>Forgot password?</Text>
+        </TouchableOpacity>
+
+        {/* Legal Text */}
+        <Text style={styles.legalText}>
+          If you continue, you agree to the{' '}
+          <Text style={styles.linkText}>Terms of Service</Text>
+          {' '}&{' '}
+          <Text style={styles.linkText}>Privacy Policy</Text>
+        </Text>
+
+        {/* Signup Link */}
+        <View style={styles.signupContainer}>
+          <Text style={styles.signupText}>Don't have an account? </Text>
+          <TouchableOpacity onPress={() => navigation.navigate('Signup')}>
+            <Text style={styles.signupLink}>Signup!</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* OR Separator */}
+        <View style={styles.orContainer}>
+          <View style={styles.orLine} />
+          <Text style={styles.orText}>OR</Text>
+          <View style={styles.orLine} />
+        </View>
+
+        {/* Social Login Buttons */}
+        <View style={styles.socialContainer}>
+          <TouchableOpacity style={styles.socialButton}>
+            <Icon name="apple" size={24} color="#FFF" />
+          </TouchableOpacity>
+          
+          <TouchableOpacity style={styles.socialButton} onPress={handleGitHubLogin}>
+            <Icon name="github" size={24} color="#000" />
+          </TouchableOpacity>
+          
+          <TouchableOpacity style={styles.socialButton}>
+            <Icon name="facebook" size={24} color="#FFF" />
+          </TouchableOpacity>
+        </View>
+
+        {/* Continue as Guest */}
+        <TouchableOpacity style={styles.guestButton}>
+          <Text style={styles.guestText}>Continue as Guest</Text>
         </TouchableOpacity>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.background,
+    backgroundColor: '#FFF',
   },
   scrollContent: {
     flexGrow: 1,
-    paddingHorizontal: SPACING.lg,
-    paddingTop: SPACING.xl,
+    paddingHorizontal: 20,
+    paddingTop: 50,
+    paddingBottom: 30,
   },
-  header: {
+
+  logoContainer: {
     alignItems: 'center',
-    marginBottom: SPACING.xxl,
+    marginBottom: 40,
   },
   logo: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: COLORS.primary,
-    marginBottom: SPACING.md,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 8,
   },
-  title: {
+  logoText: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: COLORS.textPrimary,
-    alignSelf: 'flex-start',
+    color: '#FFF',
   },
-  form: {
-    marginBottom: SPACING.xl,
+  title: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#000',
+    marginBottom: 30,
+    textAlign: 'center',
+  },
+  inputContainer: {
+    marginBottom: 30,
+  },
+  inputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#FFFFFF1A',
+    borderRadius: 2,
+    backgroundColor: '#F8F9FA',
+    marginBottom: 15,
+    paddingHorizontal: 15,
+    height: 56,
   },
   inputIcon: {
-    fontSize: 18,
+    marginRight: 12,
   },
-  forgotPasswordContainer: {
-    alignItems: 'flex-end',
-    marginTop: SPACING.sm,
-    marginBottom: SPACING.lg,
-  },
-  forgotPasswordText: {
-    fontSize: 14,
-    color: COLORS.error,
-  },
-  loginButton: {
-    marginBottom: SPACING.md,
-  },
-  errorContainer: {
-    backgroundColor: '#FFEBEE',
-    padding: SPACING.md,
-    borderRadius: BORDER_RADIUS.md,
-    marginBottom: SPACING.md,
-  },
-  errorText: {
-    color: COLORS.error,
-    fontSize: 14,
-    textAlign: 'center',
-  },
-  termsText: {
-    fontSize: 12,
-    color: COLORS.textSecondary,
-    textAlign: 'center',
-    marginTop: SPACING.md,
-    lineHeight: 18,
-  },
-  linkText: {
-    color: COLORS.primary,
-    textDecorationLine: 'underline',
-  },
-  signupLinkContainer: {
-    alignItems: 'center',
-    marginTop: SPACING.lg,
-  },
-  signupLinkText: {
-    fontSize: 14,
-    color: COLORS.textSecondary,
-  },
-  socialSection: {
-    marginTop: SPACING.xl,
-  },
-  divider: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: SPACING.lg,
-  },
-  dividerLine: {
+  input: {
     flex: 1,
-    height: 1,
-    backgroundColor: COLORS.border,
+    fontSize: 16,
+    color: '#000',
   },
-  dividerText: {
-    marginHorizontal: SPACING.md,
-    fontSize: 14,
-    color: COLORS.textSecondary,
+  eyeIcon: {
+    padding: 5,
   },
-  socialButtons: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: SPACING.md,
+  signInButton: {
+    marginBottom: 20,
   },
-  socialButton: {
-    flex: 1,
-    height: 48,
-    backgroundColor: COLORS.background,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    borderRadius: BORDER_RADIUS.lg,
+  gradientButton: {
+    height: 56,
+    borderRadius: 2,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  socialButtonText: {
+  signInText: {
+    color: '#FFF',
     fontSize: 18,
     fontWeight: '600',
   },
+  disabledButton: {
+    opacity: 0.6,
+  },
+  forgotPassword: {
+    alignItems: 'center',
+    marginBottom: 30,
+  },
+  forgotPasswordText: {
+    color: '#FF6B35',
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  legalText: {
+    textAlign: 'center',
+    fontSize: 14,
+    color: '#666',
+    lineHeight: 20,
+    marginBottom: 30,
+  },
+  linkText: {
+    color: '#FF6B35',
+    fontWeight: '500',
+  },
+  signupContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 30,
+  },
+  signupText: {
+    fontSize: 16,
+    color: '#666',
+  },
+  signupLink: {
+    fontSize: 16,
+    color: '#FF6B35',
+    fontWeight: '600',
+  },
+  orContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 30,
+  },
+  orLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: '#E0E0E0',
+  },
+  orText: {
+    marginHorizontal: 15,
+    fontSize: 16,
+    color: '#666',
+    fontWeight: '500',
+  },
+  socialContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 20,
+    marginBottom: 30,
+  },
+  socialButton: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+  },
   guestButton: {
     alignItems: 'center',
-    marginTop: SPACING.xl,
-    marginBottom: SPACING.lg,
   },
   guestText: {
-    fontSize: 14,
-    color: COLORS.textSecondary,
+    fontSize: 16,
+    color: '#666',
+    textDecorationLine: 'underline',
   },
-}); 
+});
+
+export default LoginScreen; 

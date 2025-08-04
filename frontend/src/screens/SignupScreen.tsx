@@ -1,500 +1,498 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
-  StyleSheet,
-  ScrollView,
-  SafeAreaView,
-  StatusBar,
+  TextInput,
   TouchableOpacity,
+  StyleSheet,
   Alert,
+  Platform,
+  ScrollView,
 } from 'react-native';
-import { Button, Input } from '../components';
-import { COLORS } from '../constants/colors';
-import { SPACING, BORDER_RADIUS } from '../constants/spacing';
+import LinearGradient from 'react-native-linear-gradient';
+import Icon from 'react-native-vector-icons/Feather';
 import { useAuth } from '../context/AuthContext';
-import { UserIcon, EmailIcon, LockIcon, PhoneIcon, GitHubIcon, CompanyIcon, ContractorIcon, CustomerIcon } from '../components/icons';
+import { COLORS } from '../constants/colors';
+import { SPACING } from '../constants/spacing';
+import SuccessModal from '../components/SuccessModal';
+import apiService from '../api/api';
 
 interface SignupScreenProps {
   navigation: any;
 }
 
-export const SignupScreen: React.FC<SignupScreenProps> = ({ navigation }) => {
-  const { register, isLoading, error, clearError, startOAuth } = useAuth();
-  const [formData, setFormData] = useState({
-    full_name: '',
-    email: '',
-    password: '',
-    confirmPassword: '',
-    phone: '',
-    role: 'company',
-  });
-  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+const SignupScreen: React.FC<SignupScreenProps> = ({ navigation }) => {
+  const [firstName, setFirstName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [phone, setPhone] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [roles, setRoles] = useState<Array<{ id: string; name: string }>>([]);
+  const [selectedRole, setSelectedRole] = useState<string>('');
+  const { register } = useAuth();
 
-  // Clear auth errors when component mounts
-  useEffect(() => {
-    clearError();
-  }, [clearError]);
+  // Fetch roles from backend on component mount
+  React.useEffect(() => {
+    fetchRoles();
+  }, []);
 
-  const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-    if (formErrors[field]) {
-      setFormErrors(prev => ({ ...prev, [field]: '' }));
+  const fetchRoles = async () => {
+    try {
+      console.log('🔍 Fetching roles from backend...');
+      const response = await apiService.getRoles();
+      console.log('✅ Roles response:', response.data);
+      console.log('📊 Roles array length:', response.data?.length);
+      console.log('🔍 Roles structure:', JSON.stringify(response.data, null, 2));
+      
+      if (response.data && Array.isArray(response.data)) {
+        // Convert string array to object array with id and name
+        const rolesArray = (response.data as any[]).map((role: any, index: number) => ({
+          id: typeof role === 'string' ? role : role.id || role.name,
+          name: typeof role === 'string' ? role.charAt(0).toUpperCase() + role.slice(1) : role.name || role.id
+        }));
+        
+        console.log('🔄 Converted roles:', rolesArray);
+        setRoles(rolesArray);
+        
+        // Set default role if available
+        if (rolesArray.length > 0) {
+          setSelectedRole(rolesArray[0].id);
+          console.log('🎯 Default role set to:', rolesArray[0].id);
+        }
+      } else {
+        console.warn('⚠️ Roles data is not an array:', response.data);
+        throw new Error('Invalid roles data format');
+      }
+    } catch (error) {
+      console.error('❌ Failed to fetch roles:', error);
+      // Fallback to default roles if API fails
+      const fallbackRoles = [
+        { id: 'contractor', name: 'Contractor' },
+        { id: 'company', name: 'Company' },
+        { id: 'admin', name: 'Admin' },
+      ];
+      console.log('🔄 Using fallback roles:', fallbackRoles);
+      setRoles(fallbackRoles);
+      setSelectedRole('customer');
     }
-  };
-
-  const validateForm = () => {
-    const newErrors: Record<string, string> = {};
-
-    if (!formData.full_name.trim()) {
-      newErrors.full_name = 'Full name is required';
-    } else if (formData.full_name.trim().length < 2) {
-      newErrors.full_name = 'Full name must be at least 2 characters';
-    }
-
-    if (!formData.email.trim()) {
-      newErrors.email = 'Email is required';
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = 'Please enter a valid email';
-    }
-
-    if (!formData.password) {
-      newErrors.password = 'Password is required';
-    } else if (formData.password.length < 6) {
-      newErrors.password = 'Password must be at least 6 characters';
-    }
-
-    if (!formData.confirmPassword) {
-      newErrors.confirmPassword = 'Please confirm your password';
-    } else if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = 'Passwords do not match';
-    }
-
-    if (formData.phone && !/^\+?[\d\s\-\(\)]+$/.test(formData.phone)) {
-      newErrors.phone = 'Please enter a valid phone number';
-    }
-
-    if (!formData.role) {
-      newErrors.role = 'Please select a role';
-    }
-
-    setFormErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
   };
 
   const handleSignup = async () => {
-    if (!validateForm()) return;
+    if (!firstName || !email || !password) {
+      Alert.alert('Error', 'Please fill in all required fields');
+      return;
+    }
 
+    if (password.length < 6) {
+      Alert.alert('Error', 'Password must be at least 6 characters');
+      return;
+    }
+
+    if (!selectedRole) {
+      Alert.alert('Error', 'Please select a role');
+      return;
+    }
+
+    setIsLoading(true);
     try {
-      const userData = {
-        full_name: formData.full_name.trim(),
-        email: formData.email.trim(),
-        password: formData.password,
-        phone: formData.phone.trim(),
-        role: formData.role,
-      };
-
-      await register(userData);
-      // Navigation will be handled by AuthContext state change
-    } catch (error) {
-      // Error is already handled in AuthContext
-      console.error('Signup failed:', error);
+      await register({
+        full_name: firstName,
+        email,
+        password,
+        phone: phone || '',
+        role: selectedRole,
+      });
+      
+      // Show success modal
+      setShowSuccessModal(true);
+    } catch (error: any) {
+      Alert.alert('Signup Failed', error.message || 'Failed to create account');
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const handleSocialLogin = async (provider: string) => {
+  const handleGitHubSignup = async () => {
+    setIsLoading(true);
     try {
-      await startOAuth(provider.toLowerCase());
-    } catch (error) {
-      console.error('Social login failed:', error);
+      // This would integrate with GitHub OAuth
+      Alert.alert('Coming Soon', 'GitHub signup will be available soon!');
+    } catch (error: any) {
+      Alert.alert('GitHub Signup Failed', error.message || 'Failed to signup with GitHub');
+    } finally {
+      setIsLoading(false);
     }
-  };
-
-  const handleGuestSignup = () => {
-    Alert.alert(
-      'Guest Mode',
-      'You can explore the app without creating an account.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Continue', onPress: () => navigation.navigate('Home') }
-      ]
-    );
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />
-      
-      <ScrollView 
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* Header */}
-        <View style={styles.header}>
-          <Text style={styles.logo}>Binyan</Text>
-          <Text style={styles.title}>Signup</Text>
+    <View style={styles.container}>
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+        {/* Header - removed time and status icons */}
+
+        {/* Logo and Title */}
+        <View style={styles.logoContainer}>
+          <LinearGradient
+            colors={['#FF6B35', '#FF8E53']}
+            style={styles.logo}
+          >
+            <Text style={styles.logoText}>Binyan</Text>
+          </LinearGradient>
         </View>
 
-        {/* Form */}
-        <View style={styles.form}>
-          <Input
-            placeholder="Full Name"
-            value={formData.full_name}
-            onChangeText={(text: string) => handleInputChange('full_name', text)}
-            icon={<UserIcon size={20} color={COLORS.textSecondary} />}
-            error={formErrors.full_name}
-            autoCapitalize="words"
-            autoCorrect={false}
-          />
+        <Text style={styles.title}>Signup</Text>
 
-          <Input
-            placeholder="Email Address"
-            value={formData.email}
-            onChangeText={(text: string) => handleInputChange('email', text)}
-            icon={<EmailIcon size={20} color={COLORS.textSecondary} />}
-            keyboardType="email-address"
-            error={formErrors.email}
-            autoCapitalize="none"
-            autoCorrect={false}
-          />
+        {/* Input Fields */}
+        <View style={styles.inputContainer}>
+          <View style={styles.inputWrapper}>
+            <Icon name="user" size={20} color="#666" style={styles.inputIcon} />
+            <TextInput
+              style={styles.input}
+              placeholder="First Name"
+              placeholderTextColor="#999"
+              value={firstName}
+              onChangeText={setFirstName}
+              autoCapitalize="words"
+            />
+          </View>
 
-          <Input
-            placeholder="Password"
-            value={formData.password}
-            onChangeText={(text: string) => handleInputChange('password', text)}
-            icon={<LockIcon size={20} color={COLORS.textSecondary} />}
-            secureTextEntry
-            error={formErrors.password}
-            autoCapitalize="none"
-            autoCorrect={false}
-          />
+          <View style={styles.inputWrapper}>
+            <Icon name="mail" size={20} color="#666" style={styles.inputIcon} />
+            <TextInput
+              style={styles.input}
+              placeholder="Email Address"
+              placeholderTextColor="#999"
+              value={email}
+              onChangeText={setEmail}
+              keyboardType="email-address"
+              autoCapitalize="none"
+            />
+          </View>
 
-          <Input
-            placeholder="Confirm Password"
-            value={formData.confirmPassword}
-            onChangeText={(text: string) => handleInputChange('confirmPassword', text)}
-            icon={<LockIcon size={20} color={COLORS.textSecondary} />}
-            secureTextEntry
-            error={formErrors.confirmPassword}
-            autoCapitalize="none"
-            autoCorrect={false}
-          />
+          <View style={styles.inputWrapper}>
+            <Icon name="lock" size={20} color="#666" style={styles.inputIcon} />
+            <TextInput
+              style={styles.input}
+              placeholder="Password"
+              placeholderTextColor="#999"
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry={!showPassword}
+              autoCapitalize="none"
+            />
+            <TouchableOpacity
+              onPress={() => setShowPassword(!showPassword)}
+              style={styles.eyeIcon}
+            >
+              <Icon 
+                name={showPassword ? "eye-off" : "eye"} 
+                size={20} 
+                color="#666" 
+              />
+            </TouchableOpacity>
+          </View>
 
-          <Input
-            placeholder="Phone no. (Optional)"
-            value={formData.phone}
-            onChangeText={(text: string) => handleInputChange('phone', text)}
-            icon={<PhoneIcon size={20} color={COLORS.textSecondary} />}
-            keyboardType="phone-pad"
-            error={formErrors.phone}
-            autoCapitalize="none"
-            autoCorrect={false}
-          />
+          <View style={styles.inputWrapper}>
+            <Icon name="phone" size={20} color="#666" style={styles.inputIcon} />
+            <TextInput
+              style={styles.input}
+              placeholder="Phone no. (optional)"
+              placeholderTextColor="#999"
+              value={phone}
+              onChangeText={setPhone}
+              keyboardType="phone-pad"
+            />
+          </View>
 
           {/* Role Selection */}
           <View style={styles.roleContainer}>
-            <Text style={styles.roleLabel}>Select Role</Text>
-            {formErrors.role && (
-              <Text style={styles.errorText}>{formErrors.role}</Text>
-            )}
+            <Text style={styles.roleLabel}>Select your role</Text>
             <View style={styles.roleButtons}>
-              <TouchableOpacity
-                style={[
-                  styles.roleButton,
-                  formData.role === 'company' && styles.roleButtonActive
-                ]}
-                onPress={() => handleInputChange('role', 'company')}
-              >
-                <View style={styles.roleButtonContent}>
-                  <CompanyIcon 
-                    size={16} 
-                    color={formData.role === 'company' ? COLORS.textLight : COLORS.textPrimary} 
-                  />
-                  <Text style={[
-                    styles.roleButtonText,
-                    formData.role === 'company' && styles.roleButtonTextActive
-                  ]}>
-                    Company
-                  </Text>
-                </View>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[
-                  styles.roleButton,
-                  formData.role === 'contractor' && styles.roleButtonActive
-                ]}
-                onPress={() => handleInputChange('role', 'contractor')}
-              >
-                <View style={styles.roleButtonContent}>
-                  <ContractorIcon 
-                    size={16} 
-                    color={formData.role === 'contractor' ? COLORS.textLight : COLORS.textPrimary} 
-                  />
-                  <Text style={[
-                    styles.roleButtonText,
-                    formData.role === 'contractor' && styles.roleButtonTextActive
-                  ]}>
-                    Contractor
-                  </Text>
-                </View>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[
-                  styles.roleButton,
-                  formData.role === 'customer' && styles.roleButtonActive
-                ]}
-                onPress={() => handleInputChange('role', 'customer')}
-              >
-                <View style={styles.roleButtonContent}>
-                  <CustomerIcon 
-                    size={16} 
-                    color={formData.role === 'customer' ? COLORS.textLight : COLORS.textPrimary} 
-                  />
-                  <Text style={[
-                    styles.roleButtonText,
-                    formData.role === 'customer' && styles.roleButtonTextActive
-                  ]}>
-                    Customer
-                  </Text>
-                </View>
-              </TouchableOpacity>
+              {roles.length > 0 ? (
+                roles.map((role, index) => (
+                  <TouchableOpacity
+                    key={`role-${role.id}-${index}`}
+                    style={[
+                      styles.roleButton,
+                      selectedRole === role.id && styles.roleButtonActive
+                    ]}
+                    onPress={() => setSelectedRole(role.id)}
+                  >
+                    <Text style={[
+                      styles.roleButtonText,
+                      selectedRole === role.id && styles.roleButtonTextActive
+                    ]}>
+                      {role.name}
+                    </Text>
+                  </TouchableOpacity>
+                ))
+              ) : (
+                <Text style={styles.loadingText}>Loading roles...</Text>
+              )}
             </View>
-          </View>
-
-          {/* Sign up Button */}
-          <Button
-            title="Sign up"
-            onPress={handleSignup}
-            loading={isLoading}
-            variant="gradient"
-            style={styles.signupButton}
-            disabled={isLoading}
-          />
-
-          {/* Auth Error */}
-          {error && (
-            <View style={styles.errorContainer}>
-              <Text style={styles.errorText}>{error}</Text>
-            </View>
-          )}
-
-          {/* Terms and Privacy */}
-          <Text style={styles.termsText}>
-            If you continue, you agree to our{' '}
-            <Text style={styles.linkText}>Terms of Service</Text>
-            {' '}&{' '}
-            <Text style={styles.linkText}>Privacy Policy</Text>
-          </Text>
-
-          {/* Login Link */}
-          <View style={styles.loginLinkContainer}>
-            <Text style={styles.loginLinkText}>
-              Already have an account?{' '}
-              <TouchableOpacity onPress={() => navigation.navigate('Login')}>
-                <Text style={styles.linkText}>Log in!</Text>
-              </TouchableOpacity>
-            </Text>
           </View>
         </View>
 
-        {/* Social Login */}
-        <View style={styles.socialSection}>
-          <View style={styles.divider}>
-            <View style={styles.dividerLine} />
-            <Text style={styles.dividerText}>OR</Text>
-            <View style={styles.dividerLine} />
-          </View>
-
-                     <View style={styles.socialButtons}>
-             <TouchableOpacity
-               style={styles.socialButton}
-               onPress={() => handleSocialLogin('github')}
-             >
-               <GitHubIcon size={24} color={COLORS.textPrimary} />
-             </TouchableOpacity>
-
-             <TouchableOpacity
-               style={styles.socialButton}
-               onPress={() => Alert.alert('Coming Soon', 'Google OAuth will be available soon!')}
-             >
-               <Text style={styles.socialButtonText}>G</Text>
-             </TouchableOpacity>
-
-             <TouchableOpacity
-               style={styles.socialButton}
-               onPress={() => Alert.alert('Coming Soon', 'Facebook OAuth will be available soon!')}
-             >
-               <Text style={styles.socialButtonText}>f</Text>
-             </TouchableOpacity>
-           </View>
-        </View>
-
-        {/* Guest Login */}
+        {/* Sign Up Button */}
         <TouchableOpacity
-          style={styles.guestButton}
-          onPress={handleGuestSignup}
+          style={[styles.signUpButton, isLoading && styles.disabledButton]}
+          onPress={handleSignup}
         >
-          <Text style={styles.guestText}>
-            Continue as <Text style={styles.linkText}>Guest</Text>
-          </Text>
+          <LinearGradient
+            colors={['#FF6B35', '#FF8E53']}
+            style={styles.gradientButton}
+          >
+            <Text style={styles.signUpText}>
+              {isLoading ? 'Creating account...' : 'Sign up'}
+            </Text>
+          </LinearGradient>
+        </TouchableOpacity>
+
+        {/* Legal Text */}
+        <Text style={styles.legalText}>
+          If you continue, you agree to the{' '}
+          <Text style={styles.linkText}>Terms of Service</Text>
+          {' '}&{' '}
+          <Text style={styles.linkText}>Privacy Policy</Text>
+        </Text>
+
+        {/* Login Link */}
+        <View style={styles.loginContainer}>
+          <Text style={styles.loginText}>Already have an account? </Text>
+          <TouchableOpacity onPress={() => navigation.navigate('Login')}>
+            <Text style={styles.loginLink}>Log in!</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* OR Separator */}
+        <View style={styles.orContainer}>
+          <View style={styles.orLine} />
+          <Text style={styles.orText}>OR</Text>
+          <View style={styles.orLine} />
+        </View>
+
+        {/* Social Login Buttons */}
+        <View style={styles.socialContainer}>
+          <TouchableOpacity style={styles.socialButton}>
+            <Icon name="apple" size={24} color="#FFF" />
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={styles.socialButton}
+            onPress={handleGitHubSignup}
+          >
+            <Icon name="github" size={24} color="#000" />
+          </TouchableOpacity>
+        </View>
+
+        {/* Continue as Guest */}
+        <TouchableOpacity style={styles.guestButton}>
+          <Text style={styles.guestText}>Continue as Guest</Text>
         </TouchableOpacity>
       </ScrollView>
-    </SafeAreaView>
+
+      {/* Success Modal */}
+      <SuccessModal
+        visible={showSuccessModal}
+        title="Register Successfully"
+        message="You have successfully created account. Let's start a memorable journey with us."
+        username={firstName}
+        onClose={() => setShowSuccessModal(false)}
+        onAction={() => {
+          setShowSuccessModal(false);
+          navigation.navigate('Home');
+        }}
+        actionText="Let's Go"
+      />
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.background,
+    backgroundColor: '#FFF',
   },
   scrollContent: {
     flexGrow: 1,
-    paddingHorizontal: SPACING.lg,
-    paddingTop: SPACING.xl,
+    paddingHorizontal: 20,
+    paddingTop: 50,
+    paddingBottom: 30,
   },
-  header: {
+
+  logoContainer: {
     alignItems: 'center',
-    marginBottom: SPACING.xxl,
+    marginBottom: 40,
   },
   logo: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: COLORS.primary,
-    marginBottom: SPACING.md,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 8,
   },
-  title: {
+  logoText: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: COLORS.textPrimary,
-    alignSelf: 'flex-start',
+    color: '#FFF',
   },
-  form: {
-    marginBottom: SPACING.xl,
+  title: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#000',
+    marginBottom: 30,
+    textAlign: 'center',
+  },
+  inputContainer: {
+    marginBottom: 30,
+  },
+  inputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#FFFFFF1A',
+    borderRadius: 2,
+    backgroundColor: '#F8F9FA',
+    marginBottom: 15,
+    paddingHorizontal: 15,
+    height: 56,
   },
   inputIcon: {
-    fontSize: 18,
+    marginRight: 12,
+  },
+  input: {
+    flex: 1,
+    fontSize: 16,
+    color: '#000',
+  },
+  eyeIcon: {
+    padding: 5,
   },
   roleContainer: {
-    marginBottom: SPACING.md,
+    marginBottom: 20,
   },
   roleLabel: {
     fontSize: 16,
-    color: COLORS.textPrimary,
-    marginBottom: SPACING.sm,
+    color: '#000',
+    marginBottom: 12,
     fontWeight: '500',
   },
   roleButtons: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: SPACING.sm,
+    gap: 12,
   },
   roleButton: {
     flex: 1,
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.sm,
-    borderRadius: 8,
+    minWidth: 100,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
     borderWidth: 1,
-    borderColor: COLORS.border,
-    backgroundColor: COLORS.background,
+    borderColor: '#E0E0E0',
+    borderRadius: 8,
+    backgroundColor: '#F8F9FA',
     alignItems: 'center',
   },
   roleButtonActive: {
-    backgroundColor: COLORS.primary,
-    borderColor: COLORS.primary,
+    backgroundColor: '#FF6B35',
+    borderColor: '#FF6B35',
   },
   roleButtonText: {
     fontSize: 14,
-    color: COLORS.textPrimary,
+    color: '#666',
     fontWeight: '500',
   },
   roleButtonTextActive: {
-    color: COLORS.textLight,
+    color: '#FFF',
+    fontWeight: '600',
   },
-  roleButtonContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.xs,
+  signUpButton: {
+    marginBottom: 20,
   },
-  signupButton: {
-    marginTop: SPACING.lg,
-  },
-  errorContainer: {
-    backgroundColor: '#FFEBEE',
-    padding: SPACING.md,
-    borderRadius: BORDER_RADIUS.md,
-    marginTop: SPACING.md,
-  },
-  errorText: {
-    color: COLORS.error,
-    fontSize: 14,
-    textAlign: 'center',
-  },
-  termsText: {
-    fontSize: 12,
-    color: COLORS.textSecondary,
-    textAlign: 'center',
-    marginTop: SPACING.md,
-    lineHeight: 18,
-  },
-  linkText: {
-    color: COLORS.primary,
-    textDecorationLine: 'underline',
-  },
-  loginLinkContainer: {
-    alignItems: 'center',
-    marginTop: SPACING.lg,
-  },
-  loginLinkText: {
-    fontSize: 14,
-    color: COLORS.textSecondary,
-  },
-  socialSection: {
-    marginTop: SPACING.xl,
-  },
-  divider: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: SPACING.lg,
-  },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: COLORS.border,
-  },
-  dividerText: {
-    marginHorizontal: SPACING.md,
-    fontSize: 14,
-    color: COLORS.textSecondary,
-  },
-  socialButtons: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: SPACING.md,
-  },
-  socialButton: {
-    flex: 1,
-    height: 48,
-    backgroundColor: COLORS.background,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    borderRadius: BORDER_RADIUS.lg,
+  gradientButton: {
+    height: 56,
+    borderRadius: 2,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  socialButtonText: {
+  signUpText: {
+    color: '#FFF',
     fontSize: 18,
     fontWeight: '600',
   },
+  disabledButton: {
+    opacity: 0.6,
+  },
+  legalText: {
+    textAlign: 'center',
+    fontSize: 14,
+    color: '#666',
+    lineHeight: 20,
+    marginBottom: 30,
+  },
+  linkText: {
+    color: '#FF6B35',
+    fontWeight: '500',
+  },
+  loginContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 30,
+  },
+  loginText: {
+    fontSize: 16,
+    color: '#666',
+  },
+  loginLink: {
+    fontSize: 16,
+    color: '#FF6B35',
+    fontWeight: '600',
+  },
+  orContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 30,
+  },
+  orLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: '#E0E0E0',
+  },
+  orText: {
+    marginHorizontal: 15,
+    fontSize: 16,
+    color: '#666',
+    fontWeight: '500',
+  },
+  socialContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 20,
+    marginBottom: 30,
+  },
+  socialButton: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+  },
   guestButton: {
     alignItems: 'center',
-    marginTop: SPACING.xl,
-    marginBottom: SPACING.lg,
   },
   guestText: {
-    fontSize: 14,
-    color: COLORS.textSecondary,
+    fontSize: 16,
+    color: '#666',
+    textDecorationLine: 'underline',
   },
-}); 
+  loadingText: {
+    fontSize: 16,
+    color: '#999',
+    textAlign: 'center',
+    fontStyle: 'italic',
+  },
+});
+
+export default SignupScreen; 

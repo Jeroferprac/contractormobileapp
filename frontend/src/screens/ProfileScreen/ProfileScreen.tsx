@@ -5,7 +5,6 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Image,
   SafeAreaView,
   StatusBar,
 } from 'react-native';
@@ -467,4 +466,6 @@ const styles = StyleSheet.create({
   savedAction: {
     padding: SPACING.xs,
   },
-}); 
+});
+
+export default ProfileScreen; 

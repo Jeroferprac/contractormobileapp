@@ -16,11 +16,11 @@
     "fix:red-screen": "powershell -ExecutionPolicy Bypass -File fix-red-screen.ps1"
   },
   "dependencies": {
-    "@react-navigation/bottom-tabs": "^7.4.4",
+    "@react-navigation/bottom-tabs": "^7.4.5",
     "@react-navigation/core": "^7.12.3",
     "@react-navigation/drawer": "^7.5.5",
-    "@react-navigation/native": "^7.1.16",
-    "@react-navigation/native-stack": "^7.3.23",
+    "@react-navigation/native": "^7.1.17",
+    "@react-navigation/native-stack": "^7.3.24",
     "@react-navigation/stack": "^7.4.4",
     "@types/react-native-vector-icons": "^6.4.18",
     "axios": "^1.6.0",

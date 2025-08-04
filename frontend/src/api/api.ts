@@ -117,6 +117,29 @@ class ApiService {
   }
 
   async register(userData: RegisterRequest): Promise<AxiosResponse<AuthResponse>> {
+    if (this.useMock) {
+      // Return mock data
+      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate delay
+      return {
+        data: {
+          access_token: 'mock-jwt-token-12345',
+          token_type: 'bearer',
+          user: {
+            id: '1',
+            firstName: userData.firstName,
+            lastName: userData.lastName,
+            email: userData.email,
+            phone: userData.phone || '+1234567890',
+            role: userData.role || 'user',
+          },
+        },
+        status: 200,
+        statusText: 'OK',
+        headers: {},
+        config: {} as any,
+      } as AxiosResponse<AuthResponse>;
+    }
+    
     return this.api.post('/auth/register', userData);
   }
 
@@ -148,6 +171,18 @@ class ApiService {
   }
 
   async logout(): Promise<AxiosResponse<void>> {
+    if (this.useMock) {
+      // Return mock data
+      await new Promise(resolve => setTimeout(resolve, 500)); // Simulate delay
+      return {
+        data: undefined,
+        status: 200,
+        statusText: 'OK',
+        headers: {},
+        config: {} as any,
+      } as AxiosResponse<void>;
+    }
+    
     return this.api.post('/auth/logout');
   }
 

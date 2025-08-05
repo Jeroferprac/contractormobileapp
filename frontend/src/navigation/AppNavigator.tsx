@@ -13,6 +13,7 @@ import LoginScreen from '../screens/LoginScreen';
 import SignupScreen from '../screens/SignupScreen';
 import ForgotPasswordScreen from '../screens/ForgotPasswordScreen';
 import HomeScreen from '../screens/HomeScreen/HomeScreen';
+import { ProfileScreen } from '../screens/ProfileScreen/ProfileScreen';
 import { useAuth } from '../context/AuthContext';
 
 const Stack = createNativeStackNavigator(); 
@@ -68,7 +69,7 @@ const MainTabNavigator = () => {
       />
       <Tab.Screen
         name="Profile"
-        component={HomeScreen}
+        component={ProfileScreen}
         options={{
           tabBarLabel: 'Profile',
           tabBarIcon: ({ color, size }) => (

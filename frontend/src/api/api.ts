@@ -37,15 +37,10 @@ class ApiService {
         const token = await this.getAuthToken();
         if (token) {
           config.headers.Authorization = `Bearer ${token}`;
-          console.log('🔑 Token added to request:', config.url);
-        } else {
-          console.log('⚠️ No token found for request:', config.url);
         }
-        console.log('API Request:', config.method?.toUpperCase(), config.url);
         return config;
       },
       (error) => {
-        console.error('API Request Error:', error);
         return Promise.reject(error);
       }
     );
@@ -53,11 +48,9 @@ class ApiService {
     // Response interceptor for error handling
     this.api.interceptors.response.use(
       (response: AxiosResponse) => {
-        console.log('API Response:', response.status, response.config.url);
         return response;
       },
       async (error) => {
-        console.error('API Response Error:', error.response?.status, error.response?.data);
         if (error.response?.status === 401) {
           await this.clearAuthToken();
         }
@@ -79,7 +72,6 @@ class ApiService {
   async testConnection(): Promise<AxiosResponse<User>> {
     try {
       const response = await this.api.get('/auth/me');
-      console.log('API Connection Test:', response.data);
       return response;
     } catch (error) {
       console.error('API Connection Test Failed:', error);
@@ -123,24 +115,11 @@ class ApiService {
 
   async logout(): Promise<AxiosResponse<any>> {
     try {
-      // Debug: Check if token exists before logout
-      const token = await this.getAuthToken();
-      console.log('🔍 Token before logout:', token ? 'Token exists' : 'No token');
-      
       const response = await this.api.post('/auth/logout');
-      console.log('✅ Logout API call successful');
       return response;
     } catch (error) {
-      console.error('❌ Logout API call failed:', error);
-      // Don't re-throw the error, just return a mock response
-      // This allows local logout to succeed even if API fails
-      return { 
-        data: {}, 
-        status: 200, 
-        statusText: 'OK',
-        headers: {},
-        config: {} as any
-      } as AxiosResponse<any>;
+      // Handle logout error silently
+      throw error;
     }
   }
 

@@ -1,0 +1,1 @@
+export { ThankYouModal } from './ThankYouModal'; 

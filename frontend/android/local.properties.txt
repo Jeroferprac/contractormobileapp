@@ -1,0 +1,1 @@
+sdk.dir=C:\\Users\\lenova\\AppData\\Local\\Android\\Sdk

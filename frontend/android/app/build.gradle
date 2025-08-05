@@ -94,3 +94,5 @@ dependencies {
 
 // React Native 0.80+ autolinking handles vector icons automatically
 // No manual configuration needed
+
+apply from: "../../node_modules/react-native-vector-icons/fonts.gradle"

@@ -1,7 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { Alert } from 'react-native';
-import apiService from '../api/api';
-import oauthService from '../services/OAuthService';
 import { User, LoginRequest, RegisterRequest } from '../types/api';
 
 interface AuthState {
@@ -56,21 +54,29 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setState(prev => ({ ...prev, isLoading: true }));
       setError(null);
 
-      const response = await apiService.login(credentials);
-      const { access_token, user } = response.data;
+      // Mock login for now
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      const mockUser = {
+        id: '1',
+        firstName: 'John',
+        lastName: 'Doe',
+        email: credentials.email,
+        phone: '+1234567890',
+        role: 'user',
+      };
       
       setState({
         isAuthenticated: true,
-        user,
-        token: access_token,
+        user: mockUser,
+        token: 'mock-token',
         isLoading: false,
       });
       
-      // TODO: Store token in AsyncStorage
-      console.log('Login successful:', user.email);
+      console.log('Login successful:', mockUser.email);
     } catch (error: any) {
       console.error('Login error:', error);
-      const errorMessage = error.response?.data?.detail || error.message || 'Login failed';
+      const errorMessage = error.message || 'Login failed';
       setError(errorMessage);
       setState(prev => ({ ...prev, isLoading: false }));
       
@@ -83,22 +89,30 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setState(prev => ({ ...prev, isLoading: true }));
       setError(null);
 
-      const response = await apiService.register(userData);
-      const { access_token, user } = response.data;
+      // Mock registration for now
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      const mockUser = {
+        id: '1',
+        firstName: userData.firstName,
+        lastName: userData.lastName,
+        email: userData.email,
+        phone: userData.phone || '+1234567890',
+        role: userData.role || 'user',
+      };
       
       setState({
         isAuthenticated: true,
-        user,
-        token: access_token,
+        user: mockUser,
+        token: 'mock-token',
         isLoading: false,
       });
       
-      // TODO: Store token in AsyncStorage
       Alert.alert('Success', 'Account created successfully!');
-      console.log('Registration successful:', user.email);
+      console.log('Registration successful:', mockUser.email);
     } catch (error: any) {
       console.error('Registration error:', error);
-      const errorMessage = error.response?.data?.detail || error.message || 'Registration failed';
+      const errorMessage = error.message || 'Registration failed';
       setError(errorMessage);
       setState(prev => ({ ...prev, isLoading: false }));
       
@@ -108,7 +122,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const logout = async () => {
     try {
-      await apiService.logout();
+      // Mock logout for now
+      await new Promise(resolve => setTimeout(resolve, 500));
     } catch (error) {
       console.error('Logout error:', error);
     } finally {
@@ -119,15 +134,22 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         isLoading: false,
       });
       setError(null);
-      // TODO: Clear token from AsyncStorage
     }
   };
 
   const getCurrentUser = async () => {
     try {
-      const response = await apiService.getCurrentUser();
-      const user = response.data;
-      setState(prev => ({ ...prev, user }));
+      // Mock get current user for now
+      await new Promise(resolve => setTimeout(resolve, 500));
+      const mockUser = {
+        id: '1',
+        firstName: 'John',
+        lastName: 'Doe',
+        email: 'john.doe@example.com',
+        phone: '+1234567890',
+        role: 'user',
+      };
+      setState(prev => ({ ...prev, user: mockUser }));
     } catch (error) {
       console.error('Get current user error:', error);
       setState(prev => ({ ...prev, isAuthenticated: false, user: null }));
@@ -139,11 +161,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setState(prev => ({ ...prev, isLoading: true }));
       setError(null);
 
-      if (provider === 'github') {
-        await oauthService.startGitHubOAuth();
-      } else {
-        Alert.alert('Coming Soon', `${provider} OAuth will be available soon!`);
-      }
+      Alert.alert('Coming Soon', `${provider} OAuth will be available soon!`);
     } catch (error: any) {
       console.error('OAuth error:', error);
       const errorMessage = error.message || 'OAuth failed';

@@ -1,0 +1,1 @@
+export { HowItWorksScreen } from './HowItWorksScreen'; 

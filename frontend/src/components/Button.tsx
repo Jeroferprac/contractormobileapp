@@ -53,7 +53,7 @@ export const Button: React.FC<ButtonProps> = ({
       onPress={onPress}
     >
       {loading ? (
-        <View style={{ width: 20, height: 20, borderRadius: 10, borderWidth: 2, borderColor: variant === 'primary' || variant === 'gradient' ? '#fff' : COLORS.primary, borderTopColor: 'transparent', animationDuration: '1s' }} />
+        <View style={[styles.loadingSpinner, { borderColor: variant === 'primary' || variant === 'gradient' ? '#fff' : COLORS.primary }]} />
       ) : (
         <Text style={textStyleCombined}>{title}</Text>
       )}
@@ -104,16 +104,16 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   primaryText: {
-    color: COLORS.textLight,
+    color: COLORS.text.light,
   },
   secondaryText: {
-    color: COLORS.textPrimary,
+    color: COLORS.text.primary,
   },
   outlineText: {
     color: COLORS.primary,
   },
   gradientText: {
-    color: COLORS.textLight,
+    color: COLORS.text.light,
   },
   smallText: {
     fontSize: 14,
@@ -125,6 +125,13 @@ const styles = StyleSheet.create({
     fontSize: 18,
   },
   disabledText: {
-    color: COLORS.textSecondary,
+    color: COLORS.text.secondary,
+  },
+  loadingSpinner: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    borderWidth: 2,
+    borderTopColor: 'transparent',
   },
 }); 

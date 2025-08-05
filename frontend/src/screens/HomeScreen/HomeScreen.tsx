@@ -1,124 +1,367 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
-  Text,
-  StyleSheet,
   ScrollView,
   SafeAreaView,
   StatusBar,
+  StyleSheet,
+  Text,
   TouchableOpacity,
+  Alert,
 } from 'react-native';
-import { Button } from '../../components';
 import { COLORS } from '../../constants/colors';
-import { SPACING, BORDER_RADIUS } from '../../constants/spacing';
-import Icon from 'react-native-vector-icons/MaterialIcons';
+import { SPACING } from '../../constants/spacing';
+import { HomeScreenNavigationProp } from '../../types/navigation';
+import { useAuth } from '../../context/AuthContext';
+
+// UI Components
+import { SearchBar, FilterChips, HorizontalScroll } from '../../components/ui';
+
+// Home Components
+import {
+  HomeHeader,
+  ServiceGrid,
+  DiscountBanner,
+  ProjectCard,
+  ProfessionalCard,
+} from '../../components/home';
+
+// Layout Components
+import { SectionHeader } from '../../components/layout';
+
+// Mock Data
+import {
+  mockServices,
+  mockProjects,
+  mockProfessionals,
+  mockReviews,
+  mockDiscounts,
+  mockFilters,
+  mockBeforeAfterProject,
+} from '../../data/mockData';
 
 interface HomeScreenProps {
-  navigation: any;
+  navigation: HomeScreenNavigationProp;
 }
 
 const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
-  const quickActions = [
-    { id: 1, title: 'Book Service', icon: 'build', color: '#FF6B35' },
-    { id: 2, title: 'Find Pros', icon: 'person-search', color: '#4CAF50' },
-    { id: 3, title: 'Get Quote', icon: 'attach-money', color: '#2196F3' },
-    { id: 4, title: 'Emergency', icon: 'emergency', color: '#F44336' },
-  ];
+  const [activeFilters, setActiveFilters] = useState(mockFilters || []);
+  const [searchText, setSearchText] = useState('');
+  const { logout } = useAuth();
 
-  const recentServices = [
-    { id: 1, title: 'Plumbing Repair', status: 'Completed', date: '2 days ago' },
-    { id: 2, title: 'Electrical Work', status: 'In Progress', date: '1 week ago' },
-    { id: 3, title: 'HVAC Service', status: 'Scheduled', date: 'Next week' },
-  ];
+  const handleRemoveFilter = (filterId: string) => {
+    setActiveFilters(prev => prev.filter(f => f.id !== filterId));
+  };
+
+  const handleServicePress = (service: any) => {
+    console.log('Service pressed:', service.title);
+  };
+
+  const handleViewMorePress = () => {
+    console.log('View more pressed');
+  };
+
+  const handleProjectPress = (project: any) => {
+    console.log('Project pressed:', project.title);
+  };
+
+  const handleProfessionalPress = (professional: any) => {
+    console.log('Professional pressed:', professional.name);
+  };
+
+  const handleLogout = async () => {
+    console.log('Logout button pressed');
+    Alert.alert(
+      'Logout',
+      'Are you sure you want to logout?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Logout',
+          style: 'destructive',
+          onPress: async () => {
+            console.log('Logout confirmed, starting logout process...');
+            try {
+              await logout();
+              console.log('Logout successful');
+            } catch (error) {
+              console.error('Logout error:', error);
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  // Filter professionals by type with fallback
+  const mockProfessionalsSafe = mockProfessionals || [];
+  const contractors = mockProfessionalsSafe.filter(p => p.type === 'contractor');
+  const consultants = mockProfessionalsSafe.filter(p => p.type === 'consultant');
+  const suppliers = mockProfessionalsSafe.filter(p => p.type === 'supplier');
+  const freelancers = mockProfessionals.filter(p => p.type === 'freelancer');
+  const workshops = mockProfessionals.filter(p => p.type === 'workshop');
 
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />
       
-      <ScrollView 
+      <ScrollView
         style={styles.scrollView}
         showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
       >
         {/* Header */}
-        <View style={styles.header}>
-          <View>
-            <Text style={styles.greeting}>Good morning!</Text>
-            <Text style={styles.name}>Welcome back</Text>
-          </View>
-          <TouchableOpacity style={styles.profileButton}>
-            <Icon name="person" size={24} color={COLORS.textPrimary} />
-          </TouchableOpacity>
+        <HomeHeader
+          location="Abu Dhabi"
+          address="Street # 16, Al-bateen"
+          onLocationPress={() => console.log('Location pressed')}
+          onNotificationPress={() => console.log('Notification pressed')}
+          onLogoutPress={handleLogout}
+        />
+
+        {/* Search Bar */}
+        <View style={styles.searchContainer}>
+          {SearchBar ? (
+            <SearchBar
+              value={searchText}
+              onChangeText={setSearchText}
+              onFilterPress={() => console.log('Filter pressed')}
+            />
+          ) : (
+              <View style={styles.searchBarFallback}>
+                <Text style={styles.searchBarText}>Search for services...</Text>
+              </View>
+            )}
         </View>
 
-        {/* Quick Actions */}
+        {/* Filter Chips */}
+        {activeFilters.length > 0 && FilterChips && (
+          <FilterChips
+            filters={activeFilters}
+            onRemoveFilter={handleRemoveFilter}
+            style={styles.filterChips}
+          />
+        )}
+
+        {/* Services Section */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Quick Actions</Text>
-          <View style={styles.quickActionsGrid}>
-            {quickActions.map((action) => (
-              <TouchableOpacity
-                key={action.id}
-                style={[styles.quickActionCard, { backgroundColor: action.color }]}
-                onPress={() => console.log(`Pressed ${action.title}`)}
-              >
-                <Icon name={action.icon} size={32} color="white" />
-                <Text style={styles.quickActionTitle}>{action.title}</Text>
-              </TouchableOpacity>
+          <SectionHeader
+            title="Services"
+            onViewAllPress={() => console.log('View all services')}
+          />
+          <ServiceGrid
+            services={mockServices}
+            onServicePress={handleServicePress}
+            onViewMorePress={handleViewMorePress}
+          />
+        </View>
+
+        {/* Discounts Section */}
+        <View style={styles.section}>
+          <SectionHeader title="Discounts" showViewAll={false} />
+          <DiscountBanner
+            discount={mockDiscounts[0]}
+            onPress={() => console.log('Discount pressed')}
+          />
+        </View>
+
+        {/* Browse Design Projects Section */}
+        <View style={styles.section}>
+          <SectionHeader
+            title="Browse Design Projects"
+            onViewAllPress={() => console.log('View all projects')}
+          />
+          <ScrollView
+            contentContainerStyle={styles.horizontalScrollContainer}
+            showsVerticalScrollIndicator={false}
+          >
+            {mockProjects.map((project) => (
+              <ProjectCard
+                key={project.id}
+                project={project}
+                onPress={() => handleProjectPress(project)}
+                onHeartPress={() => console.log('Heart pressed')}
+                onBookmarkPress={() => console.log('Bookmark pressed')}
+                style={styles.projectCard}
+              />
+            ))}
+          </ScrollView>
+        </View>
+
+        {/* Affiliate Program Section */}
+        <View style={styles.section}>
+          <SectionHeader title="Affiliate Program" showViewAll={false} />
+          <View style={styles.affiliateCard}>
+            <View style={styles.affiliateContent}>
+              <Text style={styles.affiliateTitle}>Team Chat</Text>
+              <Text style={styles.affiliateDescription}>
+                Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+              </Text>
+              <View style={styles.affiliateButton}>
+                <Text style={styles.affiliateButtonText}>Join Now</Text>
+              </View>
+            </View>
+          </View>
+        </View>
+
+        {/* Top Seller Reviews Section */}
+        <View style={styles.section}>
+          <SectionHeader
+            title="Top Seller Reviews"
+            onViewAllPress={() => console.log('View all reviews')}
+          />
+          <View style={styles.horizontalScrollContent}>
+            {mockReviews.map((review) => (
+              <View key={review.id} style={styles.reviewCard}>
+                <View style={styles.reviewImageContainer}>
+                  <View style={styles.ratingBadge}>
+                    <Text style={styles.ratingText}>★ {review.rating}</Text>
+                  </View>
+                  <View style={styles.verifiedBadge}>
+                    <Text style={styles.verifiedText}>✓</Text>
+                  </View>
+                </View>
+                <View style={styles.reviewContent}>
+                  <Text style={styles.reviewCompany}>{review.company}</Text>
+                  <Text style={styles.reviewLocation}>{review.location}</Text>
+                  <Text style={styles.reviewQuote}>"{review.quote}"</Text>
+                </View>
+              </View>
             ))}
           </View>
         </View>
 
-        {/* Recent Activity */}
+        {/* Find Professionals Section */}
         <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Recent Activity</Text>
-            <TouchableOpacity>
-              <Text style={styles.viewAllText}>View All</Text>
-            </TouchableOpacity>
-          </View>
-          
-          {recentServices.map((service) => (
-            <View key={service.id} style={styles.serviceCard}>
-              <View style={styles.serviceInfo}>
-                <Text style={styles.serviceTitle}>{service.title}</Text>
-                <Text style={styles.serviceDate}>{service.date}</Text>
-              </View>
-              <View style={[
-                styles.statusBadge,
-                { backgroundColor: service.status === 'Completed' ? '#4CAF50' : 
-                  service.status === 'In Progress' ? '#FF9800' : '#2196F3' }
-              ]}>
-                <Text style={styles.statusText}>{service.status}</Text>
-              </View>
-            </View>
-          ))}
-        </View>
-
-        {/* Featured Services */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Featured Services</Text>
-          <View style={styles.featuredServices}>
-            <View style={styles.featuredCard}>
-              <Text style={styles.featuredIcon}>🏠</Text>
-              <Text style={styles.featuredTitle}>Home Renovation</Text>
-              <Text style={styles.featuredDescription}>Transform your space with expert contractors</Text>
-            </View>
-            <View style={styles.featuredCard}>
-              <Text style={styles.featuredIcon}>🔧</Text>
-              <Text style={styles.featuredTitle}>Emergency Repairs</Text>
-              <Text style={styles.featuredDescription}>24/7 emergency service available</Text>
-            </View>
-          </View>
-        </View>
-
-        {/* CTA Button */}
-        <View style={styles.ctaSection}>
-          <Button
-            title="Book Your First Service"
-            onPress={() => console.log('Book service pressed')}
-            variant="gradient"
-            size="large"
-            style={styles.ctaButton}
+          <SectionHeader
+            title="Find Professionals"
+            subtitle="Connect with the best professionals who can provide unique services."
+            showViewAll={false}
           />
+
+          {/* Contractors */}
+          <View style={styles.professionalSection}>
+            <SectionHeader
+              title="Contractors"
+              subtitle="Find professional constructor companies."
+              onViewAllPress={() => console.log('View all contractors')}
+            />
+            <View style={styles.horizontalScrollContent}>
+              {contractors.map((professional) => (
+                <ProfessionalCard
+                  key={professional.id}
+                  professional={professional}
+                  onPress={() => handleProfessionalPress(professional)}
+                  style={styles.professionalCard}
+                />
+              ))}
+            </View>
+          </View>
+
+          {/* Consultants */}
+          <View style={styles.professionalSection}>
+            <SectionHeader
+              title="Consultants"
+              subtitle="Expert consulting firm for your projects"
+              onViewAllPress={() => console.log('View all consultants')}
+            />
+            <HorizontalScroll style={styles.horizontalScrollContent}>
+              {consultants.map((professional) => (
+                <ProfessionalCard
+                  key={professional.id}
+                  professional={professional}
+                  onPress={() => handleProfessionalPress(professional)}
+                  style={styles.professionalCard}
+                />
+              ))}
+            </HorizontalScroll>
+          </View>
+
+          {/* Suggested Work */}
+          <View style={styles.professionalSection}>
+            <SectionHeader
+              title="Suggested Work"
+              showViewAll={false}
+            />
+            <View style={styles.beforeAfterCard}>
+              <View style={styles.beforeAfterContainer}>
+                <View style={styles.beforeAfterImageContainer}>
+                  <View style={styles.beforeImage}>
+                    <Text style={styles.beforeAfterLabel}>Before</Text>
+                  </View>
+                  <View style={styles.afterImage}>
+                    <Text style={styles.beforeAfterLabel}>After</Text>
+                  </View>
+                </View>
+                <View style={styles.beforeAfterInfo}>
+                  <View style={styles.companyLogo}>
+                    <Text style={styles.companyLogoText}>GM</Text>
+                  </View>
+                  <View style={styles.companyInfo}>
+                    <Text style={styles.companyName}>{mockBeforeAfterProject.company}</Text>
+                    <Text style={styles.teamSize}>Team: {mockBeforeAfterProject.teamSize} people</Text>
+                  </View>
+                </View>
+              </View>
+            </View>
+          </View>
+
+          {/* Suppliers */}
+          <View style={styles.professionalSection}>
+            <SectionHeader
+              title="Suppliers"
+              subtitle="Quality building materials and equipments"
+              onViewAllPress={() => console.log('View all suppliers')}
+            />
+            <HorizontalScroll style={styles.horizontalScrollContent}>
+              {suppliers.map((professional) => (
+                <ProfessionalCard
+                  key={professional.id}
+                  professional={professional}
+                  onPress={() => handleProfessionalPress(professional)}
+                  style={styles.professionalCard}
+                />
+              ))}
+            </HorizontalScroll>
+          </View>
+
+          {/* Freelancers */}
+          <View style={styles.professionalSection}>
+            <SectionHeader
+              title="Freelancers"
+              subtitle="Independent professionals for hire"
+              onViewAllPress={() => console.log('View all freelancers')}
+            />
+            <HorizontalScroll style={styles.horizontalScrollContent}>
+              {freelancers.map((professional) => (
+                <ProfessionalCard
+                  key={professional.id}
+                  professional={professional}
+                  onPress={() => handleProfessionalPress(professional)}
+                  style={styles.professionalCard}
+                />
+              ))}
+            </HorizontalScroll>
+          </View>
+
+          {/* Workshops */}
+          <View style={styles.professionalSection}>
+            <SectionHeader
+              title="Workshops"
+              subtitle="Connect with the best professionals for your construction projects."
+              onViewAllPress={() => console.log('View all workshops')}
+            />
+            <HorizontalScroll style={styles.horizontalScrollContent}>
+              {workshops.map((professional) => (
+                <ProfessionalCard
+                  key={professional.id}
+                  professional={professional}
+                  onPress={() => handleProfessionalPress(professional)}
+                  style={styles.professionalCard}
+                />
+              ))}
+            </HorizontalScroll>
+          </View>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -133,143 +376,213 @@ const styles = StyleSheet.create({
   scrollView: {
     flex: 1,
   },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: SPACING.lg,
-    paddingTop: SPACING.lg,
+  scrollContent: {
+    paddingTop: SPACING.md,
     paddingBottom: SPACING.xl,
   },
-  greeting: {
-    fontSize: 16,
-    color: COLORS.textSecondary,
+  searchContainer: {
+    paddingHorizontal: SPACING.lg,
+    marginBottom: SPACING.md,
   },
-  name: {
-    fontSize: 24,
+  filterChips: {
+    marginBottom: SPACING.lg,
+  },
+  section: {
+    marginBottom: SPACING.xl,
+  },
+  horizontalScrollContent: {
+    paddingHorizontal: SPACING.lg,
+    flexDirection: 'row',
+  },
+  projectCard: {
+    marginRight: SPACING.md,
+  },
+  professionalCard: {
+    marginRight: SPACING.md,
+  },
+  professionalSection: {
+    marginBottom: SPACING.xl,
+  },
+  affiliateCard: {
+    marginHorizontal: SPACING.lg,
+    backgroundColor: COLORS.card,
+    borderRadius: 12,
+    padding: SPACING.lg,
+    borderWidth: 1,
+    borderColor: COLORS.border.light,
+  },
+  affiliateContent: {
+    alignItems: 'center',
+  },
+  affiliateTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: COLORS.text.primary,
+    marginBottom: SPACING.sm,
+  },
+  affiliateDescription: {
+    fontSize: 14,
+    color: COLORS.text.secondary,
+    textAlign: 'center',
+    marginBottom: SPACING.lg,
+    lineHeight: 20,
+  },
+  affiliateButton: {
+    backgroundColor: COLORS.text.primary,
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.sm,
+    borderRadius: 8,
+  },
+  affiliateButtonText: {
+    color: COLORS.text.light,
+    fontWeight: '600',
+  },
+  reviewCard: {
+    width: 280,
+    height: 200,
+    backgroundColor: COLORS.card,
+    borderRadius: 12,
+    overflow: 'hidden',
+    marginRight: SPACING.md,
+  },
+  reviewImageContainer: {
+    height: 120,
+    backgroundColor: COLORS.surface,
+    position: 'relative',
+  },
+  ratingBadge: {
+    position: 'absolute',
+    top: SPACING.sm,
+    left: SPACING.sm,
+    backgroundColor: COLORS.secondary,
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  ratingText: {
+    color: COLORS.text.dark,
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  verifiedBadge: {
+    position: 'absolute',
+    top: SPACING.sm,
+    right: SPACING.sm,
+    backgroundColor: COLORS.status.verified,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  verifiedText: {
+    color: COLORS.text.light,
+    fontSize: 12,
     fontWeight: 'bold',
-    color: COLORS.textPrimary,
   },
-  profileButton: {
+  reviewContent: {
+    padding: SPACING.md,
+  },
+  reviewCompany: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: COLORS.text.primary,
+    marginBottom: SPACING.xs,
+  },
+  reviewLocation: {
+    fontSize: 12,
+    color: COLORS.text.secondary,
+    marginBottom: SPACING.sm,
+  },
+  reviewQuote: {
+    fontSize: 14,
+    color: COLORS.text.primary,
+    fontStyle: 'italic',
+  },
+  beforeAfterCard: {
+    marginHorizontal: SPACING.lg,
+    backgroundColor: COLORS.card,
+    borderRadius: 12,
+    overflow: 'hidden',
+    borderWidth: 2,
+    borderColor: COLORS.secondary,
+  },
+  beforeAfterContainer: {
+    padding: SPACING.md,
+  },
+  beforeAfterImageContainer: {
+    flexDirection: 'row',
+    height: 120,
+    marginBottom: SPACING.md,
+  },
+  beforeImage: {
+    flex: 1,
+    backgroundColor: COLORS.surface,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: SPACING.xs,
+  },
+  afterImage: {
+    flex: 1,
+    backgroundColor: COLORS.surface,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: SPACING.xs,
+  },
+  beforeAfterLabel: {
+    backgroundColor: COLORS.primary,
+    color: COLORS.text.light,
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: 2,
+    borderRadius: 4,
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  beforeAfterInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  companyLogo: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: COLORS.primary,
+    backgroundColor: COLORS.text.primary,
+    alignItems: 'center',
     justifyContent: 'center',
-    alignItems: 'center',
+    marginRight: SPACING.sm,
   },
-  profileIcon: {
-    fontSize: 20,
-  },
-  section: {
-    paddingHorizontal: SPACING.lg,
-    marginBottom: SPACING.xl,
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: SPACING.lg,
-  },
-  sectionTitle: {
-    fontSize: 20,
+  companyLogoText: {
+    color: COLORS.text.light,
     fontWeight: 'bold',
-    color: COLORS.textPrimary,
-    marginBottom: SPACING.lg,
   },
-  viewAllText: {
-    fontSize: 14,
-    color: COLORS.primary,
-    fontWeight: '600',
-  },
-  quickActionsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: SPACING.md,
-  },
-  quickActionCard: {
-    width: '48%',
-    padding: SPACING.lg,
-    borderRadius: BORDER_RADIUS.lg,
-    alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: 100,
-  },
-  quickActionIcon: {
-    fontSize: 32,
-    marginBottom: SPACING.sm,
-  },
-  quickActionTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: COLORS.textLight,
-    textAlign: 'center',
-  },
-  serviceCard: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: SPACING.lg,
-    backgroundColor: COLORS.background,
-    borderRadius: BORDER_RADIUS.lg,
-    marginBottom: SPACING.md,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-  },
-  serviceInfo: {
+  companyInfo: {
     flex: 1,
   },
-  serviceTitle: {
+  companyName: {
     fontSize: 16,
     fontWeight: '600',
-    color: COLORS.textPrimary,
+    color: COLORS.text.primary,
     marginBottom: SPACING.xs,
   },
-  serviceDate: {
+  teamSize: {
     fontSize: 12,
-    color: COLORS.textSecondary,
+    color: COLORS.text.secondary,
   },
-  statusBadge: {
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.xs,
-    borderRadius: BORDER_RADIUS.sm,
-  },
-  statusText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: COLORS.textLight,
-  },
-  featuredServices: {
-    gap: SPACING.md,
-  },
-  featuredCard: {
-    padding: SPACING.lg,
-    backgroundColor: COLORS.background,
-    borderRadius: BORDER_RADIUS.lg,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-  },
-  featuredIcon: {
-    fontSize: 32,
-    marginBottom: SPACING.sm,
-  },
-  featuredTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: COLORS.textPrimary,
-    marginBottom: SPACING.xs,
-  },
-  featuredDescription: {
-    fontSize: 14,
-    color: COLORS.textSecondary,
-    lineHeight: 20,
-  },
-  ctaSection: {
+  horizontalScrollContainer: {
     paddingHorizontal: SPACING.lg,
-    paddingBottom: SPACING.xl,
+    flexDirection: 'row',
+    width: 1000, // Make it wider than screen to enable scrolling
   },
-  ctaButton: {
-    width: '100%',
+  // Fallback styles for missing components
+  searchBarFallback: {
+    backgroundColor: COLORS.surface,
+    padding: SPACING.md,
+    borderRadius: 8,
+    marginHorizontal: SPACING.lg,
+  },
+  searchBarText: {
+    color: COLORS.text.secondary,
+    fontSize: 16,
   },
 });
 

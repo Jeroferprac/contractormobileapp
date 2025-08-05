@@ -1,22 +1,15 @@
-export { Input } from './Input';
 export { Button } from './Button';
-export { GitHubOAuthButton } from './GitHubOAuthButton';
+export { Input } from './Input';
 export { ApiTest } from './ApiTest';
+export { GitHubOAuthButton } from './GitHubOAuthButton';
+export { OAuthTest } from './OAuthTest';
+export { AuthTest } from './AuthTest';
 
-// Profile Components
-export { ProfileHeader } from './ProfileHeader';
-export { ProfileTabs, ProfileTabType } from './ProfileTabs';
-export { BottomNavigation, BottomTabType } from './BottomNavigation';
-export { StatusBar } from './StatusBar';
+// UI Components
+export * from './ui';
 
-// Profile Content Components
-export {
-  PostsTab,
-  ActivityTab,
-  SavedTab,
-  AboutTab,
-  AffiliateTab,
-} from './ProfileContent';
+// Home Components
+export * from './home';
 
-// Modal Components
-export { ThankYouModal } from './ThankYouModal'; 
+// Layout Components
+export * from './layout'; 

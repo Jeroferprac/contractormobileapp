@@ -1,21 +1,21 @@
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
   TouchableOpacity,
   StatusBar,
   SafeAreaView,
 } from 'react-native';
+import Icon from 'react-native-vector-icons/Feather';
+import MaterialIcon from 'react-native-vector-icons/MaterialIcons';
 import { Button } from '../components';
 import { COLORS } from '../constants/colors';
 import { SPACING, BORDER_RADIUS } from '../constants/spacing';
-
-const { width, height } = { width: 400, height: 800 }; // Fallback dimensions
+import { OnboardingScreenNavigationProp } from '../types/navigation';
 
 interface OnboardingScreenProps {
-  navigation: any;
+  navigation: OnboardingScreenNavigationProp;
 }
 
 const onboardingData = [
@@ -23,34 +23,31 @@ const onboardingData = [
     id: 1,
     title: 'Turn Your Space into Something Extraordinary',
     description: 'Explore design ideas, get inspired, and connect with top-tier professionals to bring your dream home to life.',
-    image: '🏠',
+    icon: 'home',
+    iconType: 'feather',
   },
   {
     id: 2,
     title: 'Plumbers, Electricians & More — All Nearby',
     description: 'Need a quick fix or a major upgrade? Find trusted local experts for every job, big or small, right when you need them.',
-    image: '🔧',
+    icon: 'build',
+    iconType: 'material',
   },
   {
     id: 3,
     title: 'Book Home Services, All in One App',
     description: 'From design to delivery — compare reviews, chat with pros, and book your next project hassle-free.',
-    image: '📱',
+    icon: 'phone',
+    iconType: 'feather',
   },
 ];
 
 export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ navigation }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const scrollViewRef = useRef<any>(null);
 
   const handleNext = () => {
     if (currentIndex < onboardingData.length - 1) {
-      const nextIndex = currentIndex + 1;
-      setCurrentIndex(nextIndex);
-      scrollViewRef.current?.scrollTo({
-        x: nextIndex * width,
-        animated: true,
-      });
+      setCurrentIndex(currentIndex + 1);
     } else {
       navigation.navigate('Login');
     }
@@ -60,11 +57,14 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ navigation }
     navigation.navigate('Login');
   };
 
-  const handleScroll = (event: any) => {
-    const contentOffset = event.nativeEvent.contentOffset.x;
-    const index = Math.round(contentOffset / width);
-    setCurrentIndex(index);
+  const renderIcon = (iconName: string, iconType: string, size: number = 80) => {
+    if (iconType === 'material') {
+      return <MaterialIcon name={iconName} size={size} color={COLORS.primary} />;
+    }
+    return <Icon name={iconName} size={size} color={COLORS.primary} />;
   };
+
+  const currentSlide = onboardingData[currentIndex];
 
   return (
     <SafeAreaView style={styles.container}>
@@ -76,35 +76,29 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ navigation }
       </TouchableOpacity>
 
       {/* Content */}
-      <ScrollView
-        style={styles.scrollView}
-      >
-        {onboardingData.map((slide, index) => (
-          <View key={slide.id} style={styles.slide}>
-            {/* Image */}
-            <View style={styles.imageContainer}>
-              <Text style={styles.imagePlaceholder}>{slide.image}</Text>
-            </View>
+      <View style={styles.content}>
+        {/* Icon */}
+        <View style={styles.iconContainer}>
+          {renderIcon(currentSlide.icon, currentSlide.iconType)}
+        </View>
 
-            {/* Content */}
-            <View style={styles.content}>
-              <Text style={styles.title}>{slide.title}</Text>
-              <Text style={styles.description}>{slide.description}</Text>
-            </View>
-          </View>
-        ))}
-      </ScrollView>
+        {/* Text Content */}
+        <View style={styles.textContainer}>
+          <Text style={styles.title}>{currentSlide.title}</Text>
+          <Text style={styles.description}>{currentSlide.description}</Text>
+        </View>
+      </View>
 
       {/* Pagination and Button */}
       <View style={styles.bottomContainer}>
         {/* Pagination Dots */}
-        <View style={styles.paginationContainer}>
+        <View style={styles.pagination}>
           {onboardingData.map((_, index) => (
             <View
               key={index}
               style={[
-                styles.paginationDot,
-                index === currentIndex && styles.paginationDotActive,
+                styles.dot,
+                index === currentIndex && styles.activeDot,
               ]}
             />
           ))}
@@ -129,8 +123,8 @@ const styles = StyleSheet.create({
   },
   skipButton: {
     position: 'absolute',
-    top: 60,
-    right: SPACING.lg,
+    top: 50,
+    right: 20,
     zIndex: 1,
   },
   skipText: {
@@ -138,60 +132,66 @@ const styles = StyleSheet.create({
     color: COLORS.primary,
     fontWeight: '600',
   },
-  scrollView: {
-    flex: 1,
-  },
-  slide: {
-    width,
-    flex: 1,
-    paddingHorizontal: SPACING.lg,
-  },
-  imageContainer: {
+  content: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: SPACING.xxl,
+    paddingHorizontal: SPACING.xl,
   },
-  imagePlaceholder: {
-    fontSize: 120,
-    marginBottom: SPACING.xl,
-  },
-  content: {
-    paddingHorizontal: SPACING.lg,
+  iconContainer: {
     marginBottom: SPACING.xxl,
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: COLORS.background,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  textContainer: {
+    alignItems: 'center',
+    maxWidth: 300,
   },
   title: {
-    fontSize: 28,
+    fontSize: 24,
     fontWeight: 'bold',
-    color: COLORS.textPrimary,
+    color: COLORS.text.primary,
     textAlign: 'center',
     marginBottom: SPACING.lg,
-    lineHeight: 36,
+    lineHeight: 32,
   },
   description: {
     fontSize: 16,
-    color: COLORS.textSecondary,
+    color: COLORS.text.secondary,
     textAlign: 'center',
     lineHeight: 24,
   },
   bottomContainer: {
-    paddingHorizontal: SPACING.lg,
+    paddingHorizontal: SPACING.xl,
     paddingBottom: SPACING.xl,
   },
-  paginationContainer: {
+  pagination: {
     flexDirection: 'row',
     justifyContent: 'center',
     marginBottom: SPACING.xl,
   },
-  paginationDot: {
+  dot: {
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: COLORS.border,
+    backgroundColor: COLORS.border.light,
     marginHorizontal: 4,
   },
-  paginationDotActive: {
+  activeDot: {
     backgroundColor: COLORS.primary,
+    width: 24,
   },
   nextButton: {
     width: '100%',

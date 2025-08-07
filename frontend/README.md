@@ -1,97 +1,216 @@
-This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
+# Binyan - Contractor Mobile App
 
-# Getting Started
+A professional React Native mobile application for contractors and customers with complete authentication system, GitHub OAuth integration, and modern UI design.
 
-> **Note**: Make sure you have completed the [Set Up Your Environment](https://reactnative.dev/docs/set-up-your-environment) guide before proceeding.
+## 🚀 Features
 
-## Step 1: Start Metro
+### Authentication System
+- **Email/Password Login & Registration**
+- **GitHub OAuth Integration** using `react-native-app-auth`
+- **Password Reset Flow** with OTP verification
+- **Professional UI/UX** matching Figma design
+- **Secure Token Management** with AsyncStorage
+- **Automatic User Session Management**
 
-First, you will need to run **Metro**, the JavaScript build tool for React Native.
+### UI/UX Design
+- **Exact Figma Implementation** with proper styling
+- **Linear Gradient Buttons** and modern design
+- **Vector Icons** using `react-native-vector-icons`
+- **Responsive Layout** with proper keyboard handling
+- **Professional Success Modals** with animations
+- **Consistent Color Scheme** (#FF6B35 to #FF8E53)
 
-To start the Metro dev server, run the following command from the root of your React Native project:
+### Technical Features
+- **TypeScript** for type safety
+- **React Navigation** for seamless navigation
+- **Axios** for API communication
+- **Environment Variables** management
+- **Professional Error Handling**
+- **Loading States** and user feedback
 
-```sh
-# Using npm
-npm start
+## 📱 Screens
 
-# OR using Yarn
-yarn start
+### Authentication Flow
+1. **Splash Screen** - App initialization
+2. **Onboarding** - App introduction
+3. **Login Screen** - Email/password + social login
+4. **Signup Screen** - User registration
+5. **Forgot Password** - Password reset with OTP
+6. **Success Modals** - Registration confirmation
+
+### Main App
+- **Home Screen** - Dashboard with services
+- **Tab Navigation** - Home, Services, Bookings, Profile
+
+## 🛠 Setup Instructions
+
+### Prerequisites
+- Node.js (v18+)
+- React Native CLI
+- Android Studio / Xcode
+- Backend server running on `http://192.168.31.45:8000`
+
+### 1. Install Dependencies
+```bash
+cd frontend
+npm install
 ```
 
-## Step 2: Build and run your app
+### 2. Environment Configuration
+Create `.env` file in the frontend directory:
+```env
+GITHUB_CLIENT_ID=Ov23liUkvPd0zQtnSC55
+GITHUB_CLIENT_SECRET=1feba2fd580afb952c0f7d724c8aadffb498cf42
+API_URL=http://192.168.31.45:8000
+NEXTAUTH_SECRET=h10jPavso9K+M4cnMz67mwun/x3o3/zABjGMeTSMTjc=
+NEXTAUTH_URL=http://localhost:3000
+NEXT_PUBLIC_API_BASE_URL=http://localhost:8000
+APP_NAME=Binyan
+APP_ENV=development
+```
 
-With Metro running, open a new terminal window/pane from the root of your React Native project, and use one of the following commands to build and run your Android or iOS app:
+### 3. Vector Icons Setup
+```bash
+# Copy fonts to Android assets
+npm run copy-fonts
+
+# Clean and rebuild
+cd android && ./gradlew clean
+cd .. && npx react-native run-android
+```
+
+### 4. Run the App
+```bash
+# Start Metro bundler
+npx react-native start
+
+# Run on Android
+npx react-native run-android
+
+# Run on iOS
+npx react-native run-ios
+```
+
+## 🔧 API Integration
+
+### Backend Endpoints
+- `POST /api/v1/auth/register` - User registration
+- `POST /api/v1/auth/login` - User login
+- `POST /api/v1/auth/logout` - User logout
+- `GET /api/v1/auth/me` - Get current user
+- `POST /api/v1/auth/oauth/github/callback` - GitHub OAuth callback
+
+### Authentication Flow
+1. **Login/Register** → Backend validation → Token storage
+2. **GitHub OAuth** → GitHub API → Backend registration/login
+3. **Token Management** → Automatic refresh and storage
+4. **Session Persistence** → App restart maintains login
+
+## 🎨 UI Components
+
+### Design System
+- **Colors**: Primary gradient (#FF6B35 to #FF8E53)
+- **Typography**: Consistent font sizes and weights
+- **Spacing**: 20px horizontal padding, consistent margins
+- **Borders**: 2px border radius, subtle borders
+- **Icons**: Feather and MaterialIcons from react-native-vector-icons
+
+### Key Components
+- **LinearGradient Buttons** - Professional gradient buttons
+- **Input Fields** - Consistent styling with icons
+- **Success Modal** - Animated success confirmation
+- **Social Login Buttons** - GitHub, Apple, Facebook integration
+- **OTP Input** - 5-digit verification code input
+
+## 🔐 Security Features
+
+### OAuth Security
+- **State Verification** - Prevents CSRF attacks
+- **Secure Token Storage** - Encrypted AsyncStorage
+- **Token Refresh** - Automatic token renewal
+- **Secure API Calls** - Bearer token authentication
+
+### Data Protection
+- **Input Validation** - Client-side form validation
+- **Error Handling** - User-friendly error messages
+- **Loading States** - Prevents double submissions
+- **Session Management** - Automatic logout on token expiry
+
+## 📱 Platform Support
 
 ### Android
-
-```sh
-# Using npm
-npm run android
-
-# OR using Yarn
-yarn android
-```
+- **Network Security** - Allows HTTP for local development
+- **Deep Linking** - OAuth callback handling
+- **Vector Icons** - Proper font bundling
+- **Permissions** - Internet access for API calls
 
 ### iOS
+- **URL Schemes** - OAuth callback configuration
+- **Vector Icons** - Automatic font linking
+- **Network Security** - ATS configuration for local development
 
-For iOS, remember to install CocoaPods dependencies (this only needs to be run on first clone or after updating native deps).
+## 🚀 Development
 
-The first time you create a new project, run the Ruby bundler to install CocoaPods itself:
-
-```sh
-bundle install
+### Project Structure
+```
+src/
+├── api/           # API service layer
+├── components/    # Reusable UI components
+├── config/        # Environment configuration
+├── constants/     # Design system constants
+├── context/       # React Context providers
+├── navigation/    # Navigation configuration
+├── screens/       # Screen components
+├── services/      # Business logic services
+├── types/         # TypeScript type definitions
+└── utils/         # Utility functions
 ```
 
-Then, and every time you update your native dependencies, run:
+### Key Files
+- `src/config/env.ts` - Environment variables
+- `src/services/GitHubOAuthService.ts` - GitHub OAuth integration
+- `src/context/AuthContext.tsx` - Authentication state management
+- `src/screens/LoginScreen.tsx` - Login UI implementation
+- `src/screens/SignupScreen.tsx` - Registration UI implementation
 
-```sh
-bundle exec pod install
-```
+## 🐛 Troubleshooting
 
-For more information, please visit [CocoaPods Getting Started guide](https://guides.cocoapods.org/using/getting-started.html).
+### Common Issues
 
-```sh
-# Using npm
-npm run ios
+1. **Vector Icons Not Showing**
+   ```bash
+   npm run copy-fonts
+   cd android && ./gradlew clean
+   npx react-native run-android
+   ```
 
-# OR using Yarn
-yarn ios
-```
+2. **Network Security Error**
+   - Ensure `network_security_config.xml` is properly configured
+   - Check that backend is running on correct IP
 
-If everything is set up correctly, you should see your new app running in the Android Emulator, iOS Simulator, or your connected device.
+3. **OAuth Callback Issues**
+   - Verify GitHub OAuth app configuration
+   - Check redirect URI matches `binyan://oauth/github/callback`
 
-This is one way to run your app — you can also build it directly from Android Studio or Xcode.
+4. **Build Errors**
+   ```bash
+   npm run clean
+   npm install
+   npx react-native start --reset-cache
+   ```
 
-## Step 3: Modify your app
+## 📄 License
 
-Now that you have successfully run the app, let's make changes!
+This project is licensed under the MIT License.
 
-Open `App.tsx` in your text editor of choice and make some changes. When you save, your app will automatically update and reflect these changes — this is powered by [Fast Refresh](https://reactnative.dev/docs/fast-refresh).
+## 🤝 Contributing
 
-When you want to forcefully reload, for example to reset the state of your app, you can perform a full reload:
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Test thoroughly
+5. Submit a pull request
 
-- **Android**: Press the <kbd>R</kbd> key twice or select **"Reload"** from the **Dev Menu**, accessed via <kbd>Ctrl</kbd> + <kbd>M</kbd> (Windows/Linux) or <kbd>Cmd ⌘</kbd> + <kbd>M</kbd> (macOS).
-- **iOS**: Press <kbd>R</kbd> in iOS Simulator.
+## 📞 Support
 
-## Congratulations! :tada:
-
-You've successfully run and modified your React Native App. :partying_face:
-
-### Now what?
-
-- If you want to add this new React Native code to an existing application, check out the [Integration guide](https://reactnative.dev/docs/integration-with-existing-apps).
-- If you're curious to learn more about React Native, check out the [docs](https://reactnative.dev/docs/getting-started).
-
-# Troubleshooting
-
-If you're having issues getting the above steps to work, see the [Troubleshooting](https://reactnative.dev/docs/troubleshooting) page.
-
-# Learn More
-
-To learn more about React Native, take a look at the following resources:
-
-- [React Native Website](https://reactnative.dev) - learn more about React Native.
-- [Getting Started](https://reactnative.dev/docs/environment-setup) - an **overview** of React Native and how setup your environment.
-- [Learn the Basics](https://reactnative.dev/docs/getting-started) - a **guided tour** of the React Native **basics**.
-- [Blog](https://reactnative.dev/blog) - read the latest official React Native **Blog** posts.
-- [`@facebook/react-native`](https://github.com/facebook/react-native) - the Open Source; GitHub **repository** for React Native.
+For support and questions, please contact the development team.

@@ -1,7 +1,6 @@
 // src/navigation/AppNavigator.tsx
 
-import React from 'react';
-import { Text } from 'react-native';
+import React, { useState, useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
@@ -10,8 +9,9 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 // Screens
 import { SplashScreen } from '../screens/SplashScreen';
 import { OnboardingScreen } from '../screens/OnboardingScreen';
-import { LoginScreen } from '../screens/LoginScreen';
-import { SignupScreen } from '../screens/SignupScreen';
+import LoginScreen from '../screens/LoginScreen';
+import SignupScreen from '../screens/SignupScreen';
+import ForgotPasswordScreen from '../screens/ForgotPasswordScreen';
 import HomeScreen from '../screens/HomeScreen/HomeScreen';
 import { ProfileScreen } from '../screens/ProfileScreen/ProfileScreen';
 import { useAuth } from '../context/AuthContext';
@@ -88,16 +88,18 @@ const AuthStack = () => {
       <Stack.Screen name="Onboarding" component={OnboardingScreen} />
       <Stack.Screen name="Login" component={LoginScreen} />
       <Stack.Screen name="Signup" component={SignupScreen} />
+      <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
     </Stack.Navigator>
   );
 };
 
 // Main App Navigator
-export const AppNavigator = () => {
+export const AppNavigator: React.FC = () => {
   const { isAuthenticated, isLoading } = useAuth();
-  const [showSplash, setShowSplash] = React.useState(true);
+  const [showSplash, setShowSplash] = useState(true);
 
-  React.useEffect(() => {
+  useEffect(() => {
+    // Show splash for 3 seconds, then check auth status
     const timer = setTimeout(() => {
       setShowSplash(false);
     }, 3000);
@@ -105,29 +107,25 @@ export const AppNavigator = () => {
     return () => clearTimeout(timer);
   }, []);
 
-  // Show splash screen for 3 seconds
+  // Debug logging
+  console.log('🔍 AppNavigator - isAuthenticated:', isAuthenticated, 'isLoading:', isLoading, 'showSplash:', showSplash);
+
+  // Show splash screen for first 3 seconds
   if (showSplash) {
-    return <SplashScreen onFinish={() => setShowSplash(false)} />;
+    console.log('📱 Showing splash screen');
+    return <SplashScreen />;
   }
 
   // Show loading while checking auth status
   if (isLoading) {
-    return <SplashScreen onFinish={() => {}} />;
+    console.log('⏳ Showing loading screen');
+    return <SplashScreen />;
   }
 
+  console.log('🎯 Rendering main navigation - isAuthenticated:', isAuthenticated);
   return (
-    <NavigationContainer>
-      <Stack.Navigator
-        screenOptions={{
-          headerShown: false,
-        }}
-      >
-        {isAuthenticated ? (
-          <Stack.Screen name="Main" component={MainTabNavigator} />
-        ) : (
-          <Stack.Screen name="Auth" component={AuthStack} />
-        )}
-      </Stack.Navigator>
+    <NavigationContainer key={isAuthenticated ? 'authenticated' : 'unauthenticated'}>
+      {isAuthenticated ? <MainTabNavigator /> : <AuthStack />}
     </NavigationContainer>
   );
 }; 

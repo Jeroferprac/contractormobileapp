@@ -8,6 +8,7 @@ import {
   ViewStyle,
   TextStyle,
 } from 'react-native';
+import Icon from 'react-native-vector-icons/Feather';
 import { COLORS } from '../constants/colors';
 import { BORDER_RADIUS } from '../constants/spacing';
 
@@ -51,7 +52,7 @@ export const Input: React.FC<InputProps> = ({
         <TextInput
           style={[styles.input, inputStyle]}
           placeholder={placeholder}
-          placeholderTextColor={COLORS.textSecondary}
+          placeholderTextColor={COLORS.text.secondary}
           value={value}
           onChangeText={onChangeText}
           secureTextEntry={secureTextEntry && !isPasswordVisible}
@@ -64,9 +65,11 @@ export const Input: React.FC<InputProps> = ({
             style={styles.eyeIcon}
             onPress={togglePasswordVisibility}
           >
-            <Text style={styles.eyeIconText}>
-              {isPasswordVisible ? '👁️' : '👁️‍🗨️'}
-            </Text>
+            <Icon 
+              name={isPasswordVisible ? 'eye-off' : 'eye'} 
+              size={20} 
+              color={COLORS.text.secondary} 
+            />
           </TouchableOpacity>
         )}
       </View>
@@ -84,14 +87,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: COLORS.background,
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: COLORS.border.light,
     borderRadius: BORDER_RADIUS.lg,
     paddingHorizontal: 16,
     paddingVertical: 14,
     minHeight: 52,
   },
   inputError: {
-    borderColor: COLORS.error,
+    borderColor: COLORS.status.error,
   },
   iconContainer: {
     marginRight: 12,
@@ -101,17 +104,14 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     fontSize: 16,
-    color: COLORS.textPrimary,
+    color: COLORS.text.primary,
     paddingVertical: 0,
   },
   eyeIcon: {
     padding: 4,
   },
-  eyeIconText: {
-    fontSize: 18,
-  },
   errorText: {
-    color: COLORS.error,
+    color: COLORS.status.error,
     fontSize: 12,
     marginTop: 4,
     marginLeft: 4,

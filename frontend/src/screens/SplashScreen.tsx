@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import {
   View,
   Text,
@@ -8,17 +8,12 @@ import {
 import { COLORS } from '../constants/colors';
 
 interface SplashScreenProps {
-  onFinish: () => void;
+  onFinish?: () => void;
 }
 
 export const SplashScreen: React.FC<SplashScreenProps> = ({ onFinish }) => {
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      onFinish();
-    }, 3000);
-
-    return () => clearTimeout(timer);
-  }, [onFinish]);
+  // Timer is now handled by AppNavigator
+  // This component just displays the splash UI
 
   return (
     <View style={styles.container}>
@@ -55,7 +50,7 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 20,
-    backgroundColor: COLORS.textLight,
+    backgroundColor: COLORS.text.light,
     justifyContent: 'center',
     alignItems: 'center',
     shadowColor: '#000000',
@@ -75,12 +70,12 @@ const styles = StyleSheet.create({
   appName: {
     fontSize: 36,
     fontWeight: 'bold',
-    color: COLORS.textLight,
+    color: COLORS.text.light,
     marginBottom: 12,
   },
   tagline: {
     fontSize: 16,
-    color: COLORS.textLight,
+    color: COLORS.text.light,
     textAlign: 'center',
     opacity: 0.9,
     lineHeight: 24,

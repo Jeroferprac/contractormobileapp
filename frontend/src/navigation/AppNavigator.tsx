@@ -5,6 +5,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import { View } from 'react-native'; // Added View import
 
 // Screens
 import { SplashScreen } from '../screens/SplashScreen';
@@ -13,10 +14,12 @@ import LoginScreen from '../screens/LoginScreen';
 import SignupScreen from '../screens/SignupScreen';
 import ForgotPasswordScreen from '../screens/ForgotPasswordScreen';
 import HomeScreen from '../screens/HomeScreen/HomeScreen';
-import { ProfileScreen } from '../screens/ProfileScreen/ProfileScreen';
+import InventoryScreen from '../screens/InventoryScreen/InventoryScreen';
+import AllProductsScreen from '../screens/AllProductsScreen/AllProductsScreen';
+import BarcodeScanner from '../components/ui/BarcodeScanner';
 import { useAuth } from '../context/AuthContext';
 
-const Stack = createNativeStackNavigator(); 
+const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
 // Main Tab Navigator
@@ -33,7 +36,20 @@ const MainTabNavigator = () => {
           borderTopColor: '#E5E5EA',
           paddingBottom: 8,
           paddingTop: 8,
-          height: 60,
+          height: 70,
+          shadowColor: '#000',
+          shadowOffset: {
+            width: 0,
+            height: -2,
+          },
+          shadowOpacity: 0.1,
+          shadowRadius: 8,
+          elevation: 10,
+        },
+        tabBarLabelStyle: {
+          fontSize: 10,
+          fontWeight: '500',
+          marginTop: 2,
         },
       }}
     >
@@ -48,12 +64,40 @@ const MainTabNavigator = () => {
         }}
       />
       <Tab.Screen
-        name="Services"
-        component={HomeScreen}
+        name="Inventory"
+        component={InventoryScreen}
         options={{
-          tabBarLabel: 'Services',
+          tabBarLabel: 'Inventory',
           tabBarIcon: ({ color, size }) => (
-            <Icon name="build" size={size} color={color} />
+            <Icon name="inventory" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="Scan"
+        component={BarcodeScanner}
+        options={{
+          tabBarLabel: '',
+          tabBarIcon: ({ color, size }) => (
+            <View style={{
+              backgroundColor: '#FF6B35',
+              width: 56,
+              height: 56,
+              borderRadius: 28,
+              justifyContent: 'center',
+              alignItems: 'center',
+              marginTop: -20,
+              shadowColor: '#000',
+              shadowOffset: {
+                width: 0,
+                height: 2,
+              },
+              shadowOpacity: 0.25,
+              shadowRadius: 4,
+              elevation: 5,
+            }}>
+              <Icon name="qr-code-scanner" size={24} color="#FFFFFF" />
+            </View>
           ),
         }}
       />
@@ -78,18 +122,6 @@ const MainTabNavigator = () => {
         }}
       />
     </Tab.Navigator>
-  );
-};
-
-// Auth Stack Navigator
-const AuthStack = () => {
-  return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="Onboarding" component={OnboardingScreen} />
-      <Stack.Screen name="Login" component={LoginScreen} />
-      <Stack.Screen name="Signup" component={SignupScreen} />
-      <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
-    </Stack.Navigator>
   );
 };
 
@@ -125,7 +157,21 @@ export const AppNavigator: React.FC = () => {
   console.log('🎯 Rendering main navigation - isAuthenticated:', isAuthenticated);
   return (
     <NavigationContainer key={isAuthenticated ? 'authenticated' : 'unauthenticated'}>
-      {isAuthenticated ? <MainTabNavigator /> : <AuthStack />}
+      <Stack.Navigator screenOptions={{ headerShown: false }}>
+        {!isAuthenticated ? (
+          <>
+            <Stack.Screen name="Onboarding" component={OnboardingScreen} />
+            <Stack.Screen name="Login" component={LoginScreen} />
+            <Stack.Screen name="Signup" component={SignupScreen} />
+            <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
+          </>
+        ) : (
+          <>
+            <Stack.Screen name="MainTabs" component={MainTabNavigator} />
+            <Stack.Screen name="AllProducts" component={AllProductsScreen} />
+          </>
+        )}
+      </Stack.Navigator>
     </NavigationContainer>
   );
-}; 
+};

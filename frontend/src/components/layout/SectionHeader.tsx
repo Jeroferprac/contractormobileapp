@@ -40,7 +40,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: SPACING.lg,
-    marginBottom: SPACING.lg,
+    marginBottom: SPACING.sm,
+    marginTop: SPACING.md,
   },
   titleContainer: {
     flex: 1,

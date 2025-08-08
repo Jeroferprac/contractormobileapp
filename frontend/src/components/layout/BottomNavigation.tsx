@@ -19,7 +19,7 @@ interface BottomNavigationProps {
 
 const tabs: TabItem[] = [
   { id: 'home', label: 'Home', icon: 'home' },
-  { id: 'listings', label: 'Listings', icon: 'grid' },
+  { id: 'Inventory', label: 'Listings', icon: 'grid' },
   { id: 'projects', label: 'Projects', icon: 'message-circle' },
   { id: 'profile', label: 'Profile', icon: 'user' },
 ];

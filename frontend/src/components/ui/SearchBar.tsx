@@ -50,12 +50,20 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: COLORS.text.light,
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
     borderRadius: BORDER_RADIUS.xl,
     paddingHorizontal: SPACING.md,
     paddingVertical: SPACING.sm,
     borderWidth: 1,
-    borderColor: COLORS.border.light,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
   },
   searchIcon: {
     marginRight: SPACING.sm,
@@ -74,6 +82,14 @@ const styles = StyleSheet.create({
     borderRadius: BORDER_RADIUS.round,
     width: 32,
     height: 32,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
   },
 });
 

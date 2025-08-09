@@ -5,7 +5,7 @@ import {
   StyleSheet,
   TouchableOpacity,
   ScrollView,
-  Image,
+  Image as RNImage,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { COLORS } from '../../constants/colors';
@@ -25,7 +25,7 @@ export const AffiliateProgramScreen: React.FC<AffiliateProgramScreenProps> = ({
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={onBack} style={styles.backButton}>
-          <Icon name="arrow-back" size={24} color={COLORS.textPrimary} />
+          <Icon name="arrow-back" size={24} color={COLORS.text.primary} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Affiliate Program</Text>
         <View style={styles.placeholder} />
@@ -60,27 +60,27 @@ export const AffiliateProgramScreen: React.FC<AffiliateProgramScreenProps> = ({
           <Text style={styles.sectionTitle}>Why Join?</Text>
           
           <View style={styles.benefitItem}>
-            <Icon name="check-circle" size={20} color={COLORS.success} />
+            <Icon name="check-circle" size={20} color={COLORS.status.success} />
             <Text style={styles.benefitText}>High commission rates up to 25%</Text>
           </View>
           
           <View style={styles.benefitItem}>
-            <Icon name="check-circle" size={20} color={COLORS.success} />
+            <Icon name="check-circle" size={20} color={COLORS.status.success} />
             <Text style={styles.benefitText}>Easy-to-use dashboard</Text>
           </View>
           
           <View style={styles.benefitItem}>
-            <Icon name="check-circle" size={20} color={COLORS.success} />
+            <Icon name="check-circle" size={20} color={COLORS.status.success} />
             <Text style={styles.benefitText}>Real-time tracking</Text>
           </View>
           
           <View style={styles.benefitItem}>
-            <Icon name="check-circle" size={20} color={COLORS.success} />
+            <Icon name="check-circle" size={20} color={COLORS.status.success} />
             <Text style={styles.benefitText}>Monthly payouts</Text>
           </View>
           
           <View style={styles.benefitItem}>
-            <Icon name="check-circle" size={20} color={COLORS.success} />
+            <Icon name="check-circle" size={20} color={COLORS.status.success} />
             <Text style={styles.benefitText}>Marketing materials provided</Text>
           </View>
         </View>
@@ -161,7 +161,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: COLORS.textPrimary,
+    color: COLORS.text.primary,
   },
   placeholder: {
     width: 40,
@@ -176,12 +176,12 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 20,
     fontWeight: '600',
-    color: COLORS.textPrimary,
+    color: COLORS.text.primary,
     marginBottom: SPACING.md,
   },
   sectionDescription: {
     fontSize: 14,
-    color: COLORS.textSecondary,
+    color: COLORS.text.secondary,
     lineHeight: 20,
   },
   commissionSection: {
@@ -207,7 +207,7 @@ const styles = StyleSheet.create({
   },
   commissionDescription: {
     fontSize: 14,
-    color: COLORS.textSecondary,
+    color: COLORS.text.secondary,
     textAlign: 'center',
     lineHeight: 20,
   },
@@ -221,7 +221,7 @@ const styles = StyleSheet.create({
   },
   benefitText: {
     fontSize: 14,
-    color: COLORS.textPrimary,
+    color: COLORS.text.primary,
     marginLeft: SPACING.sm,
     flex: 1,
   },
@@ -243,7 +243,7 @@ const styles = StyleSheet.create({
     marginRight: SPACING.md,
   },
   stepNumberText: {
-    color: COLORS.textLight,
+    color: COLORS.text.light,
     fontSize: 14,
     fontWeight: '600',
   },
@@ -253,12 +253,12 @@ const styles = StyleSheet.create({
   stepTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: COLORS.textPrimary,
+    color: COLORS.text.primary,
     marginBottom: SPACING.xs,
   },
   stepDescription: {
     fontSize: 14,
-    color: COLORS.textSecondary,
+    color: COLORS.text.secondary,
     lineHeight: 20,
   },
   actionContainer: {
@@ -274,8 +274,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   readInstructionsText: {
-    color: COLORS.textLight,
+    color: COLORS.text.light,
     fontSize: 16,
     fontWeight: '600',
   },
-}); 
+});

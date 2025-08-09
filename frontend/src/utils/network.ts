@@ -11,9 +11,9 @@ interface NetworkConfig {
 
 // Default network configuration
 const NETWORK_CONFIG: NetworkConfig = {
-  androidEmulator: '10.0.2.2', // Android emulator localhost
+  androidEmulator: '10.72.105.204', // Use your actual local IP for Android emulator
   iosSimulator: 'localhost', // iOS simulator localhost
-  physicalDevice: '192.168.31.45', // Your local IP address
+  physicalDevice: '10.72.105.204', // Use your actual local IP for physical devices
   development: 'localhost', // Development server
 };
 
@@ -21,7 +21,7 @@ const NETWORK_CONFIG: NetworkConfig = {
  * Get the appropriate base URL based on platform and environment
  */
 export const getBaseURL = (): string => {
-  const port = '8000'; // Your backend port
+  const port = '8000'; // Your backend port (update this if your backend runs on a different port)
   const apiPath = '/api/v1';
   
   // If API_URL is set in environment, use it
@@ -37,7 +37,7 @@ export const getBaseURL = (): string => {
       // Check if running on emulator or physical device
       // For now, we'll use the emulator address
       // In production, you'd want to detect this dynamically
-      host = NETWORK_CONFIG.androidEmulator;
+      host = NETWORK_CONFIG.androidEmulator; // 10.0.2.2 is used by Android emulators to access host machine's localhost
     } else if (Platform.OS === 'ios') {
       host = NETWORK_CONFIG.iosSimulator;
     } else {

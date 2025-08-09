@@ -51,7 +51,7 @@ export const ProfileTabs: React.FC<ProfileTabsProps> = ({
     <View style={styles.container}>
       <ScrollView
         ref={scrollViewRef}
-        horizontal
+        horizontal={true}
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
@@ -114,10 +114,10 @@ const styles = StyleSheet.create({
   tabText: {
     fontSize: 14,
     fontWeight: '500',
-    color: COLORS.textSecondary,
+    color: COLORS.text.secondary,
   },
   activeTabText: {
-    color: COLORS.textLight,
+    color: COLORS.text.light,
     fontWeight: '600',
   },
-}); 
+});

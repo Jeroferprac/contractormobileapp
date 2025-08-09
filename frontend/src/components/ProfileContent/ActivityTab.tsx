@@ -79,7 +79,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: COLORS.textPrimary,
+    color: COLORS.text.primary,
     marginBottom: SPACING.md,
   },
   activityItem: {
@@ -106,16 +106,16 @@ const styles = StyleSheet.create({
   activityTitle: {
     fontSize: 14,
     fontWeight: '500',
-    color: COLORS.textPrimary,
+    color: COLORS.text.primary,
     marginBottom: 2,
   },
   activitySubtitle: {
     fontSize: 12,
-    color: COLORS.textSecondary,
+    color: COLORS.text.secondary,
     marginBottom: 4,
   },
   activityTimestamp: {
     fontSize: 12,
-    color: COLORS.textSecondary,
+    color: COLORS.text.secondary,
   },
-}); 
+});

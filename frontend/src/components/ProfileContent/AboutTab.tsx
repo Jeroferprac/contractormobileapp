@@ -33,22 +33,21 @@ export const AboutTab: React.FC<AboutTabProps> = ({ user, onContactPress }) => {
       style={styles.contactItem}
       onPress={() => onContactPress(type, value)}
     >
-      <Icon name={icon} size={20} color={COLORS.textSecondary} />
+      <Icon name={icon} size={20} color={COLORS.text.secondary} />
       <View style={styles.contactInfo}>
         <Text style={styles.contactLabel}>{label}</Text>
         <Text style={styles.contactValue}>{value}</Text>
       </View>
-      <Icon name="chevron-right" size={20} color={COLORS.textSecondary} />
+      <Icon name="chevron-right" size={20} color={COLORS.text.secondary} />
     </TouchableOpacity>
   );
 
   const renderSocialMediaItem = (icon: string, platform: string, url?: string) => (
     <TouchableOpacity
-      style={styles.socialItem}
+      style={[styles.socialItem, !url && styles.disabledItem]}
       onPress={() => url && onContactPress(platform, url)}
-      disabled={!url}
     >
-      <Icon name={icon} size={24} color={url ? COLORS.primary : COLORS.textSecondary} />
+      <Icon name={icon} size={24} color={url ? COLORS.primary : COLORS.text.secondary} />
       <Text style={[styles.socialText, !url && styles.disabledText]}>{platform}</Text>
     </TouchableOpacity>
   );
@@ -105,7 +104,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: COLORS.textPrimary,
+    color: COLORS.text.primary,
     marginBottom: SPACING.md,
   },
   descriptionContainer: {
@@ -113,7 +112,7 @@ const styles = StyleSheet.create({
   },
   descriptionText: {
     fontSize: 14,
-    color: COLORS.textPrimary,
+    color: COLORS.text.primary,
     lineHeight: 20,
   },
   contactSection: {
@@ -122,7 +121,7 @@ const styles = StyleSheet.create({
   subsectionTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: COLORS.textPrimary,
+    color: COLORS.text.primary,
     marginBottom: SPACING.sm,
   },
   contactItem: {
@@ -138,12 +137,12 @@ const styles = StyleSheet.create({
   },
   contactLabel: {
     fontSize: 12,
-    color: COLORS.textSecondary,
+    color: COLORS.text.secondary,
     marginBottom: 2,
   },
   contactValue: {
     fontSize: 14,
-    color: COLORS.textPrimary,
+    color: COLORS.text.primary,
     fontWeight: '500',
   },
   socialSection: {
@@ -164,7 +163,10 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   disabledText: {
-    color: COLORS.textSecondary,
+    color: COLORS.text.secondary,
+  },
+  disabledItem: {
+    opacity: 0.5,
   },
   joinedSection: {
     alignItems: 'center',
@@ -172,6 +174,6 @@ const styles = StyleSheet.create({
   },
   joinedText: {
     fontSize: 12,
-    color: COLORS.textSecondary,
+    color: COLORS.text.secondary,
   },
-}); 
+});

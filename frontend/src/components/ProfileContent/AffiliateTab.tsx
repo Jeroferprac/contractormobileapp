@@ -33,13 +33,13 @@ export const AffiliateTab: React.FC<AffiliateTabProps> = ({
   const getStatusColor = (status: AffiliateCompany['status']) => {
     switch (status) {
       case 'active':
-        return COLORS.success;
+        return COLORS.status.success;
       case 'pending':
-        return COLORS.warning;
+        return COLORS.status.warning;
       case 'inactive':
-        return COLORS.error;
+        return COLORS.status.error;
       default:
-        return COLORS.textSecondary;
+        return COLORS.text.secondary;
     }
   };
 
@@ -108,7 +108,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: COLORS.textPrimary,
+    color: COLORS.text.primary,
     marginBottom: SPACING.md,
   },
   companyItem: {
@@ -130,7 +130,7 @@ const styles = StyleSheet.create({
   logoText: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: COLORS.textLight,
+    color: COLORS.text.light,
   },
   companyInfo: {
     flex: 1,
@@ -138,12 +138,12 @@ const styles = StyleSheet.create({
   companyName: {
     fontSize: 14,
     fontWeight: '600',
-    color: COLORS.textPrimary,
+    color: COLORS.text.primary,
     marginBottom: 2,
   },
   companyDate: {
     fontSize: 12,
-    color: COLORS.textSecondary,
+    color: COLORS.text.secondary,
   },
   companyStats: {
     alignItems: 'flex-end',
@@ -151,13 +151,13 @@ const styles = StyleSheet.create({
   },
   revenueText: {
     fontSize: 10,
-    color: COLORS.textSecondary,
+    color: COLORS.text.secondary,
     marginBottom: 2,
   },
   revenueAmount: {
     fontSize: 14,
     fontWeight: '600',
-    color: COLORS.textPrimary,
+    color: COLORS.text.primary,
   },
   statusIndicator: {
     paddingHorizontal: SPACING.sm,
@@ -166,7 +166,7 @@ const styles = StyleSheet.create({
   },
   statusText: {
     fontSize: 10,
-    color: COLORS.textLight,
+    color: COLORS.text.light,
     fontWeight: '500',
   },
   joinButton: {
@@ -180,6 +180,6 @@ const styles = StyleSheet.create({
   joinButtonText: {
     fontSize: 16,
     fontWeight: '600',
-    color: COLORS.textLight,
+    color: COLORS.text.light,
   },
-}); 
+});

@@ -6,7 +6,7 @@ import {
   TextInput,
   TouchableOpacity,
   ScrollView,
-  Image,
+  Image as RNImage,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { COLORS } from '../../constants/colors';
@@ -38,7 +38,7 @@ export const CreateHighlightScreen: React.FC<CreateHighlightScreenProps> = ({
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={onBack} style={styles.backButton}>
-          <Icon name="arrow-back" size={24} color={COLORS.textPrimary} />
+          <Icon name="arrow-back" size={24} color={COLORS.text.primary} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Add Highlight</Text>
         <TouchableOpacity onPress={selectedImage ? onAdd : onNext} style={styles.actionButton}>
@@ -53,13 +53,13 @@ export const CreateHighlightScreen: React.FC<CreateHighlightScreenProps> = ({
           <View style={styles.highlightCreationContainer}>
             <View style={styles.coverSelectionContainer}>
               <View style={styles.coverPreview}>
-                <Image
+                <RNImage
                   source={{ uri: selectedImage }}
                   style={styles.coverImage}
                   resizeMode="cover"
                 />
                 <TouchableOpacity style={styles.editCoverButton}>
-                  <Icon name="camera-alt" size={20} color={COLORS.textLight} />
+                  <Icon name="camera-alt" size={20} color={COLORS.text.light} />
                   <Text style={styles.editCoverText}>Edit cover</Text>
                 </TouchableOpacity>
               </View>
@@ -69,7 +69,7 @@ export const CreateHighlightScreen: React.FC<CreateHighlightScreenProps> = ({
               <TextInput
                 style={styles.titleInput}
                 placeholder="Highlights"
-                placeholderTextColor={COLORS.textSecondary}
+                placeholderTextColor={COLORS.text.secondary}
                 value={highlightTitle}
                 onChangeText={setHighlightTitle}
               />
@@ -79,7 +79,7 @@ export const CreateHighlightScreen: React.FC<CreateHighlightScreenProps> = ({
           // Image Selection View
           <View style={styles.imageSelectionContainer}>
             <View style={styles.mainImageContainer}>
-              <Image
+              <RNImage
                 source={{ uri: recentImages[0] }}
                 style={styles.mainImage}
                 resizeMode="cover"
@@ -87,14 +87,14 @@ export const CreateHighlightScreen: React.FC<CreateHighlightScreenProps> = ({
             </View>
             
             <Text style={styles.recentImagesTitle}>Recent Images</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.recentImagesContainer}>
+            <ScrollView style={styles.recentImagesContainer} horizontal={true} showsHorizontalScrollIndicator={false}>
               {recentImages.map((image, index) => (
                 <TouchableOpacity
                   key={index}
                   style={styles.recentImageItem}
                   onPress={() => setSelectedImage(image)}
                 >
-                  <Image
+                  <RNImage
                     source={{ uri: image }}
                     style={styles.recentImage}
                     resizeMode="cover"
@@ -116,7 +116,7 @@ export const CreateHighlightScreen: React.FC<CreateHighlightScreenProps> = ({
         </TouchableOpacity>
         {selectedImage && (
           <TouchableOpacity style={styles.actionIcon} onPress={() => setSelectedImage(null)}>
-            <Icon name="close" size={24} color={COLORS.error} />
+            <Icon name="close" size={24} color={COLORS.status.error} />
           </TouchableOpacity>
         )}
       </View>
@@ -144,7 +144,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: COLORS.textPrimary,
+    color: COLORS.text.primary,
   },
   actionButton: {
     backgroundColor: COLORS.primary,
@@ -153,7 +153,7 @@ const styles = StyleSheet.create({
     borderRadius: BORDER_RADIUS.md,
   },
   actionButtonText: {
-    color: COLORS.textLight,
+    color: COLORS.text.light,
     fontWeight: '600',
     fontSize: 14,
   },
@@ -177,7 +177,7 @@ const styles = StyleSheet.create({
   recentImagesTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: COLORS.textPrimary,
+    color: COLORS.text.primary,
     marginBottom: SPACING.md,
   },
   recentImagesContainer: {
@@ -225,7 +225,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   editCoverText: {
-    color: COLORS.textLight,
+    color: COLORS.text.light,
     fontSize: 10,
     fontWeight: '500',
   },
@@ -235,7 +235,7 @@ const styles = StyleSheet.create({
   },
   titleInput: {
     fontSize: 18,
-    color: COLORS.textPrimary,
+    color: COLORS.text.primary,
     textAlign: 'center',
     paddingVertical: SPACING.md,
     borderBottomWidth: 1,
@@ -257,4 +257,4 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-}); 
+});

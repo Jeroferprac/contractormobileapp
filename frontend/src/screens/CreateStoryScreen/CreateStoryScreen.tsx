@@ -38,7 +38,7 @@ export const CreateStoryScreen: React.FC<CreateStoryScreenProps> = ({
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={onBack} style={styles.backButton}>
-          <Icon name="arrow-back" size={24} color={COLORS.textPrimary} />
+          <Icon name="arrow-back" size={24} color={COLORS.text.primary} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Create Story</Text>
         <TouchableOpacity onPress={selectedImage ? onSend : onNext} style={styles.actionButton}>
@@ -66,7 +66,7 @@ export const CreateStoryScreen: React.FC<CreateStoryScreenProps> = ({
               <TextInput
                 style={styles.captionInput}
                 placeholder="Write Caption"
-                placeholderTextColor={COLORS.textSecondary}
+                placeholderTextColor={COLORS.text.secondary}
                 value={caption}
                 onChangeText={setCaption}
                 multiline
@@ -114,7 +114,7 @@ export const CreateStoryScreen: React.FC<CreateStoryScreenProps> = ({
         </TouchableOpacity>
         {selectedImage && (
           <TouchableOpacity style={styles.actionIcon} onPress={() => setSelectedImage(null)}>
-            <Icon name="close" size={24} color={COLORS.error} />
+            <Icon name="close" size={24} color={COLORS.status.error} />
           </TouchableOpacity>
         )}
       </View>
@@ -169,7 +169,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: COLORS.textPrimary,
+    color: COLORS.text.primary,
   },
   actionButton: {
     backgroundColor: COLORS.primary,
@@ -178,7 +178,7 @@ const styles = StyleSheet.create({
     borderRadius: BORDER_RADIUS.md,
   },
   actionButtonText: {
-    color: COLORS.textLight,
+    color: COLORS.text.light,
     fontWeight: '600',
     fontSize: 14,
   },
@@ -202,7 +202,7 @@ const styles = StyleSheet.create({
   recentImagesTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: COLORS.textPrimary,
+    color: COLORS.text.primary,
     marginBottom: SPACING.md,
   },
   recentImagesContainer: {
@@ -243,7 +243,7 @@ const styles = StyleSheet.create({
     borderRadius: BORDER_RADIUS.md,
   },
   changePhotoText: {
-    color: COLORS.textLight,
+    color: COLORS.text.light,
     fontSize: 14,
     fontWeight: '500',
   },
@@ -252,7 +252,7 @@ const styles = StyleSheet.create({
   },
   captionInput: {
     fontSize: 16,
-    color: COLORS.textPrimary,
+    color: COLORS.text.primary,
     lineHeight: 24,
     minHeight: 100,
     padding: SPACING.md,
@@ -300,4 +300,4 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: COLORS.primary,
   },
-}); 
+});

@@ -3,17 +3,13 @@ import {
   View,
   Text,
   StyleSheet,
-  Image,
   TouchableOpacity,
   ScrollView,
-  Dimensions,
 } from 'react-native';
+import FastImage from 'react-native-fast-image';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { COLORS } from '../../constants/colors';
 import { SPACING, BORDER_RADIUS } from '../../constants/spacing';
-
-const { width } = Dimensions.get('window');
-const itemWidth = (width - SPACING.md * 3) / 2;
 
 interface SavedItem {
   id: string;
@@ -48,20 +44,20 @@ export const SavedTab: React.FC<SavedTabProps> = ({ savedItems, onItemPress }) =
       onPress={() => onItemPress(item)}
     >
       <View style={styles.imageContainer}>
-        <Image
+        <FastImage
           source={{ uri: item.image }}
           style={styles.itemImage}
-          resizeMode="cover"
+          resizeMode={FastImage.resizeMode.cover}
         />
         <View style={styles.itemIcon}>
           <Icon 
             name={getItemIcon(item.type)} 
             size={16} 
-            color={COLORS.textLight} 
+            color={COLORS.text.light} 
           />
         </View>
       </View>
-      <Text style={styles.itemTitle} numberOfLines={2}>
+      <Text style={styles.itemTitle}>
         {item.title}
       </Text>
     </TouchableOpacity>
@@ -93,7 +89,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: COLORS.textPrimary,
+    color: COLORS.text.primary,
     marginBottom: SPACING.md,
   },
   gridContainer: {
@@ -102,7 +98,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   savedItem: {
-    width: itemWidth,
+    width: '48%',
     marginBottom: SPACING.md,
   },
   imageContainer: {
@@ -128,7 +124,7 @@ const styles = StyleSheet.create({
   itemTitle: {
     fontSize: 12,
     fontWeight: '500',
-    color: COLORS.textPrimary,
+    color: COLORS.text.primary,
     lineHeight: 16,
   },
-}); 
+});

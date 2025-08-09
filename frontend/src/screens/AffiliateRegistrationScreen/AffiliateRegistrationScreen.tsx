@@ -60,7 +60,7 @@ export const AffiliateRegistrationScreen: React.FC<AffiliateRegistrationScreenPr
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={onBack} style={styles.backButton}>
-          <Icon name="arrow-back" size={24} color={COLORS.textPrimary} />
+          <Icon name="arrow-back" size={24} color={COLORS.text.primary} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Affiliate Registration</Text>
         <View style={styles.placeholder} />
@@ -80,7 +80,7 @@ export const AffiliateRegistrationScreen: React.FC<AffiliateRegistrationScreenPr
                 value={formData.firstName}
                 onChangeText={(value) => handleInputChange('firstName', value)}
                 placeholder="Enter first name"
-                placeholderTextColor={COLORS.textSecondary}
+                placeholderTextColor={COLORS.text.secondary}
               />
             </View>
             <View style={styles.inputContainer}>
@@ -90,7 +90,7 @@ export const AffiliateRegistrationScreen: React.FC<AffiliateRegistrationScreenPr
                 value={formData.lastName}
                 onChangeText={(value) => handleInputChange('lastName', value)}
                 placeholder="Enter last name"
-                placeholderTextColor={COLORS.textSecondary}
+                placeholderTextColor={COLORS.text.secondary}
               />
             </View>
           </View>
@@ -102,7 +102,7 @@ export const AffiliateRegistrationScreen: React.FC<AffiliateRegistrationScreenPr
               value={formData.email}
               onChangeText={(value) => handleInputChange('email', value)}
               placeholder="Enter email address"
-              placeholderTextColor={COLORS.textSecondary}
+              placeholderTextColor={COLORS.text.secondary}
               keyboardType="email-address"
             />
           </View>
@@ -114,7 +114,7 @@ export const AffiliateRegistrationScreen: React.FC<AffiliateRegistrationScreenPr
               value={formData.phone}
               onChangeText={(value) => handleInputChange('phone', value)}
               placeholder="Enter phone number"
-              placeholderTextColor={COLORS.textSecondary}
+              placeholderTextColor={COLORS.text.secondary}
               keyboardType="phone-pad"
             />
           </View>
@@ -126,8 +126,8 @@ export const AffiliateRegistrationScreen: React.FC<AffiliateRegistrationScreenPr
               value={formData.address}
               onChangeText={(value) => handleInputChange('address', value)}
               placeholder="Enter address"
-              placeholderTextColor={COLORS.textSecondary}
-              multiline
+              placeholderTextColor={COLORS.text.secondary}
+              numberOfLines={4}
             />
           </View>
 
@@ -139,7 +139,7 @@ export const AffiliateRegistrationScreen: React.FC<AffiliateRegistrationScreenPr
                 value={formData.city}
                 onChangeText={(value) => handleInputChange('city', value)}
                 placeholder="Enter city"
-                placeholderTextColor={COLORS.textSecondary}
+                placeholderTextColor={COLORS.text.secondary}
               />
             </View>
             <View style={styles.inputContainer}>
@@ -149,7 +149,7 @@ export const AffiliateRegistrationScreen: React.FC<AffiliateRegistrationScreenPr
                 value={formData.country}
                 onChangeText={(value) => handleInputChange('country', value)}
                 placeholder="Enter country"
-                placeholderTextColor={COLORS.textSecondary}
+                placeholderTextColor={COLORS.text.secondary}
               />
             </View>
           </View>
@@ -165,7 +165,7 @@ export const AffiliateRegistrationScreen: React.FC<AffiliateRegistrationScreenPr
               <Text style={styles.dropdownText}>
                 {formData.idType || 'Select ID type'}
               </Text>
-              <Icon name="arrow-drop-down" size={24} color={COLORS.textSecondary} />
+              <Icon name="arrow-drop-down" size={24} color={COLORS.text.secondary} />
             </View>
           </View>
 
@@ -176,7 +176,7 @@ export const AffiliateRegistrationScreen: React.FC<AffiliateRegistrationScreenPr
               value={formData.idNumber}
               onChangeText={(value) => handleInputChange('idNumber', value)}
               placeholder="Enter ID number"
-              placeholderTextColor={COLORS.textSecondary}
+              placeholderTextColor={COLORS.text.secondary}
             />
           </View>
 
@@ -197,7 +197,7 @@ export const AffiliateRegistrationScreen: React.FC<AffiliateRegistrationScreenPr
               value={formData.bankName}
               onChangeText={(value) => handleInputChange('bankName', value)}
               placeholder="Enter bank name"
-              placeholderTextColor={COLORS.textSecondary}
+              placeholderTextColor={COLORS.text.secondary}
             />
           </View>
 
@@ -208,7 +208,7 @@ export const AffiliateRegistrationScreen: React.FC<AffiliateRegistrationScreenPr
               value={formData.accountNumber}
               onChangeText={(value) => handleInputChange('accountNumber', value)}
               placeholder="Enter account number"
-              placeholderTextColor={COLORS.textSecondary}
+              placeholderTextColor={COLORS.text.secondary}
               keyboardType="numeric"
             />
           </View>
@@ -220,7 +220,7 @@ export const AffiliateRegistrationScreen: React.FC<AffiliateRegistrationScreenPr
               value={formData.iban}
               onChangeText={(value) => handleInputChange('iban', value)}
               placeholder="Enter IBAN"
-              placeholderTextColor={COLORS.textSecondary}
+              placeholderTextColor={COLORS.text.secondary}
             />
           </View>
 
@@ -231,7 +231,7 @@ export const AffiliateRegistrationScreen: React.FC<AffiliateRegistrationScreenPr
               value={formData.swiftBic}
               onChangeText={(value) => handleInputChange('swiftBic', value)}
               placeholder="Enter SWIFT/BIC code"
-              placeholderTextColor={COLORS.textSecondary}
+              placeholderTextColor={COLORS.text.secondary}
             />
           </View>
 
@@ -242,7 +242,7 @@ export const AffiliateRegistrationScreen: React.FC<AffiliateRegistrationScreenPr
               value={formData.taxId}
               onChangeText={(value) => handleInputChange('taxId', value)}
               placeholder="Enter tax ID/VAT number"
-              placeholderTextColor={COLORS.textSecondary}
+              placeholderTextColor={COLORS.text.secondary}
             />
           </View>
         </View>
@@ -278,7 +278,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: COLORS.textPrimary,
+    color: COLORS.text.primary,
   },
   placeholder: {
     width: 40,
@@ -293,7 +293,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: COLORS.textPrimary,
+    color: COLORS.text.primary,
     marginBottom: SPACING.md,
   },
   inputRow: {
@@ -307,7 +307,7 @@ const styles = StyleSheet.create({
   inputLabel: {
     fontSize: 14,
     fontWeight: '500',
-    color: COLORS.textPrimary,
+    color: COLORS.text.primary,
     marginBottom: SPACING.xs,
   },
   input: {
@@ -317,7 +317,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.md,
     paddingVertical: SPACING.sm,
     fontSize: 14,
-    color: COLORS.textPrimary,
+    color: COLORS.text.primary,
   },
   dropdownContainer: {
     flexDirection: 'row',
@@ -331,7 +331,7 @@ const styles = StyleSheet.create({
   },
   dropdownText: {
     fontSize: 14,
-    color: COLORS.textSecondary,
+    color: COLORS.text.secondary,
   },
   uploadButton: {
     flexDirection: 'row',
@@ -361,8 +361,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   completeButtonText: {
-    color: COLORS.textLight,
+    color: COLORS.text.light,
     fontSize: 16,
     fontWeight: '600',
   },
-}); 
+});

@@ -27,7 +27,7 @@ export const CreatePostScreen: React.FC<CreatePostScreenProps> = ({
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={onBack} style={styles.backButton}>
-          <Icon name="arrow-back" size={24} color={COLORS.textPrimary} />
+          <Icon name="arrow-back" size={24} color={COLORS.text.primary} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Create Post</Text>
         <TouchableOpacity onPress={onPost} style={styles.postButton}>
@@ -40,7 +40,7 @@ export const CreatePostScreen: React.FC<CreatePostScreenProps> = ({
         {/* User Info */}
         <View style={styles.userInfo}>
           <View style={styles.userAvatar}>
-            <Icon name="person" size={24} color={COLORS.textSecondary} />
+            <Icon name="person" size={24} color={COLORS.text.secondary} />
           </View>
           <View style={styles.userDetails}>
             <Text style={styles.userName}>John Doe</Text>
@@ -53,10 +53,10 @@ export const CreatePostScreen: React.FC<CreatePostScreenProps> = ({
           <TextInput
             style={styles.postInput}
             placeholder="What do you want to talk about..."
-            placeholderTextColor={COLORS.textSecondary}
+            placeholderTextColor={COLORS.text.secondary}
             value={postText}
             onChangeText={setPostText}
-            multiline
+            numberOfLines={4}
             textAlignVertical="top"
           />
         </View>
@@ -110,7 +110,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: COLORS.textPrimary,
+    color: COLORS.text.primary,
   },
   postButton: {
     backgroundColor: COLORS.primary,
@@ -119,7 +119,7 @@ const styles = StyleSheet.create({
     borderRadius: BORDER_RADIUS.md,
   },
   postButtonText: {
-    color: COLORS.textLight,
+    color: COLORS.text.light,
     fontWeight: '600',
     fontSize: 14,
   },
@@ -147,11 +147,11 @@ const styles = StyleSheet.create({
   userName: {
     fontSize: 16,
     fontWeight: '600',
-    color: COLORS.textPrimary,
+    color: COLORS.text.primary,
   },
   userHandle: {
     fontSize: 12,
-    color: COLORS.textSecondary,
+    color: COLORS.text.secondary,
   },
   postInputContainer: {
     flex: 1,
@@ -159,7 +159,7 @@ const styles = StyleSheet.create({
   },
   postInput: {
     fontSize: 16,
-    color: COLORS.textPrimary,
+    color: COLORS.text.primary,
     lineHeight: 24,
     minHeight: 200,
   },
@@ -187,4 +187,4 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: COLORS.primary,
   },
-}); 
+});

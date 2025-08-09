@@ -3,10 +3,10 @@ import {
   View,
   Text,
   StyleSheet,
-  Image,
   TouchableOpacity,
   ScrollView,
 } from 'react-native';
+import FastImage from 'react-native-fast-image';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { COLORS } from '../../constants/colors';
 import { SPACING, BORDER_RADIUS } from '../../constants/spacing';
@@ -32,7 +32,7 @@ export const PostsTab: React.FC<PostsTabProps> = ({ posts, onCreatePost }) => {
       {/* Post Header */}
       <View style={styles.postHeader}>
         <View style={styles.postAvatar}>
-          <Icon name="person" size={24} color={COLORS.textSecondary} />
+          <Icon name="person" size={24} color={COLORS.text.secondary} />
         </View>
         <View style={styles.postInfo}>
           <Text style={styles.postAuthor}>John Doe</Text>
@@ -46,25 +46,25 @@ export const PostsTab: React.FC<PostsTabProps> = ({ posts, onCreatePost }) => {
 
       {/* Post Image */}
       <View style={styles.postImageContainer}>
-        <Image
+        <FastImage
           source={{ uri: post.image }}
           style={styles.postImage}
-          resizeMode="cover"
+          resizeMode={FastImage.resizeMode.cover}
         />
       </View>
 
       {/* Post Actions */}
       <View style={styles.postActions}>
         <TouchableOpacity style={styles.actionButton}>
-          <Icon name="favorite-border" size={20} color={COLORS.textSecondary} />
+          <Icon name="favorite-border" size={20} color={COLORS.text.secondary} />
           <Text style={styles.actionText}>{post.likes}</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.actionButton}>
-          <Icon name="chat-bubble-outline" size={20} color={COLORS.textSecondary} />
+          <Icon name="chat-bubble-outline" size={20} color={COLORS.text.secondary} />
           <Text style={styles.actionText}>{post.comments}</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.actionButton}>
-          <Icon name="share" size={20} color={COLORS.textSecondary} />
+          <Icon name="share" size={20} color={COLORS.text.secondary} />
           <Text style={styles.actionText}>{post.shares}</Text>
         </TouchableOpacity>
       </View>
@@ -99,7 +99,7 @@ export const PostsTab: React.FC<PostsTabProps> = ({ posts, onCreatePost }) => {
       
       {/* Floating Action Button */}
       <TouchableOpacity style={styles.fab} onPress={onCreatePost}>
-        <Icon name="add" size={24} color={COLORS.textLight} />
+        <Icon name="add" size={24} color={COLORS.text.light} />
       </TouchableOpacity>
     </View>
   );
@@ -158,16 +158,16 @@ const styles = StyleSheet.create({
   postAuthor: {
     fontSize: 16,
     fontWeight: '600',
-    color: COLORS.textPrimary,
+    color: COLORS.text.primary,
   },
   postTimestamp: {
     fontSize: 12,
-    color: COLORS.textSecondary,
+    color: COLORS.text.secondary,
     marginTop: 2,
   },
   postCaption: {
     fontSize: 14,
-    color: COLORS.textPrimary,
+    color: COLORS.text.primary,
     lineHeight: 20,
     paddingHorizontal: SPACING.md,
     marginBottom: SPACING.xs,
@@ -200,7 +200,7 @@ const styles = StyleSheet.create({
   },
   actionText: {
     fontSize: 14,
-    color: COLORS.textSecondary,
+    color: COLORS.text.secondary,
   },
   fab: {
     position: 'absolute',
@@ -221,4 +221,4 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 8,
   },
-}); 
+});

@@ -1,0 +1,452 @@
+import React, { useState } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  TextInput,
+  Alert,
+  ActivityIndicator,
+} from 'react-native';
+import Icon from 'react-native-vector-icons/MaterialIcons';
+import { COLORS } from '../../constants/colors';
+import { SPACING, BORDER_RADIUS } from '../../constants/spacing';
+import { User } from '../../types/api';
+
+interface AboutTabWithAPIProps {
+  user: User | null;
+  loading?: boolean;
+  onUpdateProfile: (profileData: Partial<User>) => Promise<boolean>;
+  onContactPress: (type: string, value: string) => void;
+}
+
+export const AboutTabWithAPI: React.FC<AboutTabWithAPIProps> = ({ 
+  user, 
+  loading = false,
+  onUpdateProfile,
+  onContactPress 
+}) => {
+  const [isEditing, setIsEditing] = useState(false);
+  const [editingData, setEditingData] = useState<Partial<User>>({});
+  const [saving, setSaving] = useState(false);
+
+  const handleEditPress = () => {
+    if (!user) return;
+    
+    setEditingData({
+      full_name: user.full_name || '',
+      email: user.email || '',
+      phone: user.phone || '',
+    });
+    setIsEditing(true);
+  };
+
+  const handleSavePress = async () => {
+    if (!editingData.full_name?.trim()) {
+      Alert.alert('Validation Error', 'Name is required');
+      return;
+    }
+
+    if (!editingData.email?.trim()) {
+      Alert.alert('Validation Error', 'Email is required');
+      return;
+    }
+
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(editingData.email)) {
+      Alert.alert('Validation Error', 'Please enter a valid email address');
+      return;
+    }
+
+    try {
+      setSaving(true);
+      const success = await onUpdateProfile(editingData);
+      if (success) {
+        setIsEditing(false);
+        setEditingData({});
+      }
+    } catch (error) {
+      console.error('Failed to save profile:', error);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleCancelPress = () => {
+    setIsEditing(false);
+    setEditingData({});
+  };
+
+  const renderContactItem = (icon: string, label: string, value: string, type: string) => {
+    if (isEditing && (type === 'email' || type === 'phone' || type === 'name')) {
+      return (
+        <View key={type} style={styles.editContactItem}>
+          <Icon name={icon} size={20} color={COLORS.text.secondary} />
+          <View style={styles.editContactInfo}>
+            <Text style={styles.contactLabel}>{label}</Text>
+            <TextInput
+              style={styles.editInput}
+              value={type === 'email' ? editingData.email : type === 'phone' ? editingData.phone : editingData.full_name}
+              onChangeText={(text) => {
+                if (type === 'email') {
+                  setEditingData(prev => ({ ...prev, email: text }));
+                } else if (type === 'phone') {
+                  setEditingData(prev => ({ ...prev, phone: text }));
+                } else if (type === 'name') {
+                  setEditingData(prev => ({ ...prev, full_name: text }));
+                }
+              }}
+              placeholder={`Enter ${label.toLowerCase()}`}
+              keyboardType={type === 'email' ? 'email-address' : type === 'phone' ? 'phone-pad' : 'default'}
+              autoCapitalize={type === 'email' ? 'none' : 'words'}
+            />
+          </View>
+        </View>
+      );
+    }
+
+    return (
+      <TouchableOpacity
+        key={type}
+        style={styles.contactItem}
+        onPress={() => onContactPress(type, value)}
+style={[styles.saveButton, !value && { opacity: 0.5 }]}
+        onPress={!value ? undefined : handleSave}
+      >
+        <Icon name={icon} size={20} color={COLORS.text.secondary} />
+        <View style={styles.contactInfo}>
+          <Text style={styles.contactLabel}>{label}</Text>
+          <Text style={[styles.contactValue, !value && styles.emptyValue]}>
+            {value || 'Not provided'}
+          </Text>
+        </View>
+        {value && <Icon name="chevron-right" size={20} color={COLORS.text.secondary} />}
+      </TouchableOpacity>
+    );
+  };
+
+  const formatJoinedDate = (dateString: string) => {
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleDateString('en-US', { 
+        year: 'numeric', 
+        month: 'long' 
+      });
+    } catch {
+      return 'Unknown';
+    }
+  };
+
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={COLORS.primary} />
+        <Text style={styles.loadingText}>Loading profile information...</Text>
+      </View>
+    );
+  }
+
+  if (!user) {
+    return (
+      <View style={styles.errorContainer}>
+        <Icon name="error-outline" size={48} color={COLORS.text.secondary} />
+        <Text style={styles.errorText}>Unable to load profile information</Text>
+      </View>
+    );
+  }
+
+  return (
+    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+      {/* Edit/Save Controls */}
+      <View style={styles.controlsContainer}>
+        {isEditing ? (
+          <View style={styles.editControls}>
+            <TouchableOpacity 
+              style={styles.cancelButton} 
+              onPress={handleCancelPress}
+              disabled={saving}
+            >
+              <Text style={styles.cancelButtonText}>Cancel</Text>
+            </TouchableOpacity>
+            <TouchableOpacity 
+              style={[styles.saveButton, saving && styles.disabledButton]} 
+              onPress={handleSavePress}
+              disabled={saving}
+            >
+              {saving ? (
+                <ActivityIndicator size="small" color={COLORS.background} />
+              ) : (
+                <>
+                  <Icon name="check" size={16} color={COLORS.background} />
+                  <Text style={styles.saveButtonText}>Save</Text>
+                </>
+              )}
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <TouchableOpacity style={styles.editButton} onPress={handleEditPress}>
+            <Icon name="edit" size={16} color={COLORS.primary} />
+            <Text style={styles.editButtonText}>Edit Profile</Text>
+          </TouchableOpacity>
+        )}
+      </View>
+
+      {/* Contact Information */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Contact Information</Text>
+        {renderContactItem('person', 'Full Name', user.full_name || '', 'name')}
+        {renderContactItem('email', 'Email', user.email || '', 'email')}
+        {renderContactItem('phone', 'Phone', user.phone || '', 'phone')}
+      </View>
+
+      {/* Account Information */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Account Information</Text>
+        
+        <View style={styles.infoItem}>
+          <Icon name="work" size={20} color={COLORS.text.secondary} />
+          <View style={styles.infoContent}>
+            <Text style={styles.infoLabel}>Role</Text>
+            <Text style={styles.infoValue}>
+              {user.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : 'Not specified'}
+            </Text>
+          </View>
+        </View>
+
+        <View style={styles.infoItem}>
+          <Icon name="verified-user" size={20} color={COLORS.text.secondary} />
+          <View style={styles.infoContent}>
+            <Text style={styles.infoLabel}>Account Status</Text>
+            <View style={styles.statusContainer}>
+              <View style={[styles.statusDot, { backgroundColor: user.is_active ? COLORS.status.success : COLORS.status.error }]} />
+              <Text style={styles.infoValue}>
+                {user.is_active ? 'Active' : 'Inactive'}
+              </Text>
+            </View>
+          </View>
+        </View>
+
+        <View style={styles.infoItem}>
+          <Icon name="security" size={20} color={COLORS.text.secondary} />
+          <View style={styles.infoContent}>
+            <Text style={styles.infoLabel}>Verification Status</Text>
+            <View style={styles.statusContainer}>
+              <View style={[styles.statusDot, { backgroundColor: user.is_verified ? COLORS.status.success : COLORS.status.warning }]} />
+              <Text style={styles.infoValue}>
+                {user.is_verified ? 'Verified' : 'Unverified'}
+              </Text>
+            </View>
+          </View>
+        </View>
+
+        <View style={styles.infoItem}>
+          <Icon name="calendar-today" size={20} color={COLORS.text.secondary} />
+          <View style={styles.infoContent}>
+            <Text style={styles.infoLabel}>Member Since</Text>
+            <Text style={styles.infoValue}>
+              {formatJoinedDate(user.created_at)}
+            </Text>
+          </View>
+        </View>
+
+        {user.oauth_provider && (
+          <View style={styles.infoItem}>
+            <Icon name="link" size={20} color={COLORS.text.secondary} />
+            <View style={styles.infoContent}>
+              <Text style={styles.infoLabel}>Connected Account</Text>
+              <Text style={styles.infoValue}>
+                {user.oauth_provider.charAt(0).toUpperCase() + user.oauth_provider.slice(1)}
+              </Text>
+            </View>
+          </View>
+        )}
+      </View>
+
+      {/* Account ID (for debugging/support) */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Technical Information</Text>
+        <View style={styles.infoItem}>
+          <Icon name="fingerprint" size={20} color={COLORS.text.secondary} />
+          <View style={styles.infoContent}>
+            <Text style={styles.infoLabel}>Account ID</Text>
+            <Text style={[styles.infoValue, styles.technicalText]}>
+              {user.id}
+            </Text>
+          </View>
+        </View>
+      </View>
+    </ScrollView>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: COLORS.background,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: SPACING.xl,
+  },
+  loadingText: {
+    marginTop: SPACING.md,
+    color: COLORS.text.secondary,
+    fontSize: 16,
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: SPACING.xl,
+  },
+  errorText: {
+    marginTop: SPACING.md,
+    color: COLORS.text.secondary,
+    fontSize: 16,
+    textAlign: 'center',
+  },
+  controlsContainer: {
+    padding: SPACING.md,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
+  },
+  editButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-end',
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
+    borderRadius: BORDER_RADIUS.sm,
+    borderWidth: 1,
+    borderColor: COLORS.primary,
+    gap: SPACING.xs,
+  },
+  editButtonText: {
+    color: COLORS.primary,
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  editControls: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: SPACING.sm,
+  },
+  cancelButton: {
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
+    borderRadius: BORDER_RADIUS.sm,
+    borderWidth: 1,
+    borderColor: COLORS.text.secondary,
+  },
+  cancelButtonText: {
+    color: COLORS.text.secondary,
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  saveButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
+    borderRadius: BORDER_RADIUS.sm,
+    backgroundColor: COLORS.primary,
+    gap: SPACING.xs,
+  },
+  saveButtonText: {
+    color: COLORS.background,
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  disabledButton: {
+    opacity: 0.6,
+  },
+  section: {
+    padding: SPACING.md,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: COLORS.text.primary,
+    marginBottom: SPACING.md,
+  },
+  contactItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: SPACING.sm,
+    gap: SPACING.md,
+  },
+  editContactItem: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    paddingVertical: SPACING.sm,
+    gap: SPACING.md,
+  },
+  contactInfo: {
+    flex: 1,
+  },
+  editContactInfo: {
+    flex: 1,
+  },
+  contactLabel: {
+    fontSize: 14,
+    color: COLORS.text.secondary,
+    marginBottom: SPACING.xs,
+  },
+  contactValue: {
+    fontSize: 16,
+    color: COLORS.text.primary,
+  },
+  emptyValue: {
+    color: COLORS.text.secondary,
+    fontStyle: 'italic',
+  },
+  editInput: {
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: BORDER_RADIUS.sm,
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: SPACING.xs,
+    fontSize: 16,
+    color: COLORS.text.primary,
+    backgroundColor: COLORS.surface,
+  },
+  infoItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: SPACING.sm,
+    gap: SPACING.md,
+  },
+  infoContent: {
+    flex: 1,
+  },
+  infoLabel: {
+    fontSize: 14,
+    color: COLORS.text.secondary,
+    marginBottom: SPACING.xs,
+  },
+  infoValue: {
+    fontSize: 16,
+    color: COLORS.text.primary,
+  },
+  statusContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.xs,
+  },
+  statusDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  technicalText: {
+    fontFamily: 'monospace',
+    fontSize: 12,
+    color: COLORS.text.secondary,
+  },
+});

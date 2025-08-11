@@ -1,0 +1,383 @@
+import React, { useState } from 'react';
+import {
+  View,
+  Text,
+  Image,
+  TouchableOpacity,
+  Alert,
+  StyleSheet,
+} from 'react-native';
+import FastImage from 'react-native-fast-image';
+import Icon from 'react-native-vector-icons/MaterialIcons';
+import { COLORS } from '../../constants/colors';
+import { SPACING, BORDER_RADIUS } from '../../constants/spacing';
+import { User } from '../../types/api';
+import { 
+  showImagePickerOptions, 
+  createFormDataForAvatar, 
+  validateImageSize, 
+  validateImageType 
+} from '../../utils/imagePicker';
+
+interface ProfileHeaderWithAPIProps {
+  user: User | null;
+  loading?: boolean;
+  onEditProfile: () => void;
+  onShare: () => void;
+  onUploadAvatar: (imageData: FormData) => Promise<boolean>;
+  onDeleteAvatar: () => Promise<boolean>;
+}
+
+export const ProfileHeaderWithAPI: React.FC<ProfileHeaderWithAPIProps> = ({
+  user,
+  loading = false,
+  onEditProfile,
+  onShare,
+  onUploadAvatar,
+  onDeleteAvatar,
+}) => {
+  const [avatarLoading, setAvatarLoading] = useState(false);
+
+  const handleAvatarPress = () => {
+    if (!user) return;
+
+    const options = user.avatar_data 
+      ? [
+          { text: 'Change Picture', onPress: handleChangeAvatar },
+          { text: 'Remove Picture', onPress: handleRemoveAvatar, style: 'destructive' as const },
+          { text: 'Cancel', style: 'cancel' as const },
+        ]
+      : [
+          { text: 'Add Picture', onPress: handleChangeAvatar },
+          { text: 'Cancel', style: 'cancel' as const },
+        ];
+
+    Alert.alert(
+      'Profile Picture',
+      'What would you like to do?',
+      options
+    );
+  };
+
+  const handleChangeAvatar = async () => {
+    try {
+      setAvatarLoading(true);
+      
+      const imageResult = await showImagePickerOptions();
+      if (!imageResult) {
+        setAvatarLoading(false);
+        return;
+      }
+
+      // Validate image
+      if (!validateImageType(imageResult.type)) {
+        Alert.alert(
+          'Invalid Image Type',
+          'Please select a JPEG, PNG, or WebP image.',
+          [{ text: 'OK' }]
+        );
+        setAvatarLoading(false);
+        return;
+      }
+
+      if (!validateImageSize(imageResult.size, 5)) {
+        Alert.alert(
+          'Image Too Large',
+          'Please select an image smaller than 5MB.',
+          [{ text: 'OK' }]
+        );
+        setAvatarLoading(false);
+        return;
+      }
+
+      // Create form data and upload
+      const formData = createFormDataForAvatar(imageResult);
+      const success = await onUploadAvatar(formData);
+      
+      if (success) {
+        console.log('✅ [ProfileHeader] Avatar uploaded successfully');
+      }
+    } catch (error) {
+      console.error('❌ [ProfileHeader] Avatar upload error:', error);
+      Alert.alert(
+        'Upload Error',
+        'Failed to upload image. Please try again.',
+        [{ text: 'OK' }]
+      );
+    } finally {
+      setAvatarLoading(false);
+    }
+  };
+
+  const handleRemoveAvatar = async () => {
+    Alert.alert(
+      'Remove Profile Picture',
+      'Are you sure you want to remove your profile picture?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Remove',
+          style: 'destructive',
+          onPress: async () => {
+            setAvatarLoading(true);
+            const success = await onDeleteAvatar();
+            if (success) {
+              console.log('✅ [ProfileHeader] Avatar removed successfully');
+            }
+            setAvatarLoading(false);
+          },
+        },
+      ]
+    );
+  };
+
+  const getAvatarSource = () => {
+    if (user?.avatar_data && user?.avatar_mimetype) {
+      return { uri: `data:${user.avatar_mimetype};base64,${user.avatar_data}` };
+    }
+    return null;
+  };
+
+  const getDisplayName = () => {
+    return user?.full_name || 'User Name';
+  };
+
+  const getDisplayRole = () => {
+    return user?.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : 'Role';
+  };
+
+  if (loading) {
+    return (
+      <View style={[styles.container, styles.loadingContainer]}>
+        <Text style={styles.loadingText}>Loading...</Text>
+        <Text style={styles.loadingText}>Loading profile...</Text>
+      </View>
+    );
+  }
+
+  return (
+    <View style={styles.container}>
+      {/* Header Image */}
+      <View style={styles.headerImageContainer}>
+        <FastImage
+          source={{ uri: 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=800' }}
+          style={styles.headerImage}
+          resizeMode={FastImage.resizeMode.cover}
+        />
+      </View>
+
+      {/* Profile Picture Overlay */}
+      <View style={styles.profilePictureContainer}>
+        <TouchableOpacity
+          style={[styles.avatarContainer, avatarLoading && { opacity: 0.5 }]}
+          onPress={handleAvatarPress}
+        >
+          {avatarLoading ? (
+            <View style={styles.avatarLoadingContainer}>
+              <Text style={styles.loadingText}>Loading...</Text>
+            </View>
+          ) : getAvatarSource() ? (
+            <FastImage
+              source={getAvatarSource()!}
+              style={styles.profileImage}
+              resizeMode={FastImage.resizeMode.cover}
+            />
+          ) : (
+            <View style={styles.defaultAvatar}>
+              <Icon name="person" size={40} color={COLORS.text.secondary} />
+            </View>
+          )}
+          
+          {/* Camera icon overlay */}
+          <View style={styles.cameraIconContainer}>
+            <Icon name="camera-alt" size={16} color={COLORS.background} />
+          </View>
+        </TouchableOpacity>
+      </View>
+
+      {/* Profile Info */}
+      <View style={styles.profileInfo}>
+        <Text style={styles.name}>{getDisplayName()}</Text>
+        <Text style={styles.company}>{getDisplayRole()}</Text>
+        <Text style={styles.email}>{user?.email || 'email@example.com'}</Text>
+        
+        {user?.phone && (
+          <Text style={styles.phone}>{user.phone}</Text>
+        )}
+        
+        <View style={styles.statsContainer}>
+          <View style={styles.statItem}>
+            <Text style={styles.statNumber}>0</Text>
+            <Text style={styles.statLabel}>Posts</Text>
+          </View>
+          <View style={styles.statItem}>
+            <Text style={styles.statNumber}>0</Text>
+            <Text style={styles.statLabel}>Followers</Text>
+          </View>
+          <View style={styles.statItem}>
+            <Text style={styles.statNumber}>0</Text>
+            <Text style={styles.statLabel}>Following</Text>
+          </View>
+        </View>
+
+        {/* Action Buttons */}
+        <View style={styles.actionButtons}>
+          <TouchableOpacity style={styles.editButton} onPress={onEditProfile}>
+            <Icon name="edit" size={16} color={COLORS.background} />
+            <Text style={styles.editButtonText}>Edit Profile</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity style={styles.shareButton} onPress={onShare}>
+            <Icon name="share" size={16} color={COLORS.primary} />
+          </TouchableOpacity>
+        </View>
+      </View>
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    backgroundColor: COLORS.background,
+  },
+  loadingContainer: {
+    height: 300,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    color: COLORS.text.light,
+    fontSize: 12,
+    fontWeight: '500',
+  },
+  headerImageContainer: {
+    height: 150,
+    width: '100%',
+  },
+  headerImage: {
+    width: '100%',
+    height: '100%',
+  },
+  profilePictureContainer: {
+    position: 'absolute',
+    top: 100,
+    alignSelf: 'center',
+    zIndex: 1,
+  },
+  profilePicture: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    borderWidth: 4,
+    borderColor: COLORS.background,
+    overflow: 'hidden',
+    position: 'relative',
+  },
+  profileImage: {
+    width: '100%',
+    height: '100%',
+  },
+  defaultAvatar: {
+    width: '100%',
+    height: '100%',
+    backgroundColor: COLORS.surface,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  avatarLoadingContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+    borderRadius: 50,
+  },
+  cameraIconContainer: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    backgroundColor: COLORS.primary,
+    borderRadius: 12,
+    width: 24,
+    height: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: COLORS.background,
+  },
+  profileInfo: {
+    paddingTop: 60,
+    paddingHorizontal: SPACING.lg,
+    paddingBottom: SPACING.lg,
+    alignItems: 'center',
+  },
+  name: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: COLORS.text.primary,
+    marginBottom: SPACING.xs,
+  },
+  company: {
+    fontSize: 16,
+    color: COLORS.text.secondary,
+    marginBottom: SPACING.xs,
+  },
+  email: {
+    fontSize: 14,
+    color: COLORS.text.secondary,
+    marginBottom: SPACING.xs,
+  },
+  phone: {
+    fontSize: 14,
+    color: COLORS.text.secondary,
+    marginBottom: SPACING.md,
+  },
+  statsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    width: '100%',
+    marginBottom: SPACING.lg,
+  },
+  statItem: {
+    alignItems: 'center',
+  },
+  statNumber: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: COLORS.text.primary,
+  },
+  statLabel: {
+    fontSize: 12,
+    color: COLORS.text.secondary,
+    marginTop: SPACING.xs,
+  },
+  actionButtons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.md,
+  },
+  editButton: {
+    backgroundColor: COLORS.primary,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.sm,
+    borderRadius: BORDER_RADIUS.md,
+    gap: SPACING.xs,
+  },
+  editButtonText: {
+    color: COLORS.background,
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  shareButton: {
+    backgroundColor: COLORS.surface,
+    padding: SPACING.sm,
+    borderRadius: BORDER_RADIUS.md,
+    borderWidth: 1,
+    borderColor: COLORS.primary,
+  },
+});

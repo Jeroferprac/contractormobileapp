@@ -15,7 +15,7 @@ import storageService from '../utils/storage';
 
 class ApiService {
   private api: AxiosInstance;
-  private useMock: boolean = false; // Using real API - no mock data
+  private useMock: boolean = false; 
 
   constructor() {
     this.api = axios.create({

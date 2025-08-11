@@ -14,6 +14,7 @@ declare module 'react-native' {
   export interface TextProps {
     style?: any;
     children?: any;
+    numberOfLines?: number;
   }
   
   export interface TextInputProps {
@@ -30,14 +31,19 @@ declare module 'react-native' {
   
   export interface TouchableOpacityProps {
     style?: any;
-    onPress?: () => void;
+    onPress?: (event?: any) => void;
+    onPressIn?: () => void;
+    onPressOut?: () => void;
     children?: any;
+    activeOpacity?: number;
   }
   
   export interface ScrollViewProps {
     style?: any;
     contentContainerStyle?: any;
     showsVerticalScrollIndicator?: boolean;
+    showsHorizontalScrollIndicator?: boolean;
+    horizontal?: boolean;
     children?: any;
   }
   
@@ -59,7 +65,27 @@ declare module 'react-native' {
   export interface PlatformStatic {
     OS: 'ios' | 'android' | 'windows' | 'macos' | 'web';
   }
-  
+
+  export interface Dimensions {
+    width: number;
+    height: number;
+  }
+
+  export interface AnimatedValue {
+    value: number;
+    setValue(value: number): void;
+    interpolate(config: any): any;
+  }
+
+  export interface Animated {
+    Value: new (value: number) => AnimatedValue;
+    timing: (value: AnimatedValue, config: any) => any;
+    parallel: (animations: any[]) => any;
+    loop: (animation: any) => any;
+    sequence: (animations: any[]) => any;
+    View: any;
+  }
+
   export const View: React.ComponentType<ViewProps>;
   export const Text: React.ComponentType<TextProps>;
   export const TextInput: React.ComponentType<TextInputProps>;
@@ -73,9 +99,14 @@ declare module 'react-native' {
   export const Alert: AlertStatic;
   export const Platform: PlatformStatic;
   export const useColorScheme: () => 'light' | 'dark';
+  export const Dimensions: {
+    get(dimension: 'window' | 'screen'): Dimensions;
+  };
+  export const Animated: Animated;
   
   export type ViewStyle = any;
   export type TextStyle = any;
+  export type GestureResponderEvent = any;
 }
 
 declare module '@react-navigation/native' {

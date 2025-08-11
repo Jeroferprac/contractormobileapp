@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   ScrollView,
@@ -9,6 +9,8 @@ import {
   TouchableOpacity,
   Alert,
 } from 'react-native';
+import Icon from 'react-native-vector-icons/Feather';
+import FastImage from 'react-native-fast-image';
 import { COLORS } from '../../constants/colors';
 import { SPACING } from '../../constants/spacing';
 import { HomeScreenNavigationProp } from '../../types/navigation';
@@ -20,25 +22,17 @@ import { SearchBar, FilterChips, HorizontalScroll } from '../../components/ui';
 // Home Components
 import {
   HomeHeader,
-  ServiceGrid,
   DiscountBanner,
-  ProjectCard,
+  ServiceGrid,
   ProfessionalCard,
+  ProjectCard,
 } from '../../components/home';
 
 // Layout Components
 import { SectionHeader } from '../../components/layout';
 
 // Mock Data
-import {
-  mockServices,
-  mockProjects,
-  mockProfessionals,
-  mockReviews,
-  mockDiscounts,
-  mockFilters,
-  mockBeforeAfterProject,
-} from '../../data/mockData';
+import { mockServices, mockProjects, mockProfessionals, mockDiscounts, mockFilters, mockBeforeAfterProject, mockReviews } from '../../data/mockData';
 
 interface HomeScreenProps {
   navigation: HomeScreenNavigationProp;
@@ -265,7 +259,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
               subtitle="Expert consulting firm for your projects"
               onViewAllPress={() => console.log('View all consultants')}
             />
-            <HorizontalScroll style={styles.horizontalScrollContent}>
+            <View style={styles.horizontalScrollContent}>
               {consultants.map((professional) => (
                 <ProfessionalCard
                   key={professional.id}
@@ -274,7 +268,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
                   style={styles.professionalCard}
                 />
               ))}
-            </HorizontalScroll>
+            </View>
           </View>
 
           {/* Suggested Work */}
@@ -313,7 +307,9 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
               subtitle="Quality building materials and equipments"
               onViewAllPress={() => console.log('View all suppliers')}
             />
-            <HorizontalScroll style={styles.horizontalScrollContent}>
+            <View
+              style={[styles.horizontalScrollContent, { width: '100%' }]}
+            >
               {suppliers.map((professional) => (
                 <ProfessionalCard
                   key={professional.id}
@@ -322,7 +318,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
                   style={styles.professionalCard}
                 />
               ))}
-            </HorizontalScroll>
+            </View>
           </View>
 
           {/* Freelancers */}
@@ -332,7 +328,9 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
               subtitle="Independent professionals for hire"
               onViewAllPress={() => console.log('View all freelancers')}
             />
-            <HorizontalScroll style={styles.horizontalScrollContent}>
+            <View
+              style={[styles.horizontalScrollContent, { width: '100%' }]}
+            >
               {freelancers.map((professional) => (
                 <ProfessionalCard
                   key={professional.id}
@@ -341,7 +339,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
                   style={styles.professionalCard}
                 />
               ))}
-            </HorizontalScroll>
+            </View>
           </View>
 
           {/* Workshops */}
@@ -351,7 +349,9 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
               subtitle="Connect with the best professionals for your construction projects."
               onViewAllPress={() => console.log('View all workshops')}
             />
-            <HorizontalScroll style={styles.horizontalScrollContent}>
+            <View
+              style={[styles.horizontalScrollContent, { width: '100%' }]}
+            >
               {workshops.map((professional) => (
                 <ProfessionalCard
                   key={professional.id}
@@ -360,7 +360,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
                   style={styles.professionalCard}
                 />
               ))}
-            </HorizontalScroll>
+            </View>
           </View>
         </View>
       </ScrollView>

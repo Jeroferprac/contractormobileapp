@@ -1,19 +1,18 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
+import { View, ScrollView, TouchableOpacity, Text, StyleSheet } from 'react-native';
 import Icon from 'react-native-vector-icons/Feather';
 import { COLORS } from '../../constants/colors';
 import { SPACING, BORDER_RADIUS } from '../../constants/spacing';
-import { TEXT_STYLES } from '../../constants/typography';
 
-interface FilterChip {
+interface Filter {
   id: string;
   label: string;
   icon?: string;
 }
 
 interface FilterChipsProps {
-  filters: FilterChip[];
-  onRemoveFilter: (id: string) => void;
+  filters: Filter[];
+  onRemoveFilter: (filterId: string) => void;
   style?: any;
 }
 
@@ -26,51 +25,46 @@ const FilterChips: React.FC<FilterChipsProps> = ({
 
   return (
     <View style={[styles.container, style]}>
-      {filters.map((filter) => (
-        <View key={filter.id} style={styles.chip}>
-          {filter.icon && (
-            <Icon name={filter.icon as any} size={14} color={COLORS.text.secondary} style={styles.chipIcon} />
-          )}
-          <Text style={styles.chipText}>{filter.label}</Text>
+      <View style={styles.chipsContainer}>
+        {filters.map((filter) => (
           <TouchableOpacity
-            style={styles.removeButton}
+            key={filter.id}
+            style={styles.chip}
             onPress={() => onRemoveFilter(filter.id)}
           >
-            <Icon name="x" size={12} color={COLORS.text.secondary} />
+            <Text style={styles.chipText}>{filter.label}</Text>
+            <Icon name="x" size={12} color={COLORS.text.light} style={styles.removeIcon} />
           </TouchableOpacity>
-        </View>
-      ))}
+        ))}
+      </View>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    paddingHorizontal: SPACING.lg,
+    marginVertical: SPACING.sm,
+  },
+  chipsContainer: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: SPACING.sm,
+    paddingHorizontal: SPACING.lg,
   },
   chip: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: COLORS.text.light,
+    backgroundColor: COLORS.primary,
     borderRadius: BORDER_RADIUS.round,
-    paddingHorizontal: SPACING.sm,
-    paddingVertical: SPACING.xs,
-    borderWidth: 1,
-    borderColor: COLORS.border.light,
-  },
-  chipIcon: {
-    marginRight: SPACING.xs,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
+    marginRight: SPACING.sm,
   },
   chipText: {
-    fontSize: TEXT_STYLES.bodySmall.fontSize,
-    color: COLORS.text.secondary,
-    marginRight: SPACING.xs,
+    color: COLORS.text.light,
+    fontSize: 12,
+    fontWeight: '500',
   },
-  removeButton: {
-    padding: 2,
+  removeIcon: {
+    marginLeft: SPACING.xs,
   },
 });
 

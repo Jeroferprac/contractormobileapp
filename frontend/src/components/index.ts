@@ -11,5 +11,8 @@ export * from './ui';
 // Home Components
 export * from './home';
 
+// Inventory Components
+export * from './inventory';
+
 // Layout Components
 export * from './layout'; 

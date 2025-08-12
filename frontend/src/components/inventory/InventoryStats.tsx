@@ -32,7 +32,10 @@ const InventoryStats: React.FC = () => {
         <View style={styles.grid}>
           {Array.from({ length: 4 }).map((_, index) => (
             <View key={index} style={styles.cardWrapper}>
-              <LoadingSkeleton height={120} borderRadius={16} />
+              <LoadingSkeleton 
+                height={120} 
+                borderRadius={16} 
+              />
             </View>
           ))}
         </View>

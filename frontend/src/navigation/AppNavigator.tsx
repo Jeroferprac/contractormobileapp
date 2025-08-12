@@ -16,9 +16,11 @@ import ForgotPasswordScreen from '../screens/ForgotPasswordScreen';
 import HomeScreen from '../screens/HomeScreen/HomeScreen';
 import InventoryScreen from '../screens/InventoryScreen/InventoryScreen';
 import AllProductsScreen from '../screens/AllProductsScreen/AllProductsScreen';
+import ProductScreen from '../screens/ProductScreen/ProductScreen';
+import AddProductScreen from '../screens/AddProductScreen/AddProductScreen';
 import BarcodeScanner from '../components/ui/BarcodeScanner';
+import { ProfileScreen } from '../screens/ProfileScreen/ProfileScreen';
 import { useAuth } from '../context/AuthContext';
-
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
@@ -169,6 +171,8 @@ export const AppNavigator: React.FC = () => {
           <>
             <Stack.Screen name="MainTabs" component={MainTabNavigator} />
             <Stack.Screen name="AllProducts" component={AllProductsScreen} />
+            <Stack.Screen name="Product" component={ProductScreen} />
+            <Stack.Screen name="AddProduct" component={AddProductScreen} />
           </>
         )}
       </Stack.Navigator>

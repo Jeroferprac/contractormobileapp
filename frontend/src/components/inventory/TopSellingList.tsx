@@ -1,15 +1,23 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, FlatList, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, FlatList } from 'react-native';
 import { Product } from '../../types/inventory';
 import { inventoryApiService } from '../../api/inventoryApi';
 import TopSellingCard from './TopSellingCard';
 import { SPACING } from '../../constants/spacing';
 import { TEXT_STYLES } from '../../constants/typography';
+import { ProductCardSkeleton } from '../ui/LoadingSkeleton';
+import { FadeSlideInView } from '../ui';
 import { COLORS } from '../../constants/colors';
 
-const TopSellingList: React.FC = () => {
+interface TopSellingListProps {
+  loading?: boolean;
+}
+
+const TopSellingList: React.FC<TopSellingListProps> = ({ loading: propLoading }) => {
   const [topProducts, setTopProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [internalLoading, setInternalLoading] = useState(true);
+
+  const loading = propLoading !== undefined ? propLoading : internalLoading;
 
   useEffect(() => {
     const fetchTopSellingProducts = async () => {
@@ -34,7 +42,7 @@ const TopSellingList: React.FC = () => {
       } catch (error) {
         console.error('❌ Error fetching products:', error);
       } finally {
-        setLoading(false);
+        setInternalLoading(false);
       }
     };
 
@@ -50,7 +58,18 @@ const TopSellingList: React.FC = () => {
       <Text style={styles.title}>Top Selling Products</Text>
 
       {loading ? (
-        <ActivityIndicator size="large" color={COLORS.primary} />
+        <FlatList
+          data={[...Array(5)]} // Render 5 skeleton cards
+          keyExtractor={(_, i) => i.toString()}
+          renderItem={({index}) => (
+            <FadeSlideInView key={index} delay={index * 80}>
+              <ProductCardSkeleton />
+            </FadeSlideInView>
+          )}
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.listContent}
+        />
       ) : (
         <FlatList
           data={topProducts}

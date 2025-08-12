@@ -79,7 +79,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: COLORS.textPrimary,
+    color: COLORS.primary,
     marginBottom: SPACING.md,
   },
   activityItem: {

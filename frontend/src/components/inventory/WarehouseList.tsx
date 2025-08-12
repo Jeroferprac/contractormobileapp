@@ -5,11 +5,12 @@ import {
   StyleSheet,
   FlatList,
   TouchableOpacity,
-  ActivityIndicator
 } from "react-native";
+import { LoadingSkeleton } from "../common/LoadingSkeleton";
+import { FadeSlideInView } from "../ui";
 import WarehouseCard from "./WarehouseCard";
 import type { Warehouse } from "../../types/inventory";
-import { SPACING } from "../../constants/spacing";
+import { SPACING, BORDER_RADIUS } from "../../constants/spacing";
 import { COLORS } from "../../constants/colors";
 
 interface Props {
@@ -44,17 +45,45 @@ const WarehouseList: React.FC<Props> = ({
 
       {/* Content */}
       {loading ? (
-        <ActivityIndicator size="large" color={COLORS.primary} />
+        <FlatList
+          horizontal
+          data={[...Array(3)]} // Render 3 skeleton cards
+          keyExtractor={(_, i) => i.toString()}
+          renderItem={({index}) => (
+            <FadeSlideInView delay={index * 100}>
+              <WarehouseCard
+                warehouse={{
+                  id: `skeleton-${index}`,
+                  name: 'Loading...',
+                  code: '',
+                  address: '',
+                  contact_person: '',
+                  phone: '',
+                  email: '',
+                  is_active: true,
+                  created_at: new Date().toISOString()
+                }}
+                isLoading={true}
+              />
+            </FadeSlideInView>
+          )}
+          contentContainerStyle={styles.listContent}
+          showsHorizontalScrollIndicator={false}
+          ItemSeparatorComponent={() => <View style={{ width: CARD_SPACING }} />}
+        />
       ) : (
         <FlatList
           horizontal
           data={warehouses}
           keyExtractor={(item) => item.id}
-          renderItem={({ item }) => (
-            <WarehouseCard
-              warehouse={item}
-              onPress={() => onWarehousePress(item)}
-            />
+          renderItem={({ item, index }) => (
+            <FadeSlideInView delay={index * 100}>
+              <WarehouseCard
+                warehouse={item}
+                onPress={() => onWarehousePress(item)}
+                isLoading={false}
+              />
+            </FadeSlideInView>
           )}
           contentContainerStyle={styles.listContent}
           showsHorizontalScrollIndicator={false}

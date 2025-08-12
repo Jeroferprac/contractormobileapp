@@ -15,6 +15,8 @@ export type RootStackParamList = {
   ForgotPassword: undefined;
   MainTabs: undefined;
   AllProducts: undefined;
+  Product: { product: any };
+  AddProduct: { product?: any };
 };
 
 export type LoginScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Login'>;

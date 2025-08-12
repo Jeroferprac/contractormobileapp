@@ -10,12 +10,14 @@ interface InventoryHeaderProps {
   onSidebarPress: () => void;
   onSettingsPress: () => void;
   onScanPress?: () => void;
+  onAddProductPress?: () => void;
 }
 
 const InventoryHeader: React.FC<InventoryHeaderProps> = ({
   onSidebarPress,
   onSettingsPress,
-  onScanPress
+  onScanPress,
+  onAddProductPress
 }) => {
   return (
     <View style={styles.container}>
@@ -32,14 +34,25 @@ const InventoryHeader: React.FC<InventoryHeaderProps> = ({
         <Text style={styles.subtitle}>Manage your stock efficiently</Text>
       </View>
 
-      {/* <View style={styles.rightButtons}>
-        <TouchableOpacity 
-          onPress={onScanPress || (() => {})} 
-          style={[styles.iconButton, styles.scanButton]}
-          activeOpacity={0.8}
-        >
-          <Icon name="camera" size={20} color={COLORS.text.light} />
-        </TouchableOpacity>
+      <View style={styles.rightButtons}>
+        {onAddProductPress && (
+          <TouchableOpacity 
+            onPress={onAddProductPress} 
+            style={[styles.iconButton, styles.scanButton]}
+            activeOpacity={0.8}
+          >
+            <Icon name="plus" size={20} color={COLORS.text.light} />
+          </TouchableOpacity>
+        )}
+        {/* {onScanPress && (
+          <TouchableOpacity 
+            onPress={onScanPress} 
+            style={[styles.iconButton, styles.scanButton]}
+            activeOpacity={0.8}
+          >
+            <Icon name="camera" size={20} color={COLORS.text.light} />
+          </TouchableOpacity>
+        )} */}
         <TouchableOpacity 
           onPress={onSettingsPress} 
           style={styles.iconButton}
@@ -47,7 +60,7 @@ const InventoryHeader: React.FC<InventoryHeaderProps> = ({
         >
           <Icon name="settings" size={22} color={COLORS.text.light} />
         </TouchableOpacity>
-      </View> */}
+      </View>
     </View>
   );
 };

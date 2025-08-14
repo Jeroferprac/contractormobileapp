@@ -56,8 +56,7 @@ export const CreatePostScreen: React.FC<CreatePostScreenProps> = ({
             placeholderTextColor={COLORS.text.secondary}
             value={postText}
             onChangeText={setPostText}
-            numberOfLines={4}
-            textAlignVertical="top"
+
           />
         </View>
       </ScrollView>

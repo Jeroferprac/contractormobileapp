@@ -4,8 +4,8 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
+  Image,
 } from 'react-native';
-import FastImage from 'react-native-fast-image';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { COLORS } from '../../constants/colors';
 import { SPACING, BORDER_RADIUS } from '../../constants/spacing';
@@ -24,32 +24,38 @@ interface ProfileHeaderProps {
   };
   onEditProfile: () => void;
   onShare: () => void;
+  onAvatarPress?: () => void;
 }
 
 export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   user,
   onEditProfile,
   onShare,
+  onAvatarPress,
 }) => {
   return (
     <View style={styles.container}>
       {/* Header Image */}
       <View style={styles.headerImageContainer}>
-        <FastImage
+        <Image
           source={user.headerImage ? { uri: user.headerImage } : { uri: 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=800' }}
           style={styles.headerImage}
-          resizeMode={FastImage.resizeMode.cover}
+          resizeMode="cover"
         />
       </View>
 
       {/* Profile Picture Overlay */}
       <View style={styles.profilePictureContainer}>
-        <View style={styles.profilePicture}>
+        <TouchableOpacity 
+          style={styles.profilePicture} 
+          onPress={onAvatarPress}
+          activeOpacity={0.8}
+        >
           {user.profileImage ? (
-            <FastImage
+            <Image
               source={{ uri: user.profileImage }}
               style={styles.profileImage}
-              resizeMode={FastImage.resizeMode.cover}
+              resizeMode="cover"
             />
           ) : (
             <Icon name="person" size={40} color={COLORS.text.secondary} />
@@ -60,7 +66,7 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
           <View style={styles.addIcon}>
             <Icon name="add" size={16} color={COLORS.primary} />
           </View>
-        </View>
+        </TouchableOpacity>
       </View>
 
       {/* User Information */}

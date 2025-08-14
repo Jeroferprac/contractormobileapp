@@ -67,9 +67,12 @@ export const AboutTab: React.FC<AboutTabProps> = ({ user, onContactPress }) => {
           <View style={styles.contactSection}>
             <Text style={styles.subsectionTitle}>Contact Details</Text>
             {renderContactItem('email', 'Email', user.email, 'email')}
-            {renderContactItem('phone', 'Phone', user.phone, 'phone')}
-            {renderContactItem('location-on', 'Address', user.address, 'address')}
-            {renderContactItem('language', 'Website', user.website, 'website')}
+            {user.phone && user.phone !== 'No phone available' && 
+              renderContactItem('phone', 'Phone', user.phone, 'phone')}
+            {user.address && user.address !== 'No address available' && 
+              renderContactItem('location-on', 'Address', user.address, 'address')}
+            {user.website && user.website !== 'No website available' && 
+              renderContactItem('language', 'Website', user.website, 'website')}
           </View>
 
           {/* Social Media */}
@@ -80,6 +83,9 @@ export const AboutTab: React.FC<AboutTabProps> = ({ user, onContactPress }) => {
               {renderSocialMediaItem('camera-alt', 'Instagram', user.socialMedia.instagram)}
               {renderSocialMediaItem('facebook', 'Facebook', user.socialMedia.facebook)}
             </View>
+            {!user.socialMedia.linkedin && !user.socialMedia.instagram && !user.socialMedia.facebook && (
+              <Text style={styles.noSocialText}>No social media links added</Text>
+            )}
           </View>
 
           {/* Joined Date */}
@@ -175,5 +181,12 @@ const styles = StyleSheet.create({
   joinedText: {
     fontSize: 12,
     color: COLORS.text.secondary,
+  },
+  noSocialText: {
+    fontSize: 12,
+    color: COLORS.text.secondary,
+    textAlign: 'center',
+    fontStyle: 'italic',
+    marginTop: SPACING.sm,
   },
 });

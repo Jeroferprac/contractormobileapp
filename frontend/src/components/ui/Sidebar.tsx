@@ -23,18 +23,18 @@ const MenuItem: React.FC<{
   
   const handleHoverIn = () => {
     setIsHovered(true);
-    Animated.spring(scaleAnim, {
+    Animated.timing(scaleAnim, {
       toValue: 1.03,
-      friction: 7,
+      duration: 200,
       useNativeDriver: true,
     }).start();
   };
   
   const handleHoverOut = () => {
     setIsHovered(false);
-    Animated.spring(scaleAnim, {
+    Animated.timing(scaleAnim, {
       toValue: 1,
-      friction: 7,
+      duration: 200,
       useNativeDriver: true,
     }).start();
   };
@@ -48,10 +48,8 @@ const MenuItem: React.FC<{
       <TouchableOpacity
         style={[styles.menuItem, isHovered && styles.menuItemHovered]}
         onPress={onPress}
-        onMouseEnter={Platform.OS === 'web' ? handleHoverIn : undefined}
-        onMouseLeave={Platform.OS === 'web' ? handleHoverOut : undefined}
-        onPressIn={Platform.OS !== 'web' ? handleHoverIn : undefined}
-        onPressOut={Platform.OS !== 'web' ? handleHoverOut : undefined}
+        onPressIn={handleHoverIn}
+        onPressOut={handleHoverOut}
       >
         <Icon name={icon as any} size={20} color="#FFFFFF" />
         <Text style={styles.menuText}>{label}</Text>

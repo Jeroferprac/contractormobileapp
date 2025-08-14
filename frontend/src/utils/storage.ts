@@ -24,9 +24,12 @@ class StorageService {
    */
   async setAuthToken(token: string): Promise<void> {
     try {
+      console.log('💾 [Storage] Storing auth token...');
       await AsyncStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, token);
+      console.log('✅ [Storage] Auth token stored successfully');
     } catch (error) {
-      console.error('Error storing auth token:', error);
+      console.error('❌ [Storage] Failed to store auth token:', error);
+      throw error;
     }
   }
 
@@ -35,9 +38,11 @@ class StorageService {
    */
   async getAuthToken(): Promise<string | null> {
     try {
-      return await AsyncStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
+      const token = await AsyncStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
+      console.log('🔍 [Storage] Retrieved auth token:', !!token);
+      return token;
     } catch (error) {
-      console.error('Error getting auth token:', error);
+      console.error('❌ [Storage] Failed to get auth token:', error);
       return null;
     }
   }
@@ -70,9 +75,12 @@ class StorageService {
    */
   async setUserData(userData: any): Promise<void> {
     try {
+      console.log('💾 [Storage] Storing user data...');
       await AsyncStorage.setItem(STORAGE_KEYS.USER_DATA, JSON.stringify(userData));
+      console.log('✅ [Storage] User data stored successfully:', userData.email);
     } catch (error) {
-      console.error('Error storing user data:', error);
+      console.error('❌ [Storage] Failed to store user data:', error);
+      throw error;
     }
   }
 
@@ -81,10 +89,12 @@ class StorageService {
    */
   async getUserData(): Promise<any | null> {
     try {
-      const data = await AsyncStorage.getItem(STORAGE_KEYS.USER_DATA);
-      return data ? JSON.parse(data) : null;
+      const userData = await AsyncStorage.getItem(STORAGE_KEYS.USER_DATA);
+      const parsed = userData ? JSON.parse(userData) : null;
+      console.log('🔍 [Storage] Retrieved user data:', !!parsed, parsed?.email);
+      return parsed;
     } catch (error) {
-      console.error('Error getting user data:', error);
+      console.error('❌ [Storage] Failed to get user data:', error);
       return null;
     }
   }

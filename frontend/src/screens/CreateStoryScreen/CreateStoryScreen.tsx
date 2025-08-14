@@ -69,7 +69,7 @@ export const CreateStoryScreen: React.FC<CreateStoryScreenProps> = ({
                 placeholderTextColor={COLORS.text.secondary}
                 value={caption}
                 onChangeText={setCaption}
-                multiline
+
               />
             </View>
           </View>

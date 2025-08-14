@@ -9,9 +9,9 @@ interface NetworkConfig {
 }
 
 const NETWORK_CONFIG: NetworkConfig = {
-  androidEmulator: '10.72.105.204',
+  androidEmulator: '192.168.1.3',
   iosSimulator: 'localhost',
-  physicalDevice: '10.72.105.204',
+  physicalDevice: '192.168.1.3',
   development: 'localhost',
 };
 
@@ -20,7 +20,10 @@ export const getBaseURL = (): string => {
   const apiPath = '/api/v1';
 
   if (API_CONFIG.BASE_URL && API_CONFIG.BASE_URL !== 'http://localhost:8000') {
-    return `${API_CONFIG.BASE_URL}${apiPath}`;
+    // Always add /api/v1 to the configured base URL
+    const baseURL = `${API_CONFIG.BASE_URL}${apiPath}`;
+    console.log('🌐 [Network] Using API_CONFIG.BASE_URL with /api/v1:', baseURL);
+    return baseURL;
   }
 
   let host: string;
@@ -37,7 +40,11 @@ export const getBaseURL = (): string => {
     host = API_CONFIG.BASE_URL.replace(/^https?:\/\//, '').split('/')[0];
   }
 
-  return `http://${host}:${port}${apiPath}`;
+  const baseURL = `http://${host}:${port}${apiPath}`;
+  console.log('🌐 [Network] Generated base URL:', baseURL);
+  console.log('🌐 [Network] Platform:', Platform.OS, 'Dev:', __DEV__, 'Host:', host);
+  
+  return baseURL;
 };
 
 export const getOAuthRedirectURL = (provider: string): string => {

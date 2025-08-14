@@ -127,7 +127,7 @@ export const AffiliateRegistrationScreen: React.FC<AffiliateRegistrationScreenPr
               onChangeText={(value) => handleInputChange('address', value)}
               placeholder="Enter address"
               placeholderTextColor={COLORS.text.secondary}
-              numberOfLines={4}
+
             />
           </View>
 

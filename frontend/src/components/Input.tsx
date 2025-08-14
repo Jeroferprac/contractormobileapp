@@ -7,23 +7,25 @@ import {
   TouchableOpacity,
   ViewStyle,
   TextStyle,
+  TextInputProps,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Feather';
 import { COLORS } from '../constants/colors';
 import { BORDER_RADIUS } from '../constants/spacing';
 
-interface InputProps {
-  placeholder: string;
-  value: string;
-  onChangeText: (text: string) => void;
-  icon?: React.ReactNode;
-  secureTextEntry?: boolean;
-  keyboardType?: 'default' | 'email-address' | 'phone-pad' | 'numeric';
+export type InputKeyboardType = 'default' | 'email-address' | 'phone-pad' | 'numeric';
+
+export interface InputProps extends TextInputProps {
+  label?: string;
   error?: string;
-  style?: ViewStyle;
+  icon?: React.ReactNode;
+  leftIcon?: string;
+  rightIcon?: string;
+  onRightIconPress?: () => void;
+  containerStyle?: ViewStyle;
   inputStyle?: TextStyle;
-  autoCapitalize?: 'none' | 'sentences' | 'words' | 'characters';
-  autoCorrect?: boolean;
+  labelStyle?: TextStyle;
+  errorStyle?: TextStyle;
 }
 
 export const Input: React.FC<InputProps> = ({

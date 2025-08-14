@@ -3,10 +3,12 @@ import {
   View,
   Text,
   StyleSheet,
-  TextInput,
+  SafeAreaView,
   TouchableOpacity,
+  TextInput,
   ScrollView,
-  Image as RNImage,
+  Image,
+  Alert,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { COLORS } from '../../constants/colors';
@@ -53,7 +55,7 @@ export const CreateHighlightScreen: React.FC<CreateHighlightScreenProps> = ({
           <View style={styles.highlightCreationContainer}>
             <View style={styles.coverSelectionContainer}>
               <View style={styles.coverPreview}>
-                <RNImage
+                <Image
                   source={{ uri: selectedImage }}
                   style={styles.coverImage}
                   resizeMode="cover"
@@ -79,7 +81,7 @@ export const CreateHighlightScreen: React.FC<CreateHighlightScreenProps> = ({
           // Image Selection View
           <View style={styles.imageSelectionContainer}>
             <View style={styles.mainImageContainer}>
-              <RNImage
+              <Image
                 source={{ uri: recentImages[0] }}
                 style={styles.mainImage}
                 resizeMode="cover"
@@ -94,7 +96,7 @@ export const CreateHighlightScreen: React.FC<CreateHighlightScreenProps> = ({
                   style={styles.recentImageItem}
                   onPress={() => setSelectedImage(image)}
                 >
-                  <RNImage
+                  <Image
                     source={{ uri: image }}
                     style={styles.recentImage}
                     resizeMode="cover"

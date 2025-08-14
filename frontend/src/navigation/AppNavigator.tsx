@@ -4,7 +4,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import { View } from 'react-native'; // Added View import
+import { View, Text, StyleSheet } from 'react-native';
 
 // Screens
 import { SplashScreen } from '../screens/SplashScreen';
@@ -15,16 +15,30 @@ import ForgotPasswordScreen from '../screens/ForgotPasswordScreen';
 import HomeScreen from '../screens/HomeScreen/HomeScreen';
 import InventoryScreen from '../screens/InventoryScreen/InventoryScreen';
 import AllProductsScreen from '../screens/AllProductsScreen/AllProductsScreen';
-import BarcodeScanner from '../components/ui/BarcodeScanner';
+import { BarcodeScannerScreen } from '../components/ui/BarcodeScanner';
+import { ProfileScreen } from '../screens/ProfileScreen';
+import ProfileEditScreen from '../screens/ProfileEditScreen';
+
 import { useAuth } from '../context/AuthContext';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
+// Temporary Bookings Screen Component
+const BookingsScreen = () => {
+  return (
+    <View style={styles.container}>
+      <Text style={styles.title}>Bookings</Text>
+      <Text style={styles.subtitle}>Your bookings will appear here</Text>
+    </View>
+  );
+};
+
 // Main Tab Navigator
 const MainTabNavigator = () => {
   return (
     <Tab.Navigator
+      initialRouteName="Home"
       screenOptions={{
         headerShown: false,
         tabBarActiveTintColor: '#FF6B35',
@@ -73,36 +87,8 @@ const MainTabNavigator = () => {
         }}
       />
       <Tab.Screen
-        name="Scan"
-        component={BarcodeScanner}
-        options={{
-          tabBarLabel: '',
-          tabBarIcon: ({ color, size }) => (
-            <View style={{
-              backgroundColor: '#FF6B35',
-              width: 56,
-              height: 56,
-              borderRadius: 28,
-              justifyContent: 'center',
-              alignItems: 'center',
-              marginTop: -20,
-              shadowColor: '#000',
-              shadowOffset: {
-                width: 0,
-                height: 2,
-              },
-              shadowOpacity: 0.25,
-              shadowRadius: 4,
-              elevation: 5,
-            }}>
-              <Icon name="qr-code-scanner" size={24} color="#FFFFFF" />
-            </View>
-          ),
-        }}
-      />
-      <Tab.Screen
         name="Bookings"
-        component={HomeScreen}
+        component={BookingsScreen}
         options={{
           tabBarLabel: 'Bookings',
           tabBarIcon: ({ color, size }) => (
@@ -140,8 +126,11 @@ export const AppNavigator: React.FC = () => {
   if (isLoading) return <SplashScreen />;
 
   return (
-    <NavigationContainer key={isAuthenticated ? 'authenticated' : 'unauthenticated'}>
-      <Stack.Navigator screenOptions={{ headerShown: false }}>
+    <NavigationContainer>
+      <Stack.Navigator 
+        initialRouteName={isAuthenticated ? "MainTabs" : "Onboarding"}
+        screenOptions={{ headerShown: false }}
+      >
         {!isAuthenticated ? (
           <>
             <Stack.Screen name="Onboarding" component={OnboardingScreen} />
@@ -153,9 +142,28 @@ export const AppNavigator: React.FC = () => {
           <>
             <Stack.Screen name="MainTabs" component={MainTabNavigator} />
             <Stack.Screen name="AllProducts" component={AllProductsScreen} />
+            <Stack.Screen name="ProfileEdit" component={ProfileEditScreen} />
           </>
         )}
       </Stack.Navigator>
     </NavigationContainer>
   );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 8,
+  },
+  subtitle: {
+    fontSize: 16,
+    color: '#666',
+  },
+});

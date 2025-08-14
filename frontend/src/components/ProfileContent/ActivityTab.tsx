@@ -9,9 +9,10 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import { COLORS } from '../../constants/colors';
 import { SPACING, BORDER_RADIUS } from '../../constants/spacing';
 
+
 interface ActivityItem {
   id: string;
-  type: 'message' | 'save' | 'review';
+  type: 'message' | 'save' | 'review' | 'like' | 'comment' | 'follow' | 'project' | 'certification' | 'meeting' | 'purchase' | 'booking' | 'payment';
   title: string;
   subtitle?: string;
   timestamp: string;
@@ -31,6 +32,24 @@ export const ActivityTab: React.FC<ActivityTabProps> = ({ activities }) => {
         return 'bookmark';
       case 'review':
         return 'star';
+      case 'like':
+        return 'favorite';
+      case 'comment':
+        return 'comment';
+      case 'follow':
+        return 'person-add';
+      case 'project':
+        return 'business';
+      case 'certification':
+        return 'verified';
+      case 'meeting':
+        return 'event';
+      case 'purchase':
+        return 'shopping-cart';
+      case 'booking':
+        return 'calendar-today';
+      case 'payment':
+        return 'payment';
       default:
         return 'info';
     }
@@ -60,7 +79,15 @@ export const ActivityTab: React.FC<ActivityTabProps> = ({ activities }) => {
       <ScrollView showsVerticalScrollIndicator={false}>
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Recent Activity</Text>
-          {activities.map(renderActivityItem)}
+          {activities.length > 0 ? (
+            activities.map(renderActivityItem)
+          ) : (
+            <View style={styles.emptyState}>
+              <Icon name="notifications-none" size={48} color={COLORS.text.secondary} />
+              <Text style={styles.emptyStateText}>No recent activity</Text>
+              <Text style={styles.emptyStateSubtext}>Your activity will appear here</Text>
+            </View>
+          )}
         </View>
       </ScrollView>
     </View>
@@ -72,6 +99,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.background,
   },
+
   section: {
     paddingHorizontal: SPACING.md,
     paddingTop: SPACING.md,
@@ -117,5 +145,24 @@ const styles = StyleSheet.create({
   activityTimestamp: {
     fontSize: 12,
     color: COLORS.text.secondary,
+  },
+  emptyState: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: SPACING.xl * 2,
+    paddingHorizontal: SPACING.lg,
+  },
+  emptyStateText: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: COLORS.text.primary,
+    marginTop: SPACING.md,
+    marginBottom: SPACING.xs,
+  },
+  emptyStateSubtext: {
+    fontSize: 14,
+    color: COLORS.text.secondary,
+    textAlign: 'center',
   },
 });

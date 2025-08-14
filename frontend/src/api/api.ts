@@ -9,6 +9,7 @@ import {
   Booking,
   ApiError 
 } from '../types/api';
+
 import { getBaseURL } from '../utils/network';
 import { API_CONFIG } from '../config/env';
 import storageService from '../utils/storage';
@@ -18,8 +19,11 @@ class ApiService {
   private useMock: boolean = false; 
 
   constructor() {
+    const baseURL = getBaseURL();
+    console.log('🔧 [API Service] Initializing with base URL:', baseURL);
+    
     this.api = axios.create({
-      baseURL: getBaseURL(),
+      baseURL: baseURL,
       timeout: API_CONFIG.TIMEOUT,
       headers: {
         'Content-Type': 'application/json',
@@ -35,12 +39,28 @@ class ApiService {
     this.api.interceptors.request.use(
       async (config) => {
         const token = await this.getAuthToken();
+        console.log('🔍 [API Interceptor] Request URL:', config.url);
+        console.log('🔍 [API Interceptor] Base URL:', this.api.defaults.baseURL);
+        console.log('🔍 [API Interceptor] Token available:', !!token);
+        console.log('🔍 [API Interceptor] Content-Type:', config.headers['Content-Type']);
+        
         if (token) {
           config.headers.Authorization = `Bearer ${token}`;
+          console.log('🔑 [API Interceptor] Authorization header set');
+        } else {
+          console.log('⚠️ [API Interceptor] No token available for request');
         }
+        
+        // Don't override Content-Type for FormData requests
+        if (config.data instanceof FormData) {
+          console.log('📁 [API Interceptor] FormData detected, preserving multipart/form-data');
+          delete config.headers['Content-Type']; // Let browser set the correct boundary
+        }
+        
         return config;
       },
       (error) => {
+        console.error('❌ [API Interceptor] Request error:', error);
         return Promise.reject(error);
       }
     );
@@ -48,10 +68,45 @@ class ApiService {
     // Response interceptor for error handling
     this.api.interceptors.response.use(
       (response: AxiosResponse) => {
+        console.log('✅ [API Interceptor] Response success:', response.status, response.config.url);
         return response;
       },
       async (error) => {
+        console.log('❌ [API Interceptor] Response error:', {
+          status: error.response?.status,
+          data: error.response?.data,
+          message: error.message,
+          code: error.code,
+          url: error.config?.url
+        });
+        
+        // Handle network errors
+        if (error.code === 'NETWORK_ERROR' || error.code === 'ECONNABORTED' || !error.response) {
+          console.error('🌐 [API Interceptor] Network error detected');
+          const networkError = new Error('Network error - please check your internet connection and try again');
+          networkError.name = 'NetworkError';
+          return Promise.reject(networkError);
+        }
+        
         if (error.response?.status === 401) {
+          console.log('🔒 [API Interceptor] Unauthorized - attempting token refresh...');
+          try {
+            // Try to refresh the token
+            const refreshResponse = await this.refreshToken();
+            if (refreshResponse.data.access_token) {
+              console.log('✅ [API Interceptor] Token refreshed successfully');
+              // Retry the original request with new token
+              const originalRequest = error.config;
+              originalRequest.headers.Authorization = `Bearer ${refreshResponse.data.access_token}`;
+              return this.api(originalRequest);
+            }
+          } catch (refreshError) {
+            console.log('❌ [API Interceptor] Token refresh failed, clearing auth data');
+            await this.clearAuthToken();
+          }
+        } else if (error.response?.status === 403) {
+          console.log('🚫 [API Interceptor] Forbidden - user may not have permission or token is invalid');
+          // For 403 errors, we should also clear the token as it might be invalid
           await this.clearAuthToken();
         }
         return Promise.reject(error);
@@ -67,11 +122,32 @@ class ApiService {
     await storageService.clearAuthData();
   }
 
+  /**
+   * Check if user is authenticated by verifying token exists
+   */
+  async isAuthenticated(): Promise<boolean> {
+    const token = await this.getAuthToken();
+    return !!token;
+  }
+
+  /**
+   * Validate current authentication status
+   */
+  async validateAuth(): Promise<boolean> {
+    try {
+      const token = await this.getAuthToken();
+      return !!token;
+    } catch (error: any) {
+      console.log('🔒 [API] Authentication validation failed:', error);
+      return false;
+    }
+  }
+
   // ===== AUTHENTICATION ENDPOINTS =====
 
-  async testConnection(): Promise<AxiosResponse<User>> {
+  async testConnection(): Promise<AxiosResponse<{ message: string }>> {
     try {
-      const response = await this.api.get('/auth/me');
+      const response = await this.api.get('/health');
       return response;
     } catch (error) {
       console.error('API Connection Test Failed:', error);
@@ -113,26 +189,30 @@ class ApiService {
     return response;
   }
 
-  async logout(): Promise<AxiosResponse<any>> {
+  async logout(): Promise<void> {
     try {
-      const response = await this.api.post('/auth/logout');
-      return response;
+      await this.api.post('/auth/logout');
     } catch (error) {
-      // Handle logout error silently
-      throw error;
+      console.log('Logout API call failed, but clearing local data anyway');
+    } finally {
+      await storageService.clearAuthData();
     }
-  }
-
-  async getCurrentUser(): Promise<AxiosResponse<User>> {
-    return this.api.get('/auth/me');
   }
 
   async getRoles(): Promise<AxiosResponse<Role[]>> {
     return this.api.get('/auth/roles');
   }
 
-  async oauthLogin(provider: string): Promise<AxiosResponse<{ url: string }>> {
-    return this.api.get(`/auth/oauth/${provider}`);
+  async forgotPassword(email: string): Promise<AxiosResponse<{ message: string }>> {
+    return this.api.post('/auth/forgot-password', { email });
+  }
+
+  async resetPassword(token: string, newPassword: string): Promise<AxiosResponse<{ message: string }>> {
+    return this.api.post('/auth/reset-password', { token, new_password: newPassword });
+  }
+
+  async oauthLogin(provider: string): Promise<AxiosResponse<{ auth_url: string }>> {
+    return this.api.get(`/auth/oauth/${provider}/login`);
   }
 
   async oauthCallback(provider: string, code: string): Promise<AxiosResponse<AuthResponse>> {
@@ -168,10 +248,24 @@ class ApiService {
     return response;
   }
 
-  // ===== USER ENDPOINTS =====
+
+
+  // ===== USER PROFILE ENDPOINTS =====
+
+  async getUserProfile(): Promise<AxiosResponse<User>> {
+    return this.api.get('/users/profile');
+  }
 
   async updateUserProfile(profileData: Partial<User>): Promise<AxiosResponse<User>> {
-    return this.api.put('/auth/me', profileData);
+    return this.api.put('/users/profile', profileData);
+  }
+
+  async uploadAvatar(imageData: FormData): Promise<AxiosResponse<{ avatar_url: string }>> {
+    return this.api.post('/users/upload-avatar', imageData);
+  }
+
+  async deleteAvatar(): Promise<AxiosResponse<void>> {
+    return this.api.delete('/users/avatar');
   }
 
   // ===== SERVICE ENDPOINTS =====

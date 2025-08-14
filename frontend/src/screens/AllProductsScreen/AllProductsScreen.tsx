@@ -118,8 +118,8 @@ const AllProductsScreen: React.FC<AllProductsScreenProps> = ({ navigation }) => 
     const stock = stocks.find(s => s.product_id === product.id);
     if (!stock) return { text: 'N/A', color: '#999' };
     
-    const quantity = parseInt(stock.quantity);
-    const minStockLevel = parseInt(product.min_stock_level);
+    const quantity = parseInt(stock.quantity.toString());
+    const minStockLevel = parseInt(product.min_stock_level.toString());
     
     if (quantity <= minStockLevel) {
       return { text: 'Low Stock', color: '#FF9500' };

@@ -5,13 +5,12 @@ import {
   StyleSheet,
   TouchableOpacity,
   Image,
-  Dimensions,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { COLORS } from '../../constants/colors';
 import { SPACING, BORDER_RADIUS } from '../../constants/spacing';
 
-const { width } = Dimensions.get('window');
+
 
 interface ProfileHeaderProps {
   user: {
@@ -25,12 +24,14 @@ interface ProfileHeaderProps {
   };
   onEditProfile: () => void;
   onShare: () => void;
+  onAvatarPress?: () => void;
 }
 
 export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   user,
   onEditProfile,
   onShare,
+  onAvatarPress,
 }) => {
   return (
     <View style={styles.container}>
@@ -45,7 +46,11 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
 
       {/* Profile Picture Overlay */}
       <View style={styles.profilePictureContainer}>
-        <View style={styles.profilePicture}>
+        <TouchableOpacity 
+          style={styles.profilePicture} 
+          onPress={onAvatarPress}
+          activeOpacity={0.8}
+        >
           {user.profileImage ? (
             <Image
               source={{ uri: user.profileImage }}
@@ -53,15 +58,15 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
               resizeMode="cover"
             />
           ) : (
-            <Icon name="person" size={40} color={COLORS.textSecondary} />
+            <Icon name="person" size={40} color={COLORS.text.secondary} />
           )}
           <View style={styles.verifiedBadge}>
-            <Icon name="verified" size={16} color={COLORS.info} />
+            <Icon name="verified" size={16} color={COLORS.status.info} />
           </View>
           <View style={styles.addIcon}>
             <Icon name="add" size={16} color={COLORS.primary} />
           </View>
-        </View>
+        </TouchableOpacity>
       </View>
 
       {/* User Information */}
@@ -155,28 +160,28 @@ const styles = StyleSheet.create({
   userName: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: COLORS.textPrimary,
+    color: COLORS.text.primary,
     marginBottom: SPACING.xs,
   },
   userHandle: {
     fontSize: 12,
-    color: COLORS.textSecondary,
+    color: COLORS.text.secondary,
     marginBottom: SPACING.xs,
   },
   userTitle: {
     fontSize: 14,
     fontWeight: '600',
-    color: COLORS.textPrimary,
+    color: COLORS.text.primary,
     marginBottom: SPACING.xs,
   },
   userJoined: {
     fontSize: 11,
-    color: COLORS.textSecondary,
+    color: COLORS.text.secondary,
     marginBottom: SPACING.sm,
   },
   userDescription: {
     fontSize: 11,
-    color: COLORS.textSecondary,
+    color: COLORS.text.secondary,
     lineHeight: 16,
     marginBottom: SPACING.md,
   },
@@ -192,11 +197,11 @@ const styles = StyleSheet.create({
   statNumber: {
     fontSize: 14,
     fontWeight: '600',
-    color: COLORS.textPrimary,
+    color: COLORS.text.primary,
   },
   statLabel: {
     fontSize: 10,
-    color: COLORS.textSecondary,
+    color: COLORS.text.secondary,
     marginTop: 2,
   },
   statDivider: {
@@ -222,7 +227,7 @@ const styles = StyleSheet.create({
   editButtonText: {
     fontSize: 14,
     fontWeight: '600',
-    color: COLORS.textLight,
+    color: COLORS.text.light,
   },
   shareButton: {
     flex: 1,
@@ -239,4 +244,4 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: COLORS.primary,
   },
-}); 
+});

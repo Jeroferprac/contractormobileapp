@@ -1,1 +1,2 @@
-export { ProfileTabs, ProfileTabType } from './ProfileTabs'; 
+export { ProfileTabs } from './ProfileTabs';
+export type { ProfileTabType } from './ProfileTabs';

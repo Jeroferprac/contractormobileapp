@@ -25,7 +25,7 @@ export const HowItWorksScreen: React.FC<HowItWorksScreenProps> = ({
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={onBack} style={styles.backButton}>
-          <Icon name="arrow-back" size={24} color={COLORS.textPrimary} />
+          <Icon name="arrow-back" size={24} color={COLORS.text.primary} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>How it work</Text>
         <View style={styles.placeholder} />
@@ -192,7 +192,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: COLORS.textPrimary,
+    color: COLORS.text.primary,
   },
   placeholder: {
     width: 40,
@@ -220,7 +220,7 @@ const styles = StyleSheet.create({
     height: 30,
     borderRadius: 15,
     backgroundColor: COLORS.primary,
-    color: COLORS.textLight,
+    color: COLORS.text.light,
     fontSize: 16,
     fontWeight: '600',
     textAlign: 'center',
@@ -233,12 +233,12 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: COLORS.textPrimary,
+    color: COLORS.text.primary,
     marginBottom: SPACING.sm,
   },
   sectionDescription: {
     fontSize: 14,
-    color: COLORS.textSecondary,
+    color: COLORS.text.secondary,
     lineHeight: 20,
   },
   commissionTable: {
@@ -255,7 +255,7 @@ const styles = StyleSheet.create({
   },
   tableHeaderText: {
     flex: 1,
-    color: COLORS.textLight,
+    color: COLORS.text.light,
     fontSize: 12,
     fontWeight: '600',
     textAlign: 'center',
@@ -268,7 +268,7 @@ const styles = StyleSheet.create({
   },
   tableCell: {
     flex: 1,
-    color: COLORS.textPrimary,
+    color: COLORS.text.primary,
     fontSize: 12,
     textAlign: 'center',
   },
@@ -284,12 +284,12 @@ const styles = StyleSheet.create({
   incentiveTitle: {
     fontSize: 14,
     fontWeight: '600',
-    color: COLORS.textPrimary,
+    color: COLORS.text.primary,
     marginBottom: SPACING.xs,
   },
   incentiveDescription: {
     fontSize: 12,
-    color: COLORS.textSecondary,
+    color: COLORS.text.secondary,
     lineHeight: 16,
   },
   actionContainer: {
@@ -305,8 +305,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   signInText: {
-    color: COLORS.textLight,
+    color: COLORS.text.light,
     fontSize: 16,
     fontWeight: '600',
   },
-}); 
+});

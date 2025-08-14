@@ -11,6 +11,17 @@ export interface User {
   updated_at: string;
   avatar_data?: string;
   avatar_mimetype?: string;
+  avatar_url?: string;
+  bio?: string;
+  location?: string;
+  website?: string;
+  company?: string;
+  job_title?: string;
+  social_media?: {
+    linkedin?: string;
+    instagram?: string;
+    facebook?: string;
+  };
 }
 
 export interface AuthResponse {
@@ -59,4 +70,6 @@ export interface Booking {
   status: string;
   scheduled_date: string;
   created_at: string;
-} 
+}
+
+ 

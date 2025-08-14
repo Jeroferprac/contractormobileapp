@@ -33,22 +33,21 @@ export const AboutTab: React.FC<AboutTabProps> = ({ user, onContactPress }) => {
       style={styles.contactItem}
       onPress={() => onContactPress(type, value)}
     >
-      <Icon name={icon} size={20} color={COLORS.textSecondary} />
+      <Icon name={icon} size={20} color={COLORS.text.secondary} />
       <View style={styles.contactInfo}>
         <Text style={styles.contactLabel}>{label}</Text>
         <Text style={styles.contactValue}>{value}</Text>
       </View>
-      <Icon name="chevron-right" size={20} color={COLORS.textSecondary} />
+      <Icon name="chevron-right" size={20} color={COLORS.text.secondary} />
     </TouchableOpacity>
   );
 
   const renderSocialMediaItem = (icon: string, platform: string, url?: string) => (
     <TouchableOpacity
-      style={styles.socialItem}
+      style={[styles.socialItem, !url && styles.disabledItem]}
       onPress={() => url && onContactPress(platform, url)}
-      disabled={!url}
     >
-      <Icon name={icon} size={24} color={url ? COLORS.primary : COLORS.textSecondary} />
+      <Icon name={icon} size={24} color={url ? COLORS.primary : COLORS.text.secondary} />
       <Text style={[styles.socialText, !url && styles.disabledText]}>{platform}</Text>
     </TouchableOpacity>
   );
@@ -68,9 +67,12 @@ export const AboutTab: React.FC<AboutTabProps> = ({ user, onContactPress }) => {
           <View style={styles.contactSection}>
             <Text style={styles.subsectionTitle}>Contact Details</Text>
             {renderContactItem('email', 'Email', user.email, 'email')}
-            {renderContactItem('phone', 'Phone', user.phone, 'phone')}
-            {renderContactItem('location-on', 'Address', user.address, 'address')}
-            {renderContactItem('language', 'Website', user.website, 'website')}
+            {user.phone && user.phone !== 'No phone available' && 
+              renderContactItem('phone', 'Phone', user.phone, 'phone')}
+            {user.address && user.address !== 'No address available' && 
+              renderContactItem('location-on', 'Address', user.address, 'address')}
+            {user.website && user.website !== 'No website available' && 
+              renderContactItem('language', 'Website', user.website, 'website')}
           </View>
 
           {/* Social Media */}
@@ -81,6 +83,9 @@ export const AboutTab: React.FC<AboutTabProps> = ({ user, onContactPress }) => {
               {renderSocialMediaItem('camera-alt', 'Instagram', user.socialMedia.instagram)}
               {renderSocialMediaItem('facebook', 'Facebook', user.socialMedia.facebook)}
             </View>
+            {!user.socialMedia.linkedin && !user.socialMedia.instagram && !user.socialMedia.facebook && (
+              <Text style={styles.noSocialText}>No social media links added</Text>
+            )}
           </View>
 
           {/* Joined Date */}
@@ -105,7 +110,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: COLORS.textPrimary,
+    color: COLORS.text.primary,
     marginBottom: SPACING.md,
   },
   descriptionContainer: {
@@ -113,7 +118,7 @@ const styles = StyleSheet.create({
   },
   descriptionText: {
     fontSize: 14,
-    color: COLORS.textPrimary,
+    color: COLORS.text.primary,
     lineHeight: 20,
   },
   contactSection: {
@@ -122,7 +127,7 @@ const styles = StyleSheet.create({
   subsectionTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: COLORS.textPrimary,
+    color: COLORS.text.primary,
     marginBottom: SPACING.sm,
   },
   contactItem: {
@@ -138,12 +143,12 @@ const styles = StyleSheet.create({
   },
   contactLabel: {
     fontSize: 12,
-    color: COLORS.textSecondary,
+    color: COLORS.text.secondary,
     marginBottom: 2,
   },
   contactValue: {
     fontSize: 14,
-    color: COLORS.textPrimary,
+    color: COLORS.text.primary,
     fontWeight: '500',
   },
   socialSection: {
@@ -164,7 +169,10 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   disabledText: {
-    color: COLORS.textSecondary,
+    color: COLORS.text.secondary,
+  },
+  disabledItem: {
+    opacity: 0.5,
   },
   joinedSection: {
     alignItems: 'center',
@@ -172,6 +180,13 @@ const styles = StyleSheet.create({
   },
   joinedText: {
     fontSize: 12,
-    color: COLORS.textSecondary,
+    color: COLORS.text.secondary,
   },
-}); 
+  noSocialText: {
+    fontSize: 12,
+    color: COLORS.text.secondary,
+    textAlign: 'center',
+    fontStyle: 'italic',
+    marginTop: SPACING.sm,
+  },
+});

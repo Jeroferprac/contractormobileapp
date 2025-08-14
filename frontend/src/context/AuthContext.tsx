@@ -45,12 +45,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const checkAuthStatus = async () => {
     try {
+      console.log('🔍 [AuthContext] Checking auth status...');
       const [token, userData] = await Promise.all([
         storageService.getAuthToken(),
         storageService.getUserData(),
       ]);
 
+      console.log('🔍 [AuthContext] Token found:', !!token);
+      console.log('🔍 [AuthContext] User data found:', !!userData);
+
       if (token && userData) {
+        console.log('✅ [AuthContext] User is authenticated:', userData.email);
         setState({
           isAuthenticated: true,
           user: userData,
@@ -58,21 +63,27 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           isLoading: false,
         });
       } else {
+        console.log('❌ [AuthContext] No valid auth data found');
         setState(prev => ({ ...prev, isLoading: false }));
       }
     } catch (error) {
-      console.error('Auth check failed:', error);
+      console.error('❌ [AuthContext] Auth check failed:', error);
       setState(prev => ({ ...prev, isLoading: false }));
     }
   };
 
   const login = async (credentials: LoginRequest) => {
     try {
+      console.log('🔐 [AuthContext] Starting login process...');
       setState(prev => ({ ...prev, isLoading: true }));
       setError(null);
 
+      console.log('📡 [AuthContext] Calling login API...');
       const response = await apiService.login(credentials);
       const { access_token, user } = response.data;
+      
+      console.log('✅ [AuthContext] Login API successful:', user.email);
+      console.log('🔑 [AuthContext] Token received:', !!access_token);
       
       setState({
         isAuthenticated: true,
@@ -81,9 +92,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         isLoading: false,
       });
       
-      console.log('Login successful:', user.email);
+      console.log('✅ [AuthContext] Login successful:', user.email);
     } catch (error: any) {
-      console.error('Login error:', error);
+      console.error('❌ [AuthContext] Login error:', error);
       const errorMessage = error.response?.data?.detail || error.message || 'Login failed';
       setError(errorMessage);
       setState(prev => ({ ...prev, isLoading: false }));
@@ -164,9 +175,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const getCurrentUser = async () => {
     try {
-      const response = await apiService.getCurrentUser();
-      const user = response.data;
-      setState(prev => ({ ...prev, user }));
+      // Profile API removed - using stored user data instead
+      const storedUser = await storageService.getUserData();
+      if (storedUser) {
+        setState(prev => ({ ...prev, user: storedUser }));
+      }
     } catch (error) {
       console.error('Get current user error:', error);
       setState(prev => ({ ...prev, isAuthenticated: false, user: null }));

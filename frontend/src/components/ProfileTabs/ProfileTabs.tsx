@@ -21,14 +21,14 @@ const tabs: { key: ProfileTabType; label: string }[] = [
   { key: 'activity', label: 'Activity' },
   { key: 'saved', label: 'Saved' },
   { key: 'about', label: 'About' },
-  { key: 'affiliate', label: 'Affiliate Program' },
+  { key: 'affiliate', label: 'Affiliate' },
 ];
 
 export const ProfileTabs: React.FC<ProfileTabsProps> = ({
   activeTab,
   onTabPress,
 }) => {
-  const scrollViewRef = useRef<ScrollView>(null);
+  const scrollViewRef = useRef<any>(null);
 
   const handleTabPress = (tabKey: ProfileTabType) => {
     onTabPress(tabKey);
@@ -50,10 +50,9 @@ export const ProfileTabs: React.FC<ProfileTabsProps> = ({
   return (
     <View style={styles.container}>
       <ScrollView
-        ref={scrollViewRef}
         horizontal
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={styles.tabsContainer}
       >
         {tabs.map((tab) => (
           <TouchableOpacity
@@ -83,41 +82,34 @@ const styles = StyleSheet.create({
   container: {
     backgroundColor: COLORS.background,
     borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
+    borderBottomColor: '#E5E5EA',
   },
-  scrollContent: {
+  tabsContainer: {
     paddingHorizontal: SPACING.md,
   },
   tab: {
     paddingHorizontal: SPACING.lg,
     paddingVertical: SPACING.md,
     marginRight: SPACING.sm,
-    borderRadius: 20,
-    backgroundColor: COLORS.background,
-    borderWidth: 1,
-    borderColor: COLORS.border,
+    borderRadius: 0,
+    backgroundColor: 'transparent',
+    borderWidth: 0,
     minWidth: 80,
     alignItems: 'center',
+    borderBottomWidth: 2,
+    borderBottomColor: 'transparent',
   },
   activeTab: {
-    backgroundColor: COLORS.primary,
-    borderColor: COLORS.primary,
-    shadowColor: COLORS.primary,
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 4,
+    backgroundColor: 'transparent',
+    borderBottomColor: COLORS.primary,
   },
   tabText: {
     fontSize: 14,
     fontWeight: '500',
-    color: COLORS.textSecondary,
+    color: COLORS.text.secondary,
   },
   activeTabText: {
-    color: COLORS.textLight,
+    color: COLORS.primary,
     fontWeight: '600',
   },
-}); 
+});

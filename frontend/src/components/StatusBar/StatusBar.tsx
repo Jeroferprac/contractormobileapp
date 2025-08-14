@@ -22,8 +22,8 @@ export const StatusBar: React.FC = () => {
     <View style={styles.container}>
       <Text style={styles.time}>{getCurrentTime()}</Text>
       <View style={styles.icons}>
-        <Icon name="wifi" size={16} color={COLORS.textPrimary} />
-        <Icon name="battery-full" size={16} color={COLORS.textPrimary} />
+        <Icon name="wifi" size={16} color={COLORS.text.primary} />
+        <Icon name="battery-full" size={16} color={COLORS.text.primary} />
       </View>
     </View>
   );
@@ -41,11 +41,11 @@ const styles = StyleSheet.create({
   time: {
     fontSize: 14,
     fontWeight: '600',
-    color: COLORS.textPrimary,
+    color: COLORS.text.primary,
   },
   icons: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: SPACING.xs,
   },
-}); 
+});

@@ -20,7 +20,7 @@ export interface Post {
 
 export interface ActivityItem {
   id: string;
-  type: 'message' | 'save' | 'review';
+  type: 'message' | 'save' | 'review' | 'like' | 'comment' | 'follow' | 'project' | 'certification' | 'meeting' | 'purchase' | 'booking' | 'payment';
   title: string;
   subtitle?: string;
   timestamp: string;
@@ -31,7 +31,11 @@ export interface SavedItem {
   id: string;
   title: string;
   image: string;
-  type: 'project' | 'design' | 'inspiration';
+  type: 'project' | 'design' | 'inspiration' | 'service' | 'supplier' | 'technology';
+  description?: string;
+  location?: string;
+  rating?: number;
+  savedDate?: string;
 }
 
 export interface AboutUser {
@@ -55,4 +59,7 @@ export interface AffiliateCompany {
   joinedDate: string;
   revenue: string;
   status: 'active' | 'pending' | 'inactive';
+  description?: string;
+  projects?: number;
+  rating?: number;
 } 

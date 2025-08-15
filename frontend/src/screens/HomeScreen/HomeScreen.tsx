@@ -91,7 +91,6 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
   const mockProfessionalsSafe = mockProfessionals || [];
   const contractors = mockProfessionalsSafe.filter(p => p.type === 'contractor');
   const consultants = mockProfessionalsSafe.filter(p => p.type === 'consultant');
-  const suppliers = mockProfessionalsSafe.filter(p => p.type === 'supplier');
   const freelancers = mockProfessionals.filter(p => p.type === 'freelancer');
   const workshops = mockProfessionals.filter(p => p.type === 'workshop');
 
@@ -300,26 +299,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
             </View>
           </View>
 
-          {/* Suppliers */}
-          <View style={styles.professionalSection}>
-            <SectionHeader
-              title="Suppliers"
-              subtitle="Quality building materials and equipments"
-              onViewAllPress={() => console.log('View all suppliers')}
-            />
-            <View
-              style={[styles.horizontalScrollContent, { width: '100%' }]}
-            >
-              {suppliers.map((professional) => (
-                <ProfessionalCard
-                  key={professional.id}
-                  professional={professional}
-                  onPress={() => handleProfessionalPress(professional)}
-                  style={styles.professionalCard}
-                />
-              ))}
-            </View>
-          </View>
+          
 
           {/* Freelancers */}
           <View style={styles.professionalSection}>

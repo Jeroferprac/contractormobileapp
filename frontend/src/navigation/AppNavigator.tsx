@@ -15,6 +15,11 @@ import ForgotPasswordScreen from '../screens/ForgotPasswordScreen';
 import HomeScreen from '../screens/HomeScreen/HomeScreen';
 import InventoryScreen from '../screens/InventoryScreen/InventoryScreen';
 import AllProductsScreen from '../screens/AllProductsScreen/AllProductsScreen';
+import SuppliersScreen from '../screens/SuppliersScreen';
+import SupplierFormScreen from '../screens/SupplierFormScreen';
+import SupplierDetailsScreen from '../screens/SupplierDetailsScreen';
+import ProductSuppliersScreen from '../screens/ProductSuppliersScreen';
+import ProductSupplierFormScreen from '../screens/ProductSupplierFormScreen';
 import { BarcodeScannerScreen } from '../components/ui/BarcodeScanner';
 import { ProfileScreen } from '../screens/ProfileScreen';
 import ProfileEditScreen from '../screens/ProfileEditScreen';
@@ -142,6 +147,11 @@ export const AppNavigator: React.FC = () => {
           <>
             <Stack.Screen name="MainTabs" component={MainTabNavigator} />
             <Stack.Screen name="AllProducts" component={AllProductsScreen} />
+            <Stack.Screen name="Suppliers" component={SuppliersScreen} />
+            <Stack.Screen name="SupplierForm" component={SupplierFormScreen} />
+            <Stack.Screen name="SupplierDetails" component={SupplierDetailsScreen} />
+            <Stack.Screen name="ProductSuppliers" component={ProductSuppliersScreen} />
+            <Stack.Screen name="ProductSupplierForm" component={ProductSupplierFormScreen} />
             <Stack.Screen name="ProfileEdit" component={ProfileEditScreen} />
           </>
         )}

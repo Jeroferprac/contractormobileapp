@@ -32,7 +32,8 @@ import {
   InventoryStats,
   TopSellingList,
   RecentActivityCard,
-  WarehouseList
+  WarehouseList,
+  SupplierList
 } from '../../components/inventory';
 import { SectionHeader } from '../../components/layout';
 
@@ -41,6 +42,7 @@ import {
   InventorySummary,
   Transaction,
   Warehouse,
+  Supplier,
 } from '../../types/inventory';
 
 import { InventoryScreenNavigationProp } from '../../types/navigation';
@@ -65,68 +67,155 @@ const InventoryScreen: React.FC<InventoryScreenProps> = ({ navigation }) => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [summary, setSummary] = useState<InventorySummary | null>(null);
   const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
+  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [chartData, setChartData] = useState<
     { value: number; label: string; dataPointText: string }[]
   >([]);
   const [loading, setLoading] = useState(true);
   const [sidebarVisible, setSidebarVisible] = useState(false);
   const [barcodeScannerVisible, setBarcodeScannerVisible] = useState(false);
+  const [hasError, setHasError] = useState(false);
 
   useEffect(() => {
-    loadInventoryData();
+    try {
+      loadInventoryData();
+    } catch (error) {
+      console.error('Error in useEffect:', error);
+      setHasError(true);
+      setLoading(false);
+    }
   }, []);
+
+  // Refresh data when screen comes into focus
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', () => {
+      loadInventoryData();
+    });
+
+    return unsubscribe;
+  }, [navigation]);
 
   const getMonthName = (monthNumber: number): string =>
     new Date(2000, monthNumber - 1).toLocaleString('default', { month: 'short' });
 
   const loadInventoryData = async () => {
     try {
+      console.log('🔄 [InventoryScreen] Starting to load inventory data...');
       setLoading(true);
-      const [
-        summaryRes,
-        topSellingRes,
-        transactionsRes,
-        warehouseRes,
-        monthlySalesRes,
-      ] = await Promise.all([
-        inventoryApiService.getSummary(),
-        inventoryApiService.getSalesByProduct(),
-        inventoryApiService.getTransactions({ limit: 3 }),
-        inventoryApiService.getWarehouses(),
-        inventoryApiService.getMonthlySalesSummary(),
-      ]);
+      
+      // Add fallback data in case API calls fail
+      const fallbackSummary: InventorySummary = {
+        total_products: 0,
+        low_stock_items: 0,
+        total_warehouses: 0,
+        total_inventory_value: 0,
+        out_of_stock_items: 0,
+        recent_transactions: 0
+      };
+      
+      const fallbackProducts: Product[] = [];
+      const fallbackTransactions: Transaction[] = [];
+      const fallbackWarehouses: Warehouse[] = [];
+      const fallbackSuppliers: Supplier[] = [];
 
-      setSummary(summaryRes.data);
-      setProducts(topSellingRes.data);
-      setTransactions(transactionsRes.data);
+      const fallbackChartData: { value: number; label: string; dataPointText: string }[] = [];
 
-      // Attach image URL to each warehouse
-      const updatedWarehouses = warehouseRes.data.slice(0, 10).map((wh, idx) => ({
-        ...wh,
-        imageUrl: `${UNSPLASH_IMAGES[idx % UNSPLASH_IMAGES.length]}&sig=${idx}`,
-      }));
-      setWarehouses(updatedWarehouses);
+      try {
+        const [
+          summaryRes,
+          topSellingRes,
+          transactionsRes,
+          suppliersRes,
+          warehouseRes,
+          monthlySalesRes,
+        ] = await Promise.all([
+          inventoryApiService.getSummary().catch(() => ({ data: fallbackSummary })),
+          inventoryApiService.getSalesByProduct().catch(() => ({ data: fallbackProducts })),
+          inventoryApiService.getTransactions({ limit: 3 }).catch(() => ({ data: fallbackTransactions })),
+          inventoryApiService.getSuppliers().catch(() => ({ data: fallbackSuppliers })),
+          inventoryApiService.getWarehouses().catch(() => ({ data: fallbackWarehouses })),
+          inventoryApiService.getMonthlySalesSummary().catch(() => ({ data: fallbackChartData })),
+        ]);
 
-      const formattedChartData = Array.isArray(monthlySalesRes.data) ? monthlySalesRes.data.map((item) => ({
-        value: item.total_sales,
-        label: `${getMonthName(item.month)} ${item.year}`,
-        dataPointText: `${item.total_sales} units`,
-      })) : [];
+        setSummary(summaryRes.data || fallbackSummary);
+        setProducts(topSellingRes.data || fallbackProducts);
+        setTransactions(transactionsRes.data || fallbackTransactions);
+        setSuppliers(suppliersRes.data || fallbackSuppliers);
 
-      setChartData(formattedChartData);
+        // Attach image URL to each warehouse
+        const warehouseData = warehouseRes.data || fallbackWarehouses;
+        const updatedWarehouses = warehouseData.slice(0, 10).map((wh, idx) => ({
+          ...wh,
+          imageUrl: `${UNSPLASH_IMAGES[idx % UNSPLASH_IMAGES.length]}&sig=${idx}`,
+        }));
+        setWarehouses(updatedWarehouses);
+
+        const monthlyData = monthlySalesRes.data || fallbackChartData;
+        const formattedChartData = Array.isArray(monthlyData) ? monthlyData.map((item: any) => ({
+          value: item.total_sales || item.sales || 0,
+          label: item.month ? `${getMonthName(parseInt(item.month.split('-')[1]))} ${item.month.split('-')[0]}` : 'Unknown',
+          dataPointText: `${item.total_sales || item.sales || 0} units`,
+        })) : [];
+
+        setChartData(formattedChartData);
+        console.log('✅ [InventoryScreen] Successfully loaded inventory data');
+      } catch (apiError) {
+        console.error('❌ [InventoryScreen] API Error:', apiError);
+        // Use fallback data if all API calls fail
+        setSummary(fallbackSummary);
+        setProducts(fallbackProducts);
+        setTransactions(fallbackTransactions);
+        setWarehouses(fallbackWarehouses);
+        setSuppliers(fallbackSuppliers);
+        setChartData(fallbackChartData);
+        console.log('🔄 [InventoryScreen] Using fallback data');
+      }
     } catch (error) {
-      Alert.alert('Error', 'Failed to load inventory data');
+      console.error('❌ [InventoryScreen] Load inventory data error:', error);
+      // Don't show alert, just use fallback data
     } finally {
       setLoading(false);
+      console.log('🏁 [InventoryScreen] Finished loading inventory data');
     }
   };
 
   const getTopSellingProducts = () => products.slice(0, 4);
   const getRecentActivity = () => transactions.slice(0, 3);
+  const getTopSuppliers = () => suppliers.slice(0, 4);
 
   const handleProductPress = (product: Product) => {
     Alert.alert('Product Details', `Selected: ${product.name}`);
   };
+
+  const handleSupplierPress = (supplier: Supplier) => {
+    navigation.navigate('SupplierDetails', { supplierId: supplier.id });
+  };
+
+  if (hasError) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
+        <LinearGradient colors={COLORS.gradient.primary} style={styles.headerGradient}>
+          <View style={styles.errorHeader}>
+            <Text style={styles.errorTitle}>Inventory</Text>
+          </View>
+        </LinearGradient>
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorText}>Something went wrong</Text>
+          <TouchableOpacity 
+            style={styles.retryButton}
+            onPress={() => {
+              setHasError(false);
+              setLoading(true);
+              loadInventoryData();
+            }}
+          >
+            <Text style={styles.retryButtonText}>Retry</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   if (loading) {
     // Skeleton loading UI
@@ -215,16 +304,27 @@ const InventoryScreen: React.FC<InventoryScreenProps> = ({ navigation }) => {
           />
         </View>
 
-      <SectionHeader
-        title="Warehouses"
-        onViewAllPress={() => navigation.navigate('Warehouses')}
-      />
-      <WarehouseList 
-        warehouses={warehouses} 
-        loading={loading} 
-        onWarehousePress={(warehouse) => Alert.alert('Warehouse', `Selected: ${warehouse.name}`)}
-        onViewAll={() => navigation.navigate('Warehouses')}
-      />
+        <SectionHeader
+          title="Suppliers"
+          onViewAllPress={() => navigation.navigate('Suppliers')}
+        />
+        <SupplierList
+          suppliers={getTopSuppliers()}
+          onPressSupplier={handleSupplierPress}
+          onViewAll={() => navigation.navigate('Suppliers')}
+          loading={loading}
+        />
+
+        <SectionHeader
+          title="Warehouses"
+          onViewAllPress={() => navigation.navigate('Warehouses')}
+        />
+        <WarehouseList 
+          warehouses={warehouses} 
+          loading={loading} 
+          onWarehousePress={(warehouse) => Alert.alert('Warehouse', `Selected: ${warehouse.name}`)}
+          onViewAll={() => navigation.navigate('Warehouses')}
+        />
 
         <SectionHeader title="Recent Activity" />
         <View style={styles.activityContainer}>
@@ -283,5 +383,37 @@ const styles = StyleSheet.create({
   warehousesContainer: {
     paddingHorizontal: SPACING.lg,
     paddingVertical: SPACING.sm,
+  },
+  errorHeader: {
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.md,
+  },
+  errorTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: COLORS.text.light,
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: SPACING.lg,
+  },
+  errorText: {
+    fontSize: 18,
+    color: COLORS.text.secondary,
+    marginBottom: SPACING.lg,
+    textAlign: 'center',
+  },
+  retryButton: {
+    backgroundColor: COLORS.primary,
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.md,
+    borderRadius: BORDER_RADIUS.md,
+  },
+  retryButtonText: {
+    color: COLORS.text.light,
+    fontSize: 16,
+    fontWeight: '600',
   },
 });

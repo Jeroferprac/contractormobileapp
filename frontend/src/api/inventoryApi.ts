@@ -26,6 +26,12 @@ import {
 import { getBaseURL } from '../utils/network';
 import { API_CONFIG } from '../config/env';
 import storageService from '../utils/storage';
+import { 
+  mockProducts, 
+  mockTransactions, 
+  mockWarehouses, 
+  mockInventorySummary 
+} from '../data/mockData';
 
 class InventoryApiService {
   private api: AxiosInstance;
@@ -138,7 +144,18 @@ class InventoryApiService {
   // ===== WAREHOUSES ENDPOINTS =====
 
   async getWarehouses(): Promise<AxiosResponse<Warehouse[]>> {
-    return this.api.get(`${this.basePath}/warehouses`);
+    try {
+      return await this.api.get(`${this.basePath}/warehouses`);
+    } catch (error) {
+      console.log('🔄 [API] Using mock warehouses data');
+      return { 
+        data: mockWarehouses,
+        status: 200,
+        statusText: 'OK',
+        headers: {},
+        config: {} as any
+      } as AxiosResponse<Warehouse[]>;
+    }
   }
 
   async createWarehouse(warehouseData: Partial<Warehouse>): Promise<AxiosResponse<Warehouse>> {
@@ -191,7 +208,18 @@ class InventoryApiService {
     date_to?: string;
     sort?: string;
   }): Promise<AxiosResponse<Transaction[]>> {
-    return this.api.get(`${this.basePath}/transactions`, { params });
+    try {
+      return await this.api.get(`${this.basePath}/transactions`, { params });
+    } catch (error) {
+      console.log('🔄 [API] Using mock transactions data');
+      return { 
+        data: mockTransactions,
+        status: 200,
+        statusText: 'OK',
+        headers: {},
+        config: {} as any
+      } as AxiosResponse<Transaction[]>;
+    }
   }
 
   // ===== TRANSFERS ENDPOINTS =====
@@ -219,7 +247,19 @@ class InventoryApiService {
   }
 
   async createSupplier(supplierData: Partial<Supplier>): Promise<AxiosResponse<Supplier>> {
-    return this.api.post(`${this.basePath}/suppliers`, supplierData);
+    console.log('🔄 [API] Creating supplier with data:', JSON.stringify(supplierData, null, 2));
+    try {
+      const response = await this.api.post(`${this.basePath}/suppliers`, supplierData);
+      console.log('✅ [API] Supplier created successfully:', response.data);
+      return response;
+    } catch (error: any) {
+      console.error('❌ [API] Error creating supplier:', error);
+      if (error.response) {
+        console.error('Response status:', error.response.status);
+        console.error('Response data:', error.response.data);
+      }
+      throw error;
+    }
   }
 
   async getSupplierById(id: string): Promise<AxiosResponse<Supplier>> {
@@ -227,11 +267,36 @@ class InventoryApiService {
   }
 
   async updateSupplier(id: string, supplierData: Partial<Supplier>): Promise<AxiosResponse<Supplier>> {
-    return this.api.put(`${this.basePath}/suppliers/${id}`, supplierData);
+    console.log('🔄 [API] Updating supplier with ID:', id);
+    console.log('🔄 [API] Update data:', JSON.stringify(supplierData, null, 2));
+    try {
+      const response = await this.api.put(`${this.basePath}/suppliers/${id}`, supplierData);
+      console.log('✅ [API] Supplier updated successfully:', response.data);
+      return response;
+    } catch (error: any) {
+      console.error('❌ [API] Error updating supplier:', error);
+      if (error.response) {
+        console.error('Response status:', error.response.status);
+        console.error('Response data:', error.response.data);
+      }
+      throw error;
+    }
   }
 
   async deleteSupplier(id: string): Promise<AxiosResponse<void>> {
-    return this.api.delete(`${this.basePath}/suppliers/${id}`);
+    console.log('🔄 [API] Deleting supplier with ID:', id);
+    try {
+      const response = await this.api.delete(`${this.basePath}/suppliers/${id}`);
+      console.log('✅ [API] Supplier deleted successfully');
+      return response;
+    } catch (error: any) {
+      console.error('❌ [API] Error deleting supplier:', error);
+      if (error.response) {
+        console.error('Response status:', error.response.status);
+        console.error('Response data:', error.response.data);
+      }
+      throw error;
+    }
   }
 
   // ===== PRODUCT SUPPLIERS ENDPOINTS =====
@@ -241,7 +306,19 @@ class InventoryApiService {
   }
 
   async createProductSupplier(productSupplierData: Partial<ProductSupplier>): Promise<AxiosResponse<ProductSupplier>> {
-    return this.api.post(`${this.basePath}/product-suppliers`, productSupplierData);
+    console.log('🔄 [API] Creating product supplier with data:', JSON.stringify(productSupplierData, null, 2));
+    try {
+      const response = await this.api.post(`${this.basePath}/product-suppliers`, productSupplierData);
+      console.log('✅ [API] Product supplier created successfully:', response.data);
+      return response;
+    } catch (error: any) {
+      console.error('❌ [API] Error creating product supplier:', error);
+      if (error.response) {
+        console.error('Response status:', error.response.status);
+        console.error('Response data:', error.response.data);
+      }
+      throw error;
+    }
   }
 
   async getProductSupplierById(id: string): Promise<AxiosResponse<ProductSupplier>> {
@@ -287,7 +364,29 @@ class InventoryApiService {
   }
 
   async getMonthlySalesSummary(): Promise<AxiosResponse<SalesSummary>> {
-    return this.api.get(`${this.basePath}/sales/summary/monthly`);
+    try {
+      return await this.api.get(`${this.basePath}/sales/summary/monthly`);
+    } catch (error) {
+      console.log('🔄 [API] Using mock monthly sales data');
+      const mockSalesSummary: SalesSummary = {
+        total_sales: 125000,
+        total_revenue: 1875000,
+        average_order_value: 15000,
+        top_selling_products: mockProducts.slice(0, 3),
+        monthly_trends: [
+          { month: '2024-01', sales: 125000, revenue: 1875000 },
+          { month: '2024-02', sales: 138000, revenue: 2070000 },
+          { month: '2024-03', sales: 142000, revenue: 2130000 },
+        ]
+      };
+      return { 
+        data: mockSalesSummary,
+        status: 200,
+        statusText: 'OK',
+        headers: {},
+        config: {} as any
+      } as AxiosResponse<SalesSummary>;
+    }
   }
 
   // ===== PURCHASE ORDERS ENDPOINTS =====
@@ -319,7 +418,18 @@ class InventoryApiService {
   }
 
   async getInventoryReport(): Promise<AxiosResponse<InventorySummary>> {
-    return this.api.get(`${this.basePath}/reports`);
+    try {
+      return await this.api.get(`${this.basePath}/reports`);
+    } catch (error) {
+      console.log('🔄 [API] Using mock inventory summary data');
+      return { 
+        data: mockInventorySummary,
+        status: 200,
+        statusText: 'OK',
+        headers: {},
+        config: {} as any
+      } as AxiosResponse<InventorySummary>;
+    }
   }
   
    async getSummary(): Promise<AxiosResponse<InventorySummary>> {
@@ -332,7 +442,18 @@ class InventoryApiService {
   }
 
   async getSalesByProduct(): Promise<AxiosResponse<any>> {
-    return this.api.get(`${this.basePath}/sales/summary/by-product`);
+    try {
+      return await this.api.get(`${this.basePath}/sales/summary/by-product`);
+    } catch (error) {
+      console.log('🔄 [API] Using mock products data');
+      return { 
+        data: mockProducts,
+        status: 200,
+        statusText: 'OK',
+        headers: {},
+        config: {} as any
+      } as AxiosResponse<any>;
+    }
   }
 
   async getPurchaseBySupplier(): Promise<AxiosResponse<any>> {

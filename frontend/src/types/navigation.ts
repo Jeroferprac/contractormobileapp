@@ -14,6 +14,19 @@ export type RootStackParamList = {
   ForgotPassword: undefined;
   MainTabs: undefined;
   AllProducts: undefined;
+  Suppliers: undefined;
+  SupplierForm: {
+    supplier?: any;
+    isEditing?: boolean;
+  };
+  SupplierDetails: {
+    supplierId: string;
+  };
+  ProductSuppliers: undefined;
+  ProductSupplierForm: {
+    productSupplier?: any;
+    isEditing?: boolean;
+  };
   ProfileEdit: {
     user: any;
   };
@@ -26,3 +39,4 @@ export type OnboardingScreenNavigationProp = NativeStackNavigationProp<RootStack
 export type HomeScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'MainTabs'>;
 export type InventoryScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'MainTabs'>;
 export type AllProductsScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'AllProducts'>;
+export type SuppliersScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Suppliers' | 'SupplierForm' | 'SupplierDetails' | 'ProductSuppliers' | 'ProductSupplierForm'>;

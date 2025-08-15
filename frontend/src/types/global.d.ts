@@ -49,6 +49,7 @@ declare module 'react-native' {
     horizontal?: boolean;
     children?: any;
     refreshControl?: any;
+    ref?: any;
   }
   
   export interface SafeAreaViewProps {

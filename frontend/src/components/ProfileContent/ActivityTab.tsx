@@ -5,6 +5,7 @@ import {
   StyleSheet,
   ScrollView,
 } from 'react-native';
+import FastImage from 'react-native-fast-image';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { COLORS } from '../../constants/colors';
 import { SPACING, BORDER_RADIUS } from '../../constants/spacing';
@@ -21,9 +22,11 @@ interface ActivityItem {
 
 interface ActivityTabProps {
   activities: ActivityItem[];
+  userAvatar?: string;
+  userName?: string;
 }
 
-export const ActivityTab: React.FC<ActivityTabProps> = ({ activities }) => {
+export const ActivityTab: React.FC<ActivityTabProps> = ({ activities, userAvatar, userName }) => {
   const getActivityIcon = (type: ActivityItem['type']) => {
     switch (type) {
       case 'message':
@@ -58,11 +61,19 @@ export const ActivityTab: React.FC<ActivityTabProps> = ({ activities }) => {
   const renderActivityItem = (activity: ActivityItem) => (
     <View key={activity.id} style={styles.activityItem}>
       <View style={styles.activityIcon}>
-        <Icon 
-          name={getActivityIcon(activity.type)} 
-          size={20} 
-          color={COLORS.primary} 
-        />
+        {userAvatar ? (
+          <FastImage
+            source={{ uri: userAvatar }}
+            style={styles.activityAvatar}
+            resizeMode={FastImage.resizeMode.cover}
+          />
+        ) : (
+          <Icon 
+            name={getActivityIcon(activity.type)} 
+            size={20} 
+            color={COLORS.primary} 
+          />
+        )}
       </View>
       <View style={styles.activityContent}>
         <Text style={styles.activityTitle}>{activity.title}</Text>
@@ -127,6 +138,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: SPACING.sm,
+    overflow: 'hidden',
+  },
+  activityAvatar: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 20,
   },
   activityContent: {
     flex: 1,

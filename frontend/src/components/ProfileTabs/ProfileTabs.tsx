@@ -8,6 +8,7 @@ import {
 } from 'react-native';
 import { COLORS } from '../../constants/colors';
 import { SPACING, BORDER_RADIUS } from '../../constants/spacing';
+import LinearGradient from 'react-native-linear-gradient';
 
 export type ProfileTabType = 'posts' | 'activity' | 'saved' | 'about' | 'affiliate';
 
@@ -21,7 +22,7 @@ const tabs: { key: ProfileTabType; label: string }[] = [
   { key: 'activity', label: 'Activity' },
   { key: 'saved', label: 'Saved' },
   { key: 'about', label: 'About' },
-  { key: 'affiliate', label: 'Affiliate' },
+  { key: 'affiliate', label: 'Affiliate P' },
 ];
 
 export const ProfileTabs: React.FC<ProfileTabsProps> = ({
@@ -50,6 +51,7 @@ export const ProfileTabs: React.FC<ProfileTabsProps> = ({
   return (
     <View style={styles.container}>
       <ScrollView
+        ref={scrollViewRef}
         horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.tabsContainer}
@@ -62,15 +64,14 @@ export const ProfileTabs: React.FC<ProfileTabsProps> = ({
               activeTab === tab.key && styles.activeTab,
             ]}
             onPress={() => handleTabPress(tab.key)}
+            activeOpacity={0.8}
           >
-            <Text
-              style={[
-                styles.tabText,
-                activeTab === tab.key && styles.activeTabText,
-              ]}
-            >
-              {tab.label}
-            </Text>
+                         <Text style={[
+               styles.tabText,
+               activeTab === tab.key && styles.activeTabText
+             ]}>
+               {tab.label}
+             </Text>
           </TouchableOpacity>
         ))}
       </ScrollView>
@@ -80,36 +81,39 @@ export const ProfileTabs: React.FC<ProfileTabsProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: COLORS.background,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E5E5EA',
+    backgroundColor: '#FFFFFF',
+    paddingVertical: SPACING.sm,
   },
   tabsContainer: {
-    paddingHorizontal: SPACING.md,
+    paddingHorizontal: SPACING.lg,
+    gap: SPACING.md,
   },
   tab: {
     paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.md,
-    marginRight: SPACING.sm,
-    borderRadius: 0,
-    backgroundColor: 'transparent',
-    borderWidth: 0,
+    paddingVertical: SPACING.sm,
+    borderRadius: 24,
+    backgroundColor: '#F8F9FA',
+    borderWidth: 1,
+    borderColor: '#E5E5EA',
     minWidth: 80,
     alignItems: 'center',
-    borderBottomWidth: 2,
-    borderBottomColor: 'transparent',
+    justifyContent: 'center',
   },
   activeTab: {
-    backgroundColor: 'transparent',
-    borderBottomColor: COLORS.primary,
+    backgroundColor: '#FF6B35',
+    borderWidth: 0,
   },
+
   tabText: {
     fontSize: 14,
-    fontWeight: '500',
-    color: COLORS.text.secondary,
+    fontWeight: '600',
+    color: '#5A6474',
+    letterSpacing: 0.2,
   },
   activeTabText: {
-    color: COLORS.primary,
-    fontWeight: '600',
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    letterSpacing: 0.3,
   },
 });

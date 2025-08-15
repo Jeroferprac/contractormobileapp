@@ -122,27 +122,44 @@ export const createFormDataForAvatar = (imageResult: ImagePickerResult): FormDat
   console.log('📁 [ImagePicker] Creating FormData for avatar upload...');
   console.log('📁 [ImagePicker] Image result:', imageResult);
   
-  const formData = new FormData();
+  // Defensive check for valid imageResult
+  if (!imageResult || !imageResult.uri) {
+    console.error('❌ [ImagePicker] Invalid imageResult provided:', imageResult);
+    throw new Error('Invalid image data provided. Please try selecting an image again.');
+  }
   
-  // Ensure proper file object structure for React Native
-  const fileObject = {
-    uri: Platform.OS === 'ios' ? imageResult.uri.replace('file://', '') : imageResult.uri,
-    type: imageResult.type || 'image/jpeg',
-    name: imageResult.name || 'avatar.jpg',
-  };
-  
-  console.log('📁 [ImagePicker] File object:', fileObject);
-  console.log('📁 [ImagePicker] Platform:', Platform.OS);
-  console.log('📁 [ImagePicker] Original URI:', imageResult.uri);
-  console.log('📁 [ImagePicker] Processed URI:', fileObject.uri);
-  
-  // Append the file to FormData with 'avatar_file' field name (as per API specification)
-  formData.append('avatar_file', fileObject as any);
-  
-  console.log('📁 [ImagePicker] FormData created successfully');
-  console.log('📁 [ImagePicker] FormData field name: avatar_file');
+  try {
+    console.log('📁 [ImagePicker] Creating new FormData...');
+    const formData = new FormData();
+    console.log('📁 [ImagePicker] FormData created:', formData);
+    
+    // Ensure proper file object structure for React Native
+    const fileObject = {
+      uri: Platform.OS === 'ios' ? imageResult.uri.replace('file://', '') : imageResult.uri,
+      type: imageResult.type || 'image/jpeg',
+      name: imageResult.name || 'avatar.jpg',
+    };
+    
+    console.log('📁 [ImagePicker] File object:', fileObject);
+    console.log('📁 [ImagePicker] Platform:', Platform.OS);
+    console.log('📁 [ImagePicker] Original URI:', imageResult.uri);
+    console.log('📁 [ImagePicker] Processed URI:', fileObject.uri);
+    
+    console.log('📁 [ImagePicker] Appending file to FormData...');
+    // Append the file to FormData with 'avatar_file' field name (backend expects this)
+    formData.append('avatar_file', fileObject as any);
+    console.log('📁 [ImagePicker] File appended successfully');
+    
+    console.log('📁 [ImagePicker] FormData created successfully');
+    console.log('📁 [ImagePicker] FormData field name: avatar_file');
+    console.log('📁 [ImagePicker] FormData type:', typeof formData);
+    console.log('📁 [ImagePicker] FormData constructor:', formData.constructor.name);
 
-  return formData;
+    return formData;
+  } catch (error) {
+    console.error('❌ [ImagePicker] FormData creation failed:', error);
+    throw new Error('Failed to create form data for image upload. Please try again.');
+  }
 };
 
 export const validateImageSize = (size: number, maxSizeMB: number = 5): boolean => {

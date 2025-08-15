@@ -8,12 +8,14 @@ import {
   TouchableOpacity,
   Alert,
   ActivityIndicator,
+  TextInput,
+  Platform,
 } from 'react-native';
+import Icon from 'react-native-vector-icons/MaterialIcons';
+import LinearGradient from 'react-native-linear-gradient';
 import { StatusBar } from '../../components/StatusBar';
-import { Input } from '../../components/Input';
-import { Button } from '../../components/Button';
 import { COLORS } from '../../constants/colors';
-import { SPACING, BORDER_RADIUS } from '../../constants/spacing';
+import { SPACING, BORDER_RADIUS, SHADOWS } from '../../constants/spacing';
 import { useAuth } from '../../context/AuthContext';
 import profileService from '../../services/profileService';
 import { User } from '../../types/api';
@@ -44,6 +46,41 @@ export const ProfileEditScreen: React.FC<ProfileEditScreenProps> = ({ navigation
     instagram: user?.social_media?.instagram || '',
     facebook: user?.social_media?.facebook || '',
   });
+
+  // Custom Input Component
+  const CustomInput = ({ 
+    label, 
+    value, 
+    onChangeText, 
+    placeholder, 
+    multiline = false, 
+    numberOfLines = 1,
+    keyboardType = 'default',
+    icon,
+    ...props 
+  }: any) => (
+    <View style={styles.inputContainer}>
+      <View style={styles.inputLabelContainer}>
+        {icon && <Icon name={icon} size={20} color={COLORS.primary} style={styles.inputIcon} />}
+        <Text style={styles.inputLabel}>{label}</Text>
+      </View>
+      <TextInput
+        style={[
+          styles.textInput,
+          multiline && styles.textInputMultiline,
+          value && styles.textInputFilled
+        ]}
+        value={value}
+        onChangeText={onChangeText}
+        placeholder={placeholder}
+        placeholderTextColor={COLORS.text.tertiary}
+        multiline={multiline}
+        numberOfLines={numberOfLines}
+        keyboardType={keyboardType}
+        {...props}
+      />
+    </View>
+  );
 
   const handleSave = async () => {
     try {
@@ -90,102 +127,155 @@ export const ProfileEditScreen: React.FC<ProfileEditScreenProps> = ({ navigation
           <Text style={styles.cancelButtonText}>Cancel</Text>
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Edit Profile</Text>
-        <TouchableOpacity onPress={handleSave} style={styles.saveButton} disabled={loading}>
-          <Text style={styles.saveButtonText}>Save</Text>
+        <TouchableOpacity onPress={handleSave} style={styles.headerSaveButton} disabled={loading}>
+          <Text style={styles.headerSaveButtonText}>Save</Text>
         </TouchableOpacity>
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.form}>
-          <Text style={styles.sectionTitle}>Basic Information</Text>
-          
-          <Input
-            label="Full Name"
-            value={formData.full_name}
-            onChangeText={(text) => setFormData(prev => ({ ...prev, full_name: text }))}
-            placeholder="Enter your full name"
-          />
+          {/* Profile Header */}
+          <View style={styles.profileHeader}>
+            <LinearGradient
+              colors={COLORS.gradient.primary}
+              style={styles.profileHeaderGradient}
+            >
+              <View style={styles.profileHeaderContent}>
+                <View style={styles.profileAvatar}>
+                  <Icon name="person" size={40} color={COLORS.white} />
+                </View>
+                <Text style={styles.profileHeaderTitle}>Edit Your Profile</Text>
+                <Text style={styles.profileHeaderSubtitle}>Update your information and preferences</Text>
+              </View>
+            </LinearGradient>
+          </View>
 
-          <Input
-            label="Bio"
-            value={formData.bio}
-            onChangeText={(text) => setFormData(prev => ({ ...prev, bio: text }))}
-            placeholder="Tell us about yourself"
-            multiline
-            numberOfLines={3}
-          />
+          {/* Basic Information Section */}
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Icon name="person-outline" size={24} color={COLORS.primary} />
+              <Text style={styles.sectionTitle}>Basic Information</Text>
+            </View>
+            
+            <CustomInput
+              label="Full Name"
+              value={formData.full_name}
+              onChangeText={(text: string) => setFormData(prev => ({ ...prev, full_name: text }))}
+              placeholder="Enter your full name"
+              icon="person"
+            />
 
-          <Input
-            label="Phone"
-            value={formData.phone}
-            onChangeText={(text) => setFormData(prev => ({ ...prev, phone: text }))}
-            placeholder="Enter your phone number"
-            keyboardType="phone-pad"
-          />
+            <CustomInput
+              label="Bio"
+              value={formData.bio}
+              onChangeText={(text: string) => setFormData(prev => ({ ...prev, bio: text }))}
+              placeholder="Tell us about yourself"
+              multiline
+              numberOfLines={3}
+              icon="description"
+            />
 
-          <Input
-            label="Location"
-            value={formData.location}
-            onChangeText={(text) => setFormData(prev => ({ ...prev, location: text }))}
-            placeholder="Enter your location"
-          />
+            <CustomInput
+              label="Phone"
+              value={formData.phone}
+              onChangeText={(text: string) => setFormData(prev => ({ ...prev, phone: text }))}
+              placeholder="Enter your phone number"
+              keyboardType="phone-pad"
+              icon="phone"
+            />
 
-          <Input
-            label="Website"
-            value={formData.website}
-            onChangeText={(text) => setFormData(prev => ({ ...prev, website: text }))}
-            placeholder="Enter your website URL"
-            keyboardType="url"
-          />
+            <CustomInput
+              label="Location"
+              value={formData.location}
+              onChangeText={(text: string) => setFormData(prev => ({ ...prev, location: text }))}
+              placeholder="Enter your location"
+              icon="location-on"
+            />
 
-          <Text style={styles.sectionTitle}>Professional Information</Text>
+            <CustomInput
+              label="Website"
+              value={formData.website}
+              onChangeText={(text: string) => setFormData(prev => ({ ...prev, website: text }))}
+              placeholder="Enter your website URL"
+              keyboardType="url"
+              icon="language"
+            />
+          </View>
 
-          <Input
-            label="Company"
-            value={formData.company}
-            onChangeText={(text) => setFormData(prev => ({ ...prev, company: text }))}
-            placeholder="Enter your company name"
-          />
+          {/* Professional Information Section */}
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Icon name="work-outline" size={24} color={COLORS.primary} />
+              <Text style={styles.sectionTitle}>Professional Information</Text>
+            </View>
 
-          <Input
-            label="Job Title"
-            value={formData.job_title}
-            onChangeText={(text) => setFormData(prev => ({ ...prev, job_title: text }))}
-            placeholder="Enter your job title"
-          />
+            <CustomInput
+              label="Company"
+              value={formData.company}
+              onChangeText={(text: string) => setFormData(prev => ({ ...prev, company: text }))}
+              placeholder="Enter your company name"
+              icon="business"
+            />
 
-          <Text style={styles.sectionTitle}>Social Media</Text>
+            <CustomInput
+              label="Job Title"
+              value={formData.job_title}
+              onChangeText={(text: string) => setFormData(prev => ({ ...prev, job_title: text }))}
+              placeholder="Enter your job title"
+              icon="work"
+            />
+          </View>
 
-          <Input
-            label="LinkedIn"
-            value={formData.linkedin}
-            onChangeText={(text) => setFormData(prev => ({ ...prev, linkedin: text }))}
-            placeholder="Enter your LinkedIn profile"
-            keyboardType="url"
-          />
+          {/* Social Media Section */}
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Icon name="share" size={24} color={COLORS.primary} />
+              <Text style={styles.sectionTitle}>Social Media</Text>
+            </View>
 
-          <Input
-            label="Instagram"
-            value={formData.instagram}
-            onChangeText={(text) => setFormData(prev => ({ ...prev, instagram: text }))}
-            placeholder="Enter your Instagram handle"
-          />
+            <CustomInput
+              label="LinkedIn"
+              value={formData.linkedin}
+              onChangeText={(text: string) => setFormData(prev => ({ ...prev, linkedin: text }))}
+              placeholder="Enter your LinkedIn profile"
+              keyboardType="url"
+              icon="link"
+            />
 
-          <Input
-            label="Facebook"
-            value={formData.facebook}
-            onChangeText={(text) => setFormData(prev => ({ ...prev, facebook: text }))}
-            placeholder="Enter your Facebook profile"
-            keyboardType="url"
-          />
+            <CustomInput
+              label="Instagram"
+              value={formData.instagram}
+              onChangeText={(text: string) => setFormData(prev => ({ ...prev, instagram: text }))}
+              placeholder="Enter your Instagram handle"
+              icon="camera-alt"
+            />
 
+            <CustomInput
+              label="Facebook"
+              value={formData.facebook}
+              onChangeText={(text: string) => setFormData(prev => ({ ...prev, facebook: text }))}
+              placeholder="Enter your Facebook profile"
+              keyboardType="url"
+              icon="facebook"
+            />
+          </View>
+
+          {/* Action Buttons */}
           <View style={styles.buttonContainer}>
-            <Button
-              title={loading ? 'Saving...' : 'Save Changes'}
+            <TouchableOpacity
+              style={[styles.saveButton, loading && styles.saveButtonDisabled]}
               onPress={handleSave}
               disabled={loading}
-              loading={loading}
-            />
+            >
+              {loading ? (
+                <ActivityIndicator color={COLORS.white} size="small" />
+              ) : (
+                <>
+                  <Icon name="save" size={20} color={COLORS.white} />
+                  <Text style={styles.saveButtonText}>Save Changes</Text>
+                </>
+              )}
+            </TouchableOpacity>
           </View>
         </View>
       </ScrollView>
@@ -206,23 +296,28 @@ const styles = StyleSheet.create({
     paddingVertical: SPACING.md,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.border,
+    backgroundColor: COLORS.white,
+    ...SHADOWS.sm,
   },
   cancelButton: {
     padding: SPACING.sm,
+    borderRadius: BORDER_RADIUS.sm,
   },
   cancelButtonText: {
     color: COLORS.text.secondary,
     fontSize: 16,
+    fontWeight: '500',
   },
   headerTitle: {
     fontSize: 18,
     fontWeight: '600',
     color: COLORS.text.primary,
   },
-  saveButton: {
+  headerSaveButton: {
     padding: SPACING.sm,
+    borderRadius: BORDER_RADIUS.sm,
   },
-  saveButtonText: {
+  headerSaveButtonText: {
     color: COLORS.primary,
     fontSize: 16,
     fontWeight: '600',
@@ -231,17 +326,124 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   form: {
-    padding: SPACING.lg,
+    flex: 1,
   },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: COLORS.text.primary,
-    marginTop: SPACING.lg,
+  
+  // Profile Header
+  profileHeader: {
+    marginBottom: SPACING.lg,
+  },
+  profileHeaderGradient: {
+    paddingVertical: SPACING.xl,
+    paddingHorizontal: SPACING.lg,
+    borderBottomLeftRadius: BORDER_RADIUS.xl,
+    borderBottomRightRadius: BORDER_RADIUS.xl,
+  },
+  profileHeaderContent: {
+    alignItems: 'center',
+  },
+  profileAvatar: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
     marginBottom: SPACING.md,
   },
+  profileHeaderTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: COLORS.white,
+    marginBottom: SPACING.xs,
+  },
+  profileHeaderSubtitle: {
+    fontSize: 14,
+    color: 'rgba(255, 255, 255, 0.8)',
+    textAlign: 'center',
+  },
+
+  // Sections
+  section: {
+    marginBottom: SPACING.xl,
+    paddingHorizontal: SPACING.lg,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: SPACING.lg,
+    paddingBottom: SPACING.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: COLORS.text.primary,
+    marginLeft: SPACING.sm,
+  },
+
+  // Input Styles
+  inputContainer: {
+    marginBottom: SPACING.lg,
+  },
+  inputLabelContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: SPACING.sm,
+  },
+  inputIcon: {
+    marginRight: SPACING.sm,
+  },
+  inputLabel: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: COLORS.text.primary,
+  },
+  textInput: {
+    backgroundColor: COLORS.white,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: BORDER_RADIUS.md,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
+    fontSize: 16,
+    color: COLORS.text.primary,
+    ...SHADOWS.sm,
+  },
+  textInputMultiline: {
+    minHeight: 80,
+    textAlignVertical: 'top',
+    paddingTop: SPACING.sm,
+  },
+  textInputFilled: {
+    borderColor: COLORS.primary,
+    backgroundColor: COLORS.surface,
+  },
+
+  // Button Styles
   buttonContainer: {
-    marginTop: SPACING.xl,
+    paddingHorizontal: SPACING.lg,
+    paddingBottom: SPACING.xl,
+  },
+  saveButton: {
+    backgroundColor: COLORS.primary,
+    borderRadius: BORDER_RADIUS.lg,
+    paddingVertical: SPACING.lg,
+    paddingHorizontal: SPACING.xl,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...SHADOWS.md,
+  },
+  saveButtonDisabled: {
+    backgroundColor: COLORS.text.tertiary,
+  },
+  saveButtonText: {
+    color: COLORS.white,
+    fontSize: 18,
+    fontWeight: '600',
+    marginLeft: SPACING.sm,
   },
 });
 

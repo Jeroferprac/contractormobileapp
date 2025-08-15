@@ -23,22 +23,32 @@ interface Post {
 
 interface PostsTabProps {
   posts: Post[];
+  userAvatar?: string;
+  userName?: string;
   onCreatePost: () => void;
 }
 
-export const PostsTab: React.FC<PostsTabProps> = ({ posts, onCreatePost }) => {
+export const PostsTab: React.FC<PostsTabProps> = ({ posts, userAvatar, userName, onCreatePost }) => {
   const renderPost = (post: Post) => (
     <View key={post.id} style={styles.postCard}>
       {/* Post Header */}
       <View style={styles.postHeader}>
         <View style={styles.postAvatar}>
-          <View style={styles.postAvatarPlaceholder}>
-            <Icon name="person" size={20} color={COLORS.text.secondary} />
-          </View>
+          {userAvatar ? (
+            <FastImage
+              source={{ uri: userAvatar }}
+              style={styles.postAvatarImage}
+              resizeMode={FastImage.resizeMode.cover}
+            />
+          ) : (
+            <View style={styles.postAvatarPlaceholder}>
+              <Icon name="person" size={20} color={COLORS.text.secondary} />
+            </View>
+          )}
         </View>
         <View style={styles.postInfo}>
           <View style={styles.postAuthorContainer}>
-            <Text style={styles.postAuthor}>User</Text>
+            <Text style={styles.postAuthor}>{userName || 'User'}</Text>
             <Icon name="verified" size={14} color="#2196F3" style={styles.verifiedIcon} />
           </View>
           <Text style={styles.postTimestamp}>{post.timestamp}</Text>
@@ -134,6 +144,11 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.surface,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  postAvatarImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 20,
   },
   postInfo: {
     flex: 1,

@@ -14,6 +14,10 @@ export type RootStackParamList = {
   ForgotPassword: undefined;
   MainTabs: undefined;
   AllProducts: undefined;
+  ProfileEdit: {
+    user: any;
+  };
+  ProfileApiTest: undefined;
 };
 
 export type LoginScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Login'>;

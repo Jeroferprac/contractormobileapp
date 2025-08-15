@@ -5,6 +5,7 @@ import {
   StyleSheet,
   TouchableOpacity,
   Image,
+  ActivityIndicator,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { COLORS } from '../../constants/colors';
@@ -25,6 +26,7 @@ interface ProfileHeaderProps {
   onEditProfile: () => void;
   onShare: () => void;
   onAvatarPress?: () => void;
+  avatarLoading?: boolean;
 }
 
 export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
@@ -32,6 +34,7 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   onEditProfile,
   onShare,
   onAvatarPress,
+  avatarLoading = false,
 }) => {
   return (
     <View style={styles.container}>
@@ -50,8 +53,13 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
           style={styles.profilePicture} 
           onPress={onAvatarPress}
           activeOpacity={0.8}
+          disabled={avatarLoading}
         >
-          {user.profileImage ? (
+          {avatarLoading ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="small" color={COLORS.primary} />
+            </View>
+          ) : user.profileImage ? (
             <Image
               source={{ uri: user.profileImage }}
               style={styles.profileImage}
@@ -63,9 +71,11 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
           <View style={styles.verifiedBadge}>
             <Icon name="verified" size={16} color={COLORS.status.info} />
           </View>
-          <View style={styles.addIcon}>
-            <Icon name="add" size={16} color={COLORS.primary} />
-          </View>
+          {!avatarLoading && (
+            <View style={styles.addIcon}>
+              <Icon name="camera-alt" size={16} color={COLORS.primary} />
+            </View>
+          )}
         </TouchableOpacity>
       </View>
 
@@ -135,6 +145,14 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
     borderRadius: 37,
+  },
+  loadingContainer: {
+    width: '100%',
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 37,
+    backgroundColor: COLORS.surface,
   },
   verifiedBadge: {
     position: 'absolute',

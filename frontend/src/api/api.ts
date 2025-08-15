@@ -253,19 +253,125 @@ class ApiService {
   // ===== USER PROFILE ENDPOINTS =====
 
   async getUserProfile(): Promise<AxiosResponse<User>> {
-    return this.api.get('/users/profile');
+    console.log('🔍 [API] Calling getUserProfile endpoint: /users/profile');
+    console.log('🔍 [API] Full URL will be:', `${this.api.defaults.baseURL}/users/profile`);
+    
+    // Try the standard endpoint first
+    try {
+      console.log('🔍 [API] Trying standard endpoint: /users/profile');
+      const response = await this.api.get('/users/profile');
+      console.log('✅ [API] Standard endpoint successful:', response.data);
+      return response;
+    } catch (error: any) {
+      console.log('❌ [API] Standard endpoint failed:', {
+        status: error.response?.status,
+        message: error.message,
+        data: error.response?.data
+      });
+      
+      // If the standard endpoint fails, try some common alternatives
+      const alternatives = [
+        '/user/profile',
+        '/profile',
+        '/auth/profile',
+        '/me',
+        '/user/me',
+        '/users/me'
+      ];
+      
+      for (const endpoint of alternatives) {
+        try {
+          console.log(`🔍 [API] Trying alternative endpoint: ${endpoint}`);
+          const response = await this.api.get(endpoint);
+          console.log(`✅ [API] Alternative endpoint ${endpoint} successful:`, response.data);
+          return response;
+        } catch (altError: any) {
+          console.log(`❌ [API] Alternative endpoint ${endpoint} failed:`, {
+            status: altError.response?.status,
+            message: altError.message
+          });
+        }
+      }
+      
+      // If all alternatives fail, provide a detailed error
+      console.error('❌ [API] All profile endpoints failed');
+      if (error.response?.status === 401) {
+        throw new Error('Authentication failed. Please log in again.');
+      } else if (error.response?.status === 404) {
+        throw new Error('Profile endpoint not found. Please check if the API endpoint is correct.');
+      } else if (error.response?.status === 403) {
+        throw new Error('Access denied. You may not have permission to access this resource.');
+      } else {
+        throw error;
+      }
+    }
   }
 
   async updateUserProfile(profileData: Partial<User>): Promise<AxiosResponse<User>> {
-    return this.api.put('/users/profile', profileData);
+    console.log('🔍 [API] Calling updateUserProfile with data:', profileData);
+    try {
+      const response = await this.api.put('/users/profile', profileData);
+      console.log('✅ [API] Profile updated successfully:', response.data);
+      return response;
+    } catch (error: any) {
+      console.error('❌ [API] Profile update failed:', {
+        status: error.response?.status,
+        message: error.message,
+        data: error.response?.data
+      });
+      throw error;
+    }
   }
 
   async uploadAvatar(imageData: FormData): Promise<AxiosResponse<{ avatar_url: string }>> {
-    return this.api.post('/users/upload-avatar', imageData);
+    console.log('🔍 [API] Calling uploadAvatar...');
+    console.log('🔍 [API] Type of imageData:', typeof imageData);
+    console.log('🔍 [API] Value of imageData:', imageData);
+    
+    // Defensive check for valid FormData
+    if (!imageData || typeof imageData !== 'object') {
+      console.error('❌ [API] Invalid imageData received for uploadAvatar. It is not a FormData object or is undefined/null.');
+      throw new Error('Invalid image data provided for upload. Please try again.');
+    }
+    
+    console.log('🔍 [API] FormData validation passed');
+    // Note: entries() method might not be available in React Native FormData
+    console.log('🔍 [API] Full URL will be:', `${this.api.defaults.baseURL}/users/upload-avatar`);
+    
+    try {
+      // Use a longer timeout for file uploads
+      const response = await this.api.post('/users/upload-avatar', imageData, {
+        timeout: 30000, // 30 seconds for file uploads
+      });
+      console.log('✅ [API] Avatar uploaded successfully:', response.data);
+      return response;
+    } catch (error: any) {
+      console.error('❌ [API] Avatar upload failed:', {
+        status: error.response?.status,
+        message: error.message,
+        data: error.response?.data,
+        code: error.code,
+        url: error.config?.url,
+        headers: error.config?.headers
+      });
+      throw error;
+    }
   }
 
   async deleteAvatar(): Promise<AxiosResponse<void>> {
-    return this.api.delete('/users/avatar');
+    console.log('🔍 [API] Calling deleteAvatar...');
+    try {
+      const response = await this.api.delete('/users/avatar');
+      console.log('✅ [API] Avatar deleted successfully');
+      return response;
+    } catch (error: any) {
+      console.error('❌ [API] Avatar deletion failed:', {
+        status: error.response?.status,
+        message: error.message,
+        data: error.response?.data
+      });
+      throw error;
+    }
   }
 
   // ===== SERVICE ENDPOINTS =====

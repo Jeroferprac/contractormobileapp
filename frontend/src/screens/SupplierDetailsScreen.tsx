@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import {
   View,
   ScrollView,
-  SafeAreaView,
   StatusBar,
   StyleSheet,
   Alert,
@@ -10,6 +9,7 @@ import {
   Text,
   ActivityIndicator,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import LinearGradient from 'react-native-linear-gradient';
 import { COLORS } from '../constants/colors';

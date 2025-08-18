@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import {
   View,
   ScrollView,
-  SafeAreaView,
   StatusBar,
   StyleSheet,
   Alert,
@@ -10,6 +9,7 @@ import {
   Text,
   ActivityIndicator,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import LinearGradient from 'react-native-linear-gradient';
 import { COLORS } from '../constants/colors';
@@ -48,6 +48,7 @@ const SupplierFormScreen: React.FC<SupplierFormScreenProps> = ({ navigation, rou
   
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
@@ -104,38 +105,118 @@ const SupplierFormScreen: React.FC<SupplierFormScreenProps> = ({ navigation, rou
 
   const performSubmit = async () => {
     setLoading(true);
+    setSubmitError(null);
     try {
       // Clean up the data and ensure proper types
       const supplierData = {
         name: formData.name.trim(),
         contact_person: formData.contact_person.trim(),
-        email: formData.email.trim(),
+        email: formData.email.trim().toLowerCase(),
         phone: formData.phone.trim(),
         address: formData.address.trim(),
-        tax_number: formData.tax_number.trim() || null,
-        payment_terms: formData.payment_terms.trim() || null,
-        credit_limit: formData.credit_limit ? Number(formData.credit_limit) : null,
+        tax_number: formData.tax_number.trim() || undefined,
+        payment_terms: formData.payment_terms.trim() || undefined,
+        credit_limit: formData.credit_limit ? Number(formData.credit_limit) : undefined,
         is_active: true,
       };
+
+      // Remove undefined values to prevent API issues
+      Object.keys(supplierData).forEach(key => {
+        if (supplierData[key as keyof typeof supplierData] === undefined) {
+          delete supplierData[key as keyof typeof supplierData];
+        }
+      });
+
+      // Validate the data before sending
+      if (!supplierData.name || !supplierData.contact_person || !supplierData.email || !supplierData.phone || !supplierData.address) {
+        throw new Error('Please fill in all required fields');
+      }
+
+      // Validate email format
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(supplierData.email)) {
+        throw new Error('Please enter a valid email address');
+      }
+
+      // Validate credit limit if provided
+      if (supplierData.credit_limit !== undefined && (isNaN(supplierData.credit_limit) || supplierData.credit_limit < 0)) {
+        throw new Error('Credit limit must be a valid positive number');
+      }
 
       console.log('🔄 [SupplierForm] Sending supplier data:', JSON.stringify(supplierData, null, 2));
       console.log('🔄 [SupplierForm] Is editing:', isEditing);
       console.log('🔄 [SupplierForm] Existing supplier ID:', existingSupplier?.id);
+      
+             // Add timeout to prevent hanging requests
+       const timeoutId = setTimeout(() => {
+         const timeoutError = new Error('Request timeout - please check your connection');
+         console.error('❌ [SupplierForm] Request timeout');
+         setSubmitError('Request timeout - please check your connection');
+         Alert.alert('Timeout Error', 'Request timeout - please check your connection');
+         setLoading(false);
+       }, 30000); // 30 second timeout
 
       if (isEditing && existingSupplier) {
         console.log('🔄 [SupplierForm] Updating existing supplier...');
-        const response = await inventoryApiService.updateSupplier(existingSupplier.id, supplierData);
-        console.log('✅ [SupplierForm] Update response:', response.data);
-        Alert.alert('Success', 'Supplier updated successfully', [
-          { text: 'OK', onPress: () => navigation.goBack() }
-        ]);
+        console.log('🔄 [SupplierForm] Supplier ID:', existingSupplier.id);
+        console.log('🔄 [SupplierForm] Update data:', JSON.stringify(supplierData, null, 2));
+        
+        try {
+          const response = await inventoryApiService.updateSupplier(existingSupplier.id, supplierData);
+          clearTimeout(timeoutId);
+          console.log('✅ [SupplierForm] Update response:', response.data);
+          Alert.alert('Success', 'Supplier updated successfully', [
+            { text: 'OK', onPress: () => navigation.goBack() }
+          ]);
+        } catch (apiError: any) {
+          clearTimeout(timeoutId);
+          console.error('❌ [SupplierForm] API call failed:', apiError);
+          
+          // If it's a network error, show a more helpful message
+          if (apiError.code === 'NETWORK_ERROR' || apiError.message?.includes('Network Error')) {
+            Alert.alert(
+              'Connection Error', 
+              'Unable to connect to the server. Please check your internet connection and try again.',
+              [
+                { text: 'Cancel', style: 'cancel' },
+                { text: 'Retry', onPress: () => performSubmit() }
+              ]
+            );
+            return;
+          }
+          
+          throw apiError; // Re-throw to be caught by outer catch block
+        }
       } else {
         console.log('🔄 [SupplierForm] Creating new supplier...');
-        const response = await inventoryApiService.createSupplier(supplierData);
-        console.log('✅ [SupplierForm] Create response:', response.data);
-        Alert.alert('Success', 'Supplier created successfully', [
-          { text: 'OK', onPress: () => navigation.goBack() }
-        ]);
+        console.log('🔄 [SupplierForm] Create data:', JSON.stringify(supplierData, null, 2));
+        
+        try {
+          const response = await inventoryApiService.createSupplier(supplierData);
+          clearTimeout(timeoutId);
+          console.log('✅ [SupplierForm] Create response:', response.data);
+          Alert.alert('Success', 'Supplier created successfully', [
+            { text: 'OK', onPress: () => navigation.goBack() }
+          ]);
+        } catch (apiError: any) {
+          clearTimeout(timeoutId);
+          console.error('❌ [SupplierForm] API call failed:', apiError);
+          
+          // If it's a network error, show a more helpful message
+          if (apiError.code === 'NETWORK_ERROR' || apiError.message?.includes('Network Error')) {
+            Alert.alert(
+              'Connection Error', 
+              'Unable to connect to the server. Please check your internet connection and try again.',
+              [
+                { text: 'Cancel', style: 'cancel' },
+                { text: 'Retry', onPress: () => performSubmit() }
+              ]
+            );
+            return;
+          }
+          
+          throw apiError; // Re-throw to be caught by outer catch block
+        }
       }
     } catch (error: any) {
       console.error('❌ [SupplierForm] Error saving supplier:', error);
@@ -143,18 +224,72 @@ const SupplierFormScreen: React.FC<SupplierFormScreenProps> = ({ navigation, rou
       // Log the response details if available
       if (error.response) {
         console.error('Response status:', error.response.status);
-        console.error('Response data:', error.response.data);
+        console.error('Response data:', JSON.stringify(error.response.data, null, 2));
+        console.error('Response headers:', JSON.stringify(error.response.headers, null, 2));
       }
+      
+             // Check for network errors
+       if (error.code === 'NETWORK_ERROR' || error.message?.includes('Network Error')) {
+         console.error('❌ [SupplierForm] Network error detected');
+         const networkErrorMsg = 'Network error - please check your internet connection and try again';
+         setSubmitError(networkErrorMsg);
+         Alert.alert('Network Error', networkErrorMsg);
+         return;
+       }
+       
+       // Check for authentication errors
+       if (error.response?.status === 401) {
+         console.error('❌ [SupplierForm] Authentication error detected');
+         const authErrorMsg = 'Authentication failed - please log in again';
+         setSubmitError(authErrorMsg);
+         Alert.alert('Authentication Error', authErrorMsg);
+         return;
+       }
+       
+       // Check for server errors
+       if (error.response?.status >= 500) {
+         console.error('❌ [SupplierForm] Server error detected');
+         const serverErrorMsg = 'Server error - please try again later';
+         setSubmitError(serverErrorMsg);
+         Alert.alert('Server Error', serverErrorMsg);
+         return;
+       }
       
       // Show more specific error message
       let errorMessage = 'Failed to save supplier. Please try again.';
-      if (error.response?.data?.detail) {
-        errorMessage = error.response.data.detail;
-      } else if (error.response?.data?.message) {
-        errorMessage = error.response.data.message;
+      
+      try {
+        if (error.response?.data?.detail) {
+          errorMessage = String(error.response.data.detail);
+        } else if (error.response?.data?.message) {
+          errorMessage = String(error.response.data.message);
+        } else if (error.message) {
+          errorMessage = String(error.message);
+        }
+      } catch (parseError) {
+        console.error('❌ [SupplierForm] Error parsing error message:', parseError);
+        errorMessage = 'An unexpected error occurred';
       }
       
-      Alert.alert('Error', errorMessage);
+      // Log the full error for debugging
+      try {
+        console.error('❌ [SupplierForm] Full error details:', {
+          message: String(error.message || 'Unknown error'),
+          response: error.response?.data ? JSON.stringify(error.response.data) : 'No response data',
+          status: error.response?.status || 'No status',
+          stack: String(error.stack || 'No stack trace'),
+          code: String(error.code || 'No code'),
+          name: String(error.name || 'No name')
+        });
+      } catch (logError) {
+        console.error('❌ [SupplierForm] Error logging error details:', logError);
+        console.error('❌ [SupplierForm] Basic error info:', String(error.message || 'Unknown error'));
+      }
+      
+      // Ensure errorMessage is a string
+      const finalErrorMessage = typeof errorMessage === 'string' ? errorMessage : 'An unexpected error occurred';
+      setSubmitError(finalErrorMessage);
+      Alert.alert('Error', finalErrorMessage);
     } finally {
       setLoading(false);
     }
@@ -164,6 +299,10 @@ const SupplierFormScreen: React.FC<SupplierFormScreenProps> = ({ navigation, rou
     setFormData(prev => ({ ...prev, [field]: value }));
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: '' }));
+    }
+    // Clear submit error when user starts typing
+    if (submitError) {
+      setSubmitError(null);
     }
   };
 
@@ -310,6 +449,22 @@ const SupplierFormScreen: React.FC<SupplierFormScreenProps> = ({ navigation, rou
             error={errors.credit_limit}
           />
 
+          {submitError && (
+            <View style={styles.errorContainer}>
+              <Icon name="error" size={20} color={COLORS.status.error} />
+              <Text style={styles.errorText}>{submitError}</Text>
+              <TouchableOpacity 
+                style={styles.retryButton}
+                onPress={() => {
+                  setSubmitError(null);
+                  performSubmit();
+                }}
+              >
+                <Text style={styles.retryButtonText}>Retry</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+
           <View style={styles.buttonContainer}>
             <Button
               title={loading ? 'Saving...' : (isEditing ? 'Update Supplier' : 'Add Supplier')}
@@ -317,7 +472,7 @@ const SupplierFormScreen: React.FC<SupplierFormScreenProps> = ({ navigation, rou
               disabled={loading}
               variant="primary"
               size="large"
-              style={styles.submitButton}
+              style={styles.mainButton}
             />
             
             {isEditing && existingSupplier && (
@@ -327,13 +482,13 @@ const SupplierFormScreen: React.FC<SupplierFormScreenProps> = ({ navigation, rou
                 disabled={loading}
                 variant="outline"
                 size="medium"
-                style={styles.resetButton}
+                style={styles.secondaryButton}
               />
             )}
             
             {loading && (
               <View style={styles.loadingContainer}>
-                <ActivityIndicator size="small" color="#667EEA" />
+                <ActivityIndicator size="small" color={COLORS.primary} />
                 <Text style={styles.loadingText}>Saving supplier...</Text>
               </View>
             )}
@@ -399,7 +554,7 @@ const styles = StyleSheet.create({
   editModeIndicator: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(102, 126, 234, 0.1)',
+    backgroundColor: 'rgba(255, 107, 53, 0.1)',
     padding: SPACING.sm,
     borderRadius: BORDER_RADIUS.md,
     marginBottom: SPACING.md,
@@ -407,7 +562,7 @@ const styles = StyleSheet.create({
   editModeText: {
     fontSize: TYPOGRAPHY.sizes.sm,
     fontWeight: TYPOGRAPHY.weights.medium,
-    color: '#667EEA',
+    color: COLORS.primary,
     marginLeft: SPACING.xs,
   },
   sectionTitle: {
@@ -423,22 +578,11 @@ const styles = StyleSheet.create({
   buttonContainer: {
     padding: SPACING.lg,
   },
-  submitButton: {
+  mainButton: {
     marginBottom: SPACING.md,
-    backgroundColor: '#667EEA',
-    paddingVertical: SPACING.md,
-    paddingHorizontal: SPACING.lg,
-    borderRadius: BORDER_RADIUS.lg,
-    ...SHADOWS.md,
   },
-  resetButton: {
-    backgroundColor: '#F3F4F6',
-    borderWidth: 1,
-    borderColor: '#D1D5DB',
-    paddingVertical: SPACING.md,
-    paddingHorizontal: SPACING.lg,
-    borderRadius: BORDER_RADIUS.lg,
-    marginBottom: SPACING.md,
+  secondaryButton: {
+    marginTop: SPACING.sm,
   },
   loadingContainer: {
     flexDirection: 'row',
@@ -449,7 +593,37 @@ const styles = StyleSheet.create({
   loadingText: {
     marginLeft: SPACING.sm,
     fontSize: TYPOGRAPHY.sizes.md,
-    color: '#6B7280',
+    color: COLORS.text.secondary,
+  },
+  errorContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(220, 53, 69, 0.1)',
+    borderWidth: 1,
+    borderColor: COLORS.status.error,
+    borderRadius: BORDER_RADIUS.md,
+    padding: SPACING.md,
+    marginBottom: SPACING.md,
+  },
+  errorText: {
+    flex: 1,
+    marginLeft: SPACING.sm,
+    fontSize: TYPOGRAPHY.sizes.sm,
+    color: COLORS.status.error,
+    fontWeight: TYPOGRAPHY.weights.medium,
+  },
+  retryButton: {
+    backgroundColor: COLORS.primary,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
+    borderRadius: BORDER_RADIUS.md,
+    marginTop: SPACING.sm,
+    alignSelf: 'flex-start',
+  },
+  retryButtonText: {
+    color: COLORS.text.light,
+    fontSize: TYPOGRAPHY.sizes.sm,
+    fontWeight: TYPOGRAPHY.weights.medium,
   },
 });
 

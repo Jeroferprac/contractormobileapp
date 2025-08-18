@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import {
   View,
   ScrollView,
-  SafeAreaView,
   StatusBar,
   StyleSheet,
   Alert,
@@ -12,13 +11,27 @@ import {
   ActivityIndicator,
   Dimensions,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import LinearGradient from 'react-native-linear-gradient';
 import { COLORS } from '../../constants/colors';
 import { SPACING, BORDER_RADIUS, SHADOWS } from '../../constants/spacing';
 import { TYPOGRAPHY } from '../../constants/typography';
 
-const { width } = Dimensions.get('window');
+const { width, height } = Dimensions.get('window');
+
+// Responsive font sizes
+const FONTS = {
+  xs: 10,
+  sm: 12,
+  md: 14,
+  lg: 16,
+  xl: 18,
+  xxl: 20,
+  xxxl: 24,
+  title: 28,
+  large: 32,
+};
 
 import {
   SearchBar,
@@ -156,21 +169,6 @@ const SuppliersScreen: React.FC<SuppliersScreenProps> = ({ navigation }) => {
         style={styles.supplierItem}
         activeOpacity={0.9}
         onPress={() => handleSupplierPress(item)}
-        onLongPress={() => {
-          Alert.alert(
-            'Supplier Options',
-            `What would you like to do with "${item.name}"?`,
-            [
-              { text: 'Cancel', style: 'cancel' },
-              { text: 'Edit', onPress: () => handleEditSupplier(item) },
-              { 
-                text: 'Delete', 
-                style: 'destructive',
-                onPress: () => handleDeleteSupplier(item)
-              },
-            ]
-          );
-        }}
       >
         <LinearGradient
           colors={getSupplierCardColors(index)}
@@ -361,7 +359,7 @@ const SuppliersScreen: React.FC<SuppliersScreenProps> = ({ navigation }) => {
              style={styles.headerButton}
              onPress={() => navigation.goBack()}
            >
-             <Icon name="arrow-back" size={24} color="#FFFFFF" />
+                           <Icon name="arrow-back" size={24} color="#FFFFFF" />
            </TouchableOpacity>
            <View style={styles.headerTitleContainer}>
              <Text style={styles.headerTitle}>Suppliers</Text>
@@ -461,7 +459,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   headerTitle: {
-    fontSize: TYPOGRAPHY.sizes.xl,
+    fontSize: FONTS.title,
     fontWeight: TYPOGRAPHY.weights.bold,
     color: '#FFFFFF',
     textShadowColor: 'rgba(0, 0, 0, 0.1)',
@@ -469,7 +467,7 @@ const styles = StyleSheet.create({
     textShadowRadius: 2,
   },
   headerSubtitle: {
-    fontSize: TYPOGRAPHY.sizes.sm,
+    fontSize: FONTS.md,
     color: 'rgba(255, 255, 255, 0.9)',
     marginTop: 2,
   },
@@ -538,7 +536,7 @@ const styles = StyleSheet.create({
     marginRight: SPACING.xs,
   },
   statusText: {
-    fontSize: TYPOGRAPHY.sizes.sm,
+    fontSize: FONTS.sm,
     fontWeight: TYPOGRAPHY.weights.semibold,
     color: '#374151',
   },
@@ -558,7 +556,7 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.md,
   },
   supplierName: {
-    fontSize: TYPOGRAPHY.sizes.xxl,
+    fontSize: FONTS.xxxl,
     fontWeight: TYPOGRAPHY.weights.bold,
     color: '#1F2937',
     flex: 1,
@@ -576,7 +574,7 @@ const styles = StyleSheet.create({
     gap: SPACING.xs,
   },
   supplierBadgeText: {
-    fontSize: TYPOGRAPHY.sizes.sm,
+    fontSize: FONTS.sm,
     fontWeight: TYPOGRAPHY.weights.semibold,
     color: '#10B981',
   },
@@ -607,13 +605,13 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   contactLabel: {
-    fontSize: TYPOGRAPHY.sizes.sm,
+    fontSize: FONTS.sm,
     color: COLORS.text.secondary,
     fontWeight: TYPOGRAPHY.weights.medium,
     marginBottom: 1,
   },
   contactText: {
-    fontSize: TYPOGRAPHY.sizes.md,
+    fontSize: FONTS.md,
     color: COLORS.text.primary,
     fontWeight: TYPOGRAPHY.weights.semibold,
   },
@@ -636,7 +634,7 @@ const styles = StyleSheet.create({
     gap: SPACING.xs,
   },
   infoChipText: {
-    fontSize: TYPOGRAPHY.sizes.sm,
+    fontSize: FONTS.sm,
     color: COLORS.text.primary,
     fontWeight: TYPOGRAPHY.weights.medium,
   },
@@ -652,7 +650,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   actionHintText: {
-    fontSize: TYPOGRAPHY.sizes.sm,
+    fontSize: FONTS.sm,
     color: COLORS.text.secondary,
     marginLeft: SPACING.xs,
     fontStyle: 'italic',
@@ -681,14 +679,14 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.lg,
   },
   emptyTitle: {
-    fontSize: TYPOGRAPHY.sizes.xl,
+    fontSize: FONTS.title,
     fontWeight: TYPOGRAPHY.weights.bold,
     color: COLORS.text.primary,
     marginBottom: SPACING.sm,
     textAlign: 'center',
   },
   emptySubtitle: {
-    fontSize: TYPOGRAPHY.sizes.md,
+    fontSize: FONTS.lg,
     color: COLORS.text.secondary,
     textAlign: 'center',
     lineHeight: 22,
@@ -706,7 +704,7 @@ const styles = StyleSheet.create({
   },
   emptyActionText: {
     color: '#FFFFFF',
-    fontSize: TYPOGRAPHY.sizes.md,
+    fontSize: FONTS.lg,
     fontWeight: TYPOGRAPHY.weights.semibold,
   },
   errorContainer: {
@@ -716,7 +714,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.lg,
   },
   errorText: {
-    fontSize: TYPOGRAPHY.sizes.lg,
+    fontSize: FONTS.xl,
     color: COLORS.text.secondary,
     marginBottom: SPACING.lg,
     textAlign: 'center',
@@ -730,7 +728,7 @@ const styles = StyleSheet.create({
   },
   retryButtonText: {
     color: '#FFFFFF',
-    fontSize: TYPOGRAPHY.sizes.md,
+    fontSize: FONTS.lg,
     fontWeight: TYPOGRAPHY.weights.medium,
   },
 });

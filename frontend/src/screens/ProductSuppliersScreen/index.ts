@@ -1,1 +1,1 @@
-export { default } from './ProductSuppliersScreen';
+export { default } from '../ProductSuppliersScreen';

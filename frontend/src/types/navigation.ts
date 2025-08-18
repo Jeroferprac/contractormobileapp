@@ -1,5 +1,6 @@
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
+import { Supplier } from './inventory';
 
 export type MainTabParamList = {
   Home: undefined;
@@ -16,7 +17,7 @@ export type RootStackParamList = {
   AllProducts: undefined;
   Suppliers: undefined;
   SupplierForm: {
-    supplier?: any;
+    supplier?: Supplier;
     isEditing?: boolean;
   };
   SupplierDetails: {
@@ -24,7 +25,7 @@ export type RootStackParamList = {
   };
   ProductSuppliers: undefined;
   ProductSupplierForm: {
-    productSupplier?: any;
+    productSupplier?: any; // TODO: Replace with proper ProductSupplier type
     isEditing?: boolean;
   };
   ProfileEdit: {

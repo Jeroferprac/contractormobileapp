@@ -529,7 +529,7 @@ export const mockAffiliateCompanies: AffiliateCompany[] = [
     projects: 1,
     rating: 4.5,
   },
-];
+]; 
 
 // ===== INVENTORY MOCK DATA =====
 

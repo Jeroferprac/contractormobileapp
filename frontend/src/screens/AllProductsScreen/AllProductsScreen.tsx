@@ -10,11 +10,15 @@ import {
   Alert,
   Modal,
   TextInput,
+  ImageBackground,
+  Dimensions,
+  Platform,
 } from 'react-native';
+import LinearGradient from 'react-native-linear-gradient';
 import Icon from 'react-native-vector-icons/Feather';
 import FastImage from 'react-native-fast-image';
 import { COLORS } from '../../constants/colors';
-import { SPACING } from '../../constants/spacing';
+import { SPACING, BORDER_RADIUS, SHADOWS } from '../../constants/spacing';
 import { AllProductsScreenNavigationProp } from '../../types/navigation';
 import { Product, Stock } from '../../types/inventory';
 import inventoryApiService from '../../api/inventoryApi';
@@ -30,11 +34,7 @@ const AllProductsScreen: React.FC<AllProductsScreenProps> = ({ navigation }) => 
   const [searchText, setSearchText] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [showBarcodeScanner, setShowBarcodeScanner] = useState(false);
-  const [showAddModal, setShowAddModal] = useState(false);
   const [showFilterModal, setShowFilterModal] = useState(false);
-  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-  const [showActionMenu, setShowActionMenu] = useState(false);
 
   const categories = [
     { id: 'all', label: 'All Products', icon: 'package' },
@@ -130,40 +130,6 @@ const AllProductsScreen: React.FC<AllProductsScreenProps> = ({ navigation }) => 
     return { text: `Stock: ${quantity}`, color: '#34C759' };
   };
 
-  const handleAddProduct = () => {
-    setShowAddModal(true);
-  };
-
-  const handleEditProduct = (product: Product) => {
-    setEditingProduct(product);
-    setShowAddModal(true);
-    setShowActionMenu(false);
-  };
-
-  const handleDeleteProduct = (product: Product) => {
-    Alert.alert(
-      'Delete Product',
-      `Are you sure you want to delete "${product.name}"?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await inventoryApiService.deleteProduct(product.id);
-              loadProducts();
-              Alert.alert('Success', 'Product deleted successfully');
-            } catch (error) {
-              Alert.alert('Error', 'Failed to delete product');
-            }
-          },
-        },
-      ]
-    );
-    setShowActionMenu(false);
-  };
-
   const handleBarcodeScan = () => {
     setShowBarcodeScanner(true);
   };
@@ -173,8 +139,7 @@ const AllProductsScreen: React.FC<AllProductsScreenProps> = ({ navigation }) => 
   };
 
   const handleProductAction = (product: Product) => {
-    setSelectedProduct(product);
-    setShowActionMenu(true);
+    navigation.navigate('Product', { product });
   };
 
   const filteredProducts = products.filter(product => {
@@ -185,107 +150,17 @@ const AllProductsScreen: React.FC<AllProductsScreenProps> = ({ navigation }) => 
     return matchesSearch && matchesCategory;
   });
 
-  const renderProductCard = ({ item: product }: { item: Product }) => {
-    const stockStatus = getStockStatus(product);
-    
-    return (
-      <TouchableOpacity style={styles.productCard} onPress={() => handleProductAction(product)}>
-        <View style={styles.productImageContainer}>
-          <FastImage
-            source={{ uri: getProductImage(product) }}
-            style={styles.productImage}
-            resizeMode={FastImage.resizeMode.cover}
-          />
-          
-          {/* Bookmark Icon */}
-          <TouchableOpacity style={styles.bookmarkButton}>
-            <Icon name="bookmark" size={16} color={COLORS.text.light} />
-          </TouchableOpacity>
-          
-          {/* Stock Status Badge */}
-          <View style={[styles.stockBadge, { backgroundColor: stockStatus.color === '#34C759' ? 'rgba(52, 199, 89, 0.9)' : stockStatus.color + '90' }]}>
-            <Text style={[styles.stockText, { color: stockStatus.color === '#34C759' ? COLORS.text.light : stockStatus.color }]}>
-              {stockStatus.text}
-            </Text>
-          </View>
-
-          {/* Three Dot Menu */}
-          <TouchableOpacity 
-            style={styles.actionMenuButton}
-            onPress={() => handleProductAction(product)}
-          >
-            <Icon name="more-horizontal" size={20} color={COLORS.text.light} />
-          </TouchableOpacity>
-        </View>
-        
-        <View style={styles.productInfo}>
-          <View style={styles.productHeader}>
-            <View style={styles.brandContainer}>
-              <View style={styles.brandLogo}>
-                <Text style={styles.brandLogoText}>{product.brand?.charAt(0) || 'P'}</Text>
-              </View>
-              <View style={styles.brandInfo}>
-                <Text style={styles.brandName}>
-                  {product.brand || 'Product Brand'}
-                </Text>
-                <View style={styles.verifiedBadge}>
-                  <Icon name="check-circle" size={12} color={COLORS.status.verified} />
-                </View>
-              </View>
-            </View>
-            <View style={styles.ratingContainer}>
-              <Icon name="star" size={12} color="#FFD700" />
-              <Text style={styles.ratingText}>4.9 (100+)</Text>
-            </View>
-          </View>
-          
-          <Text style={styles.productName}>
-            {product.name}
-          </Text>
-          
-          <View style={styles.productDetails}>
-            <View style={styles.detailItem}>
-              <Icon name="tag" size={12} color={COLORS.text.secondary} />
-              <Text style={styles.detailText}>${product.selling_price}</Text>
-            </View>
-            <View style={styles.detailItem}>
-              <Icon name="package" size={12} color={COLORS.text.secondary} />
-              <Text style={styles.detailText}>{product.category_name}</Text>
-            </View>
-            <View style={styles.detailItem}>
-              <Icon name="hash" size={12} color={COLORS.text.secondary} />
-              <Text style={styles.detailText}>SKU: {product.id}</Text>
-            </View>
-            <View style={styles.detailItem}>
-              <Icon name="calendar" size={12} color={COLORS.text.secondary} />
-              <Text style={styles.detailText}>Added: {new Date().toLocaleDateString()}</Text>
-            </View>
-          </View>
-          
-          <View style={styles.productTags}>
-            <View style={styles.tag}>
-              <Text style={styles.tagText}>Premium</Text>
-            </View>
-            <View style={styles.tag}>
-              <Text style={styles.tagText}>Featured</Text>
-            </View>
-            <View style={styles.tag}>
-              <Text style={styles.tagText}>Best Seller</Text>
-            </View>
-          </View>
-        </View>
-      </TouchableOpacity>
-    );
-  };
-
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />
+      <StatusBar barStyle="light-content" backgroundColor={COLORS.primary} />
+      
+      {/* Header Background with Camera Overflow */}
+      <View style={styles.headerBackground} />
       
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <Icon name="arrow-left" size={24} color={COLORS.text.primary} />
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+          <Icon name="arrow-left" size={24} color={COLORS.text.light} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>All Products</Text>
         <View style={styles.headerSpacer} />
@@ -297,15 +172,16 @@ const AllProductsScreen: React.FC<AllProductsScreenProps> = ({ navigation }) => 
           <Icon name="search" size={20} color={COLORS.text.secondary} />
           <TextInput
             style={styles.searchInput}
-            placeholder="Search products..."
+            placeholder="Search BUO"
+            placeholderTextColor="#999"
             value={searchText}
             onChangeText={setSearchText}
           />
-          <TouchableOpacity onPress={handleBarcodeScan} style={styles.barcodeButton}>
-            <Icon name="camera" size={20} color={COLORS.text.light} />
+          <TouchableOpacity onPress={handleBarcodeScan} style={styles.iconButton}>
+            <Icon name="mic" size={20} color={COLORS.text.secondary} />
           </TouchableOpacity>
           <TouchableOpacity onPress={handleFilterPress} style={styles.filterButton}>
-            <Icon name="filter" size={20} color={COLORS.text.light} />
+            <Icon name="sliders" size={20} color={COLORS.text.light} />
           </TouchableOpacity>
         </View>
       </View>
@@ -321,499 +197,327 @@ const AllProductsScreen: React.FC<AllProductsScreenProps> = ({ navigation }) => 
             <Text style={styles.emptyText}>No products found</Text>
           </View>
         ) : (
-          filteredProducts.map((product) => (
-            <TouchableOpacity key={product.id} style={styles.productCard} onPress={() => handleProductAction(product)}>
-              <View style={styles.productImageContainer}>
-                <FastImage
-                  source={{ uri: getProductImage(product) }}
-                  style={styles.productImage}
-                  resizeMode={FastImage.resizeMode.cover}
-                />
-                
-                {/* Bookmark Icon */}
-                <TouchableOpacity style={styles.bookmarkButton}>
-                  <Icon name="bookmark" size={16} color={COLORS.text.light} />
-                </TouchableOpacity>
-                
-                {/* Stock Status Badge */}
-                <View style={[styles.stockBadge, { backgroundColor: getStockStatus(product).color === '#34C759' ? 'rgba(52, 199, 89, 0.9)' : getStockStatus(product).color + '90' }]}>
-                  <Text style={[styles.stockText, { color: getStockStatus(product).color === '#34C759' ? COLORS.text.light : getStockStatus(product).color }]}>
-                    {getStockStatus(product).text}
-                  </Text>
-                </View>
-
-                {/* Three Dot Menu */}
-                <TouchableOpacity 
-                  style={styles.actionMenuButton}
-                  onPress={() => handleProductAction(product)}
-                >
-                  <Icon name="more-horizontal" size={20} color={COLORS.text.light} />
-                </TouchableOpacity>
-              </View>
-              
-              <View style={styles.productInfo}>
-                <View style={styles.productHeader}>
-                  <View style={styles.brandContainer}>
-                    <View style={styles.brandLogo}>
-                      <Text style={styles.brandLogoText}>{product.brand?.charAt(0) || 'P'}</Text>
-                    </View>
-                    <View style={styles.brandInfo}>
-                      <Text style={styles.brandName}>
-                        {product.brand || 'Product Brand'}
-                      </Text>
-                      <View style={styles.verifiedBadge}>
-                        <Icon name="check-circle" size={12} color={COLORS.status.verified} />
-                      </View>
-                    </View>
+          <View style={styles.productsGrid}>
+            {filteredProducts.map((product) => (
+              <TouchableOpacity key={product.id} style={styles.foodCard} onPress={() => handleProductAction(product)}>
+                <View style={styles.foodImageContainer}>
+                  <FastImage
+                    source={{ uri: getProductImage(product) }}
+                    style={styles.foodImage}
+                    resizeMode={FastImage.resizeMode.cover}
+                  />
+                  
+                  {/* Stock Badge */}
+                  <View style={styles.stockBadge}>
+                    <Icon name="box" size={12} color={COLORS.text.light} />
+                    <Text style={styles.stockBadgeText}>{stocks.find(s => s.product_id === product.id)?.quantity || 0}</Text>
                   </View>
-                  <View style={styles.ratingContainer}>
-                    <Icon name="star" size={12} color="#FFD700" />
-                    <Text style={styles.ratingText}>4.9 (100+)</Text>
-                  </View>
+                  
+                  {/* Image Gradient Overlay */}
+                  <LinearGradient
+                    colors={['transparent', 'rgba(0,0,0,0.7)']}
+                    style={styles.imageGradient}
+                  />
+                  
+                  {/* Favorite Icon */}
+                  <TouchableOpacity style={styles.favoriteButton}>
+                    <Icon 
+                      name={Math.random() > 0.5 ? "heart" : "heart"} 
+                      size={16} 
+                      color={Math.random() > 0.5 ? "#FF6B35" : "#FFF"} 
+                    />
+                  </TouchableOpacity>
                 </View>
                 
-                <Text style={styles.productName}>
-                  {product.name}
-                </Text>
-                
-                <View style={styles.productDetails}>
-                  <View style={styles.detailItem}>
-                    <Icon name="tag" size={12} color={COLORS.text.secondary} />
-                    <Text style={styles.detailText}>${product.selling_price}</Text>
+                <View style={styles.foodInfo}>
+                  <View style={styles.nameContainer}>
+                    <Icon name="shopping-bag" size={16} color={COLORS.primary} style={styles.nameIcon} />
+                    <Text style={styles.foodName} numberOfLines={2}>
+                      {product.name}
+                    </Text>
                   </View>
-                  <View style={styles.detailItem}>
-                    <Icon name="package" size={12} color={COLORS.text.secondary} />
-                    <Text style={styles.detailText}>{product.category_name}</Text>
-                  </View>
-                  <View style={styles.detailItem}>
-                    <Icon name="hash" size={12} color={COLORS.text.secondary} />
-                    <Text style={styles.detailText}>SKU: {product.id}</Text>
-                  </View>
-                  <View style={styles.detailItem}>
-                    <Icon name="calendar" size={12} color={COLORS.text.secondary} />
-                    <Text style={styles.detailText}>Added: {new Date().toLocaleDateString()}</Text>
+                  
+                  <View style={styles.foodDetails}>
+                    <Text style={styles.foodPrice}>
+                      ${parseFloat(product.selling_price.toString()).toFixed(2)}
+                    </Text>
                   </View>
                 </View>
-                
-                <View style={styles.productTags}>
-                  <View style={styles.tag}>
-                    <Text style={styles.tagText}>Premium</Text>
-                  </View>
-                  <View style={styles.tag}>
-                    <Text style={styles.tagText}>Featured</Text>
-                  </View>
-                  <View style={styles.tag}>
-                    <Text style={styles.tagText}>Best Seller</Text>
-                  </View>
-                </View>
-              </View>
-            </TouchableOpacity>
-          ))
+              </TouchableOpacity>
+            ))}
+          </View>
         )}
       </ScrollView>
-
-      {/* Floating Action Button */}
-      <TouchableOpacity style={styles.fab} onPress={handleAddProduct}>
+      
+      {/* Add Product Floating Button */}
+      <TouchableOpacity 
+        style={styles.addButton}
+        onPress={() => navigation.navigate('AddProduct', {})}
+      >
         <Icon name="plus" size={24} color={COLORS.text.light} />
       </TouchableOpacity>
-
-      {/* Action Menu Modal */}
-      <Modal
-        visible={showActionMenu}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setShowActionMenu(false)}
-      >
-        <TouchableOpacity 
-          style={styles.modalOverlay}
-          onPress={() => setShowActionMenu(false)}
-        >
-          <View style={styles.actionMenu}>
-            <TouchableOpacity 
-              style={styles.actionMenuItem}
-              onPress={() => selectedProduct && handleEditProduct(selectedProduct)}
-            >
-              <Icon name="edit-2" size={20} color={COLORS.primary} />
-              <Text style={styles.actionMenuText}>Edit Product</Text>
-            </TouchableOpacity>
-            <TouchableOpacity 
-              style={styles.actionMenuItem}
-              onPress={() => selectedProduct && handleDeleteProduct(selectedProduct)}
-            >
-              <Icon name="trash-2" size={20} color="#FF3B30" />
-              <Text style={[styles.actionMenuText, { color: '#FF3B30' }]}>Delete Product</Text>
-            </TouchableOpacity>
-          </View>
-        </TouchableOpacity>
-      </Modal>
-
+      
       {/* Filter Modal */}
       <Modal
         visible={showFilterModal}
         animationType="slide"
-        presentationStyle="pageSheet"
+        transparent={false}
+        onRequestClose={() => setShowFilterModal(false)}
       >
-        <View style={styles.modalContainer}>
+        <SafeAreaView style={styles.modalContainer}>
           <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>Filter & Sort</Text>
-            <View style={styles.modalActions}>
-              <TouchableOpacity onPress={() => setShowFilterModal(false)}>
-                <Text style={styles.resetButton}>Reset</Text>
-              </TouchableOpacity>
-              <TouchableOpacity onPress={() => setShowFilterModal(false)}>
-                <Icon name="x" size={24} color={COLORS.text.primary} />
-              </TouchableOpacity>
-            </View>
+            <TouchableOpacity onPress={() => setShowFilterModal(false)}>
+              <Icon name="x" size={24} color={COLORS.text.primary} />
+            </TouchableOpacity>
+            <Text style={styles.modalTitle}>Filter Products</Text>
+            <TouchableOpacity>
+              <Text style={styles.resetButton}>Reset</Text>
+            </TouchableOpacity>
           </View>
+          
           <ScrollView style={styles.filterOptions}>
-            {filterOptions.map((filter) => (
-              <TouchableOpacity key={filter.id} style={styles.filterOption}>
-                <Icon name={filter.icon as any} size={20} color={COLORS.text.secondary} />
-                <Text style={styles.filterOptionText}>{filter.label}</Text>
-                <Icon name="chevron-right" size={16} color={COLORS.text.secondary} />
+            {filterOptions.map((option) => (
+              <TouchableOpacity key={option.id} style={styles.filterOption}>
+                <Icon name={option.icon} size={20} color={COLORS.text.secondary} />
+                <Text style={styles.filterOptionText}>{option.label}</Text>
+                <Icon name="check" size={20} color={COLORS.primary} />
               </TouchableOpacity>
             ))}
           </ScrollView>
-        </View>
-      </Modal>
-
-      {/* Add/Edit Product Modal */}
-      <Modal
-        visible={showAddModal}
-        animationType="slide"
-        presentationStyle="pageSheet"
-      >
-        <View style={styles.modalContainer}>
-          <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>
-              {editingProduct ? 'Edit Product' : 'Add New Product'}
-            </Text>
-            <TouchableOpacity onPress={() => setShowAddModal(false)}>
-              <Icon name="x" size={24} color={COLORS.text.primary} />
-            </TouchableOpacity>
-          </View>
-          <Text style={styles.modalPlaceholder}>
-            Product form will be implemented here
-          </Text>
-        </View>
-      </Modal>
-
-      {/* Barcode Scanner Modal */}
-      <Modal
-        visible={showBarcodeScanner}
-        animationType="slide"
-        presentationStyle="pageSheet"
-      >
-        <View style={styles.modalContainer}>
-          <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>Scan Barcode</Text>
-            <TouchableOpacity onPress={() => setShowBarcodeScanner(false)}>
-              <Icon name="x" size={24} color={COLORS.text.primary} />
-            </TouchableOpacity>
-          </View>
-          <Text style={styles.modalPlaceholder}>
-            Barcode scanner will be implemented here
-          </Text>
-        </View>
+        </SafeAreaView>
       </Modal>
     </SafeAreaView>
   );
 };
 
+const { width } = Dimensions.get('window');
+const cardWidth = (width - (SPACING.lg * 3)) / 2;
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.background,
+    position: 'relative',
   },
-
-  // Header
+  headerBackground: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 160, // Further reduced height for better camera overflow
+    backgroundColor: COLORS.primary,
+    borderBottomLeftRadius: BORDER_RADIUS.lg,
+    borderBottomRightRadius: BORDER_RADIUS.lg,
+    zIndex: 1,
+  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: SPACING.lg,
-    paddingTop: SPACING.xl,
-    paddingBottom: SPACING.lg,
-    backgroundColor: COLORS.background,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border.light,
+    paddingVertical: SPACING.md,
+    backgroundColor: 'transparent',
+    zIndex: 10,
+    paddingTop: Platform.OS === 'android' ? 40 : 0, 
   },
-  backButton: { padding: SPACING.sm },
+  backButton: {
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   headerTitle: {
-    fontSize: 22,
+    fontSize: 25,
     fontWeight: '700',
-    color: COLORS.text.primary,
-    flex: 1,
-    textAlign: 'center',
+    textTransform:"uppercase",
+    color: COLORS.text.light,
   },
-  headerSpacer: { width: 48 },
-
-  // Search bar
-  searchContainer: { paddingHorizontal: SPACING.lg, paddingVertical: SPACING.lg },
+  headerSpacer: {
+    width: 40,
+  },
+  searchContainer: {
+    paddingHorizontal: SPACING.lg,
+    marginTop: SPACING.xs, // Adjusted to overlap with header background
+    zIndex: 10,
+    paddingBottom:SPACING.xs
+  },
   searchBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: COLORS.surface,
-    borderRadius: 30,
-    paddingHorizontal: SPACING.xl,
-    paddingVertical: SPACING.lg,
-    elevation: 4,
+    backgroundColor:COLORS.background,
+    borderRadius: BORDER_RADIUS.lg,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: 8,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+    height: 50,
+    marginTop: 0,
   },
-  searchInput: { flex: 1, fontSize: 16, color: COLORS.text.primary },
-  barcodeButton: {
-    width: 40,
-    height: 40,
-    marginLeft: SPACING.md,
-    borderRadius: 20,
-    backgroundColor: COLORS.primary,
-    justifyContent: 'center',
-    alignItems: 'center',
+  searchInput: {
+    flex: 1,
+    marginLeft: SPACING.sm,
+    fontSize: 16,
+    color: COLORS.text.primary,
+  },
+  iconButton: {
+    padding: SPACING.xs,
+    marginLeft: SPACING.sm,
   },
   filterButton: {
-    width: 40,
-    height: 40,
-    marginLeft: SPACING.sm,
-    borderRadius: 20,
+    padding: SPACING.sm,
     backgroundColor: COLORS.primary,
+    borderRadius: 20,
+    marginLeft: SPACING.sm,
+    width: 36,
+    height: 36,
     justifyContent: 'center',
     alignItems: 'center',
   },
-
-  // Category chips (rounded pills)
-  categoryContainer: {
-    paddingHorizontal: SPACING.lg,
-    paddingBottom: SPACING.sm,
-    backgroundColor: COLORS.background,
-  },
-  categoryChip: {
-    borderRadius: 20,
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.sm,
-    marginRight: SPACING.sm,
-    backgroundColor: COLORS.surface,
-  },
-  categoryChipActive: {
-    backgroundColor: COLORS.primary,
-  },
-  categoryText: {
-    fontSize: 14,
-    color: COLORS.text.primary,
-  },
-  categoryTextActive: {
-    color: COLORS.text.light,
-    fontWeight: '600',
-  },
-
-  // Product list
   productsList: {
-    paddingHorizontal: SPACING.lg,
-    paddingBottom: SPACING.lg,
+    padding: SPACING.lg,
+    paddingBottom: 100, // Space for bottom navigation
   },
-
-  // Product card
-  productCard: {
-    width: '100%',
-    borderRadius: 16,
-    backgroundColor: COLORS.card,
-    marginBottom: SPACING.lg,
-    elevation: 5,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    overflow: 'hidden',
-  },
-  productImageContainer: {
-    width: '100%',
-    height: 220,
-    overflow: 'hidden',
-  },
-  productImage: {
-    width: '100%',
-    height: '100%',
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
-  },
-
-  // Bookmark & More buttons on image
-  bookmarkButton: {
-    position: 'absolute',
-    top: SPACING.md,
-    left: SPACING.md,
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: 'rgba(255,255,255,0.7)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  actionMenuButton: {
-    position: 'absolute',
-    top: SPACING.md,
-    right: SPACING.md,
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: 'rgba(255,255,255,0.7)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-
-  // Product info section
-  productInfo: {
-    padding: SPACING.xl,
-    backgroundColor: COLORS.card,
-  },
-  productHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: SPACING.md,
-  },
-  brandContainer: { flexDirection: 'row', alignItems: 'center', flex: 1 },
-  brandLogo: {
-    width: 32,
-    height: 32,
-    backgroundColor: COLORS.primary + '15',
-    borderRadius: 16,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: SPACING.md,
-  },
-  brandLogoText: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: COLORS.primary,
-  },
-  brandInfo: { flexDirection: 'row', alignItems: 'center', flex: 1 },
-  brandName: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: COLORS.text.primary,
-    flex: 1,
-  },
-  verifiedBadge: {
-    marginLeft: SPACING.sm,
-    backgroundColor: COLORS.status.verified + '15',
-    borderRadius: 8,
-    paddingHorizontal: SPACING.xs,
-    paddingVertical: SPACING.xs,
-  },
-  ratingContainer: { flexDirection: 'row', alignItems: 'center' },
-  ratingText: {
-    fontSize: 12,
-    color: COLORS.text.secondary,
-    marginLeft: SPACING.xs,
-    fontWeight: '500',
-  },
-
-  productName: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: COLORS.text.primary,
-    marginBottom: SPACING.sm,
-    lineHeight: 24,
-  },
-
-  productDetails: { marginBottom: SPACING.md },
-  detailItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: SPACING.sm,
-  },
-  detailText: {
-    fontSize: 14,
-    color: COLORS.text.secondary,
-    marginLeft: SPACING.sm,
-    fontWeight: '500',
-  },
-
-  // Tags (badges)
-  productTags: {
+  productsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
+    justifyContent: 'space-between',
   },
-  tag: {
+  foodCard: {
+    width: cardWidth,
     backgroundColor: COLORS.surface,
-    borderRadius: 12,
-    paddingHorizontal: SPACING.md,
+    borderRadius: BORDER_RADIUS.xl,
+    marginBottom: SPACING.lg,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  foodImageContainer: {
+    height: cardWidth,
+    position: 'relative',
+  },
+  foodImage: {
+    width: '100%',
+    height: '100%',
+    borderTopLeftRadius: BORDER_RADIUS.xl,
+    borderTopRightRadius: BORDER_RADIUS.xl,
+    borderBottomLeftRadius: BORDER_RADIUS.md,
+    borderBottomRightRadius: BORDER_RADIUS.md,
+  },
+  stockBadge: {
+    position: 'absolute',
+    top: SPACING.sm,
+    left: SPACING.sm,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    borderRadius: BORDER_RADIUS.round,
+    paddingHorizontal: SPACING.sm,
     paddingVertical: SPACING.xs,
-    marginRight: SPACING.sm,
-    marginBottom: SPACING.sm,
-    borderWidth: 1,
-    borderColor: COLORS.border.light,
+    flexDirection: 'row',
+    alignItems: 'center',
+    zIndex: 10,
   },
-  tagText: {
+  stockBadgeText: {
     fontSize: 12,
-    color: COLORS.text.secondary,
-    fontWeight: '500',
+    fontWeight: '700',
+    color: COLORS.text.light,
+    marginLeft: 4,
   },
-
-  // Empty list fallback
-  emptyContainer: {
-    flex: 1,
+  imageGradient: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    height: '40%',
+    borderBottomLeftRadius: BORDER_RADIUS.md,
+    borderBottomRightRadius: BORDER_RADIUS.md,
+  },
+  favoriteButton: {
+    position: 'absolute',
+    bottom: SPACING.sm,
+    right: SPACING.sm,
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    borderRadius: 20,
+    padding: SPACING.sm,
+    width: 32,
+    height: 32,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: SPACING.lg,
+  },
+  stockIndicator: {
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  stockText: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  foodInfo: {
+    padding: SPACING.md,
+    paddingTop: SPACING.xs,
+    paddingBottom: SPACING.sm,
+  },
+  nameContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: SPACING.xs,
+    height: 40,
+  },
+  nameIcon: {
+    marginRight: SPACING.xs,
+  },
+  foodName: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: COLORS.text.primary,
+    marginBottom: 0,
+    flex: 1,
+    letterSpacing: 0.3,
+  },
+  foodDetails: {
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+    alignItems: 'center',
+    marginTop: 2,
+  },
+  foodPrice: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: COLORS.primary,
+    letterSpacing: 0.5,
+  },
+  emptyContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: SPACING.xl,
   },
   emptyText: {
-    fontSize: 18,
+    fontSize: 16,
     color: COLORS.text.secondary,
-    marginTop: SPACING.sm,
+    marginTop: SPACING.md,
   },
-
-  // Floating Action Button
-  fab: {
+  addButton: {
     position: 'absolute',
-    bottom: SPACING.lg,
     right: SPACING.lg,
+    bottom: 80, // Above bottom navigation
     width: 56,
     height: 56,
     borderRadius: 28,
     backgroundColor: COLORS.primary,
     justifyContent: 'center',
     alignItems: 'center',
-    elevation: 8,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 6,
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 8,
+    zIndex: 100,
   },
-
-  // Modals & overlays
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.4)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  actionMenu: {
-    backgroundColor: COLORS.card,
-    borderRadius: SPACING.sm,
-    width: '80%',
-    alignSelf: 'center',
-    elevation: 5,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-  },
-  actionMenuItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: SPACING.sm,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border.light,
-  },
-  actionMenuText: {
-    fontSize: 16,
-    color: COLORS.text.primary,
-    marginLeft: SPACING.sm,
-  },
-
   modalContainer: {
     flex: 1,
     padding: SPACING.lg,
@@ -835,8 +539,9 @@ const styles = StyleSheet.create({
     color: COLORS.primary,
     marginRight: SPACING.sm,
   },
-  filterOptions: { paddingVertical: SPACING.sm },
-
+  filterOptions: { 
+    paddingVertical: SPACING.sm 
+  },
   filterOption: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -852,13 +557,6 @@ const styles = StyleSheet.create({
     color: COLORS.text.primary,
     marginLeft: SPACING.sm,
   },
-
-  modalPlaceholder: {
-    fontSize: 18,
-    color: COLORS.text.secondary,
-    textAlign: 'center',
-    paddingVertical: SPACING.lg,
-  },
 });
 
-export default AllProductsScreen; 
+export default AllProductsScreen;

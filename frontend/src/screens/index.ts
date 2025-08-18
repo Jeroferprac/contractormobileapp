@@ -6,8 +6,7 @@ export { CreateHighlightScreen } from './CreateHighlightScreen';
 export { AffiliateProgramScreen } from './AffiliateProgramScreen';
 export { HowItWorksScreen } from './HowItWorksScreen';
 export { AffiliateRegistrationScreen } from './AffiliateRegistrationScreen';
-export { default as SuppliersScreen } from './SuppliersScreen';
-export { default as SupplierFormScreen } from './SupplierFormScreen';
-export { default as SupplierDetailsScreen } from './SupplierDetailsScreen';
-export { default as ProductSuppliersScreen } from './ProductSuppliersScreen';
-export { default as ProductSupplierFormScreen } from './ProductSupplierFormScreen'; 
+export { default as AllTransfersScreen } from './AllTransfersScreen/AllTransfersScreen';
+export { default as LowStockInventoryScreen } from './LowStockInventoryScreen/LowStockInventoryScreen';
+export { default as WarehouseReportsScreen } from './WarehouseReportsScreen'; 
+

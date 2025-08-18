@@ -15,29 +15,18 @@ export type RootStackParamList = {
   ForgotPassword: undefined;
   MainTabs: undefined;
   AllProducts: undefined;
-  Suppliers: undefined;
-  SupplierForm: {
-    supplier?: Supplier;
-    isEditing?: boolean;
-  };
-  SupplierDetails: {
-    supplierId: string;
-  };
-  ProductSuppliers: undefined;
-  ProductSupplierForm: {
-    productSupplier?: any; // TODO: Replace with proper ProductSupplier type
-    isEditing?: boolean;
-  };
-  ProfileEdit: {
-    user: any;
-  };
-  ProfileApiTest: undefined;
+  Product: { product: any };
+  AddProduct: { product?: any };
+  AllTransfers: undefined;
+  LowStockInventory: undefined;
+  Warehouse: undefined;
+  WarehouseReports: undefined;
 };
-
 export type LoginScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Login'>;
 export type SignupScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Signup'>;
 export type OnboardingScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Onboarding'>;
 export type HomeScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'MainTabs'>;
 export type InventoryScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'MainTabs'>;
 export type AllProductsScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'AllProducts'>;
-export type SuppliersScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Suppliers' | 'SupplierForm' | 'SupplierDetails' | 'ProductSuppliers' | 'ProductSupplierForm'>;
+export type AllTransfersScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'AllTransfers'>;
+export type LowStockInventoryScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'LowStockInventory'>;

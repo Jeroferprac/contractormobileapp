@@ -98,7 +98,7 @@ const Sidebar: React.FC<SidebarProps> = ({ visible, onClose, onNavigate }) => {
 
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: 'grid', screen: 'Dashboard' },
-    { id: 'products', label: 'Products', icon: 'box', screen: 'Products' },
+    { id: 'products', label: 'Products', icon: 'box', screen: 'AllProducts' },
     { id: 'warehouse', label: 'Warehouse', icon: 'home', screen: 'Warehouse' },
     { id: 'suppliers', label: 'Suppliers', icon: 'users', screen: 'Suppliers' },
     { id: 'sales', label: 'Sales', icon: 'trending-up', screen: 'Sales' },

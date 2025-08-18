@@ -1,5 +1,6 @@
 import React, { memo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import { ListItemSkeleton } from '../ui/LoadingSkeleton';
 import LinearGradient from 'react-native-linear-gradient';
 import Icon from 'react-native-vector-icons/Feather';
 import { COLORS } from '../../constants/colors';
@@ -8,7 +9,8 @@ import { TYPOGRAPHY } from '../../constants/typography';
 import { Transaction } from '../../types/inventory';
 
 interface RecentActivityCardProps {
-  transaction: Transaction;
+  transaction?: Transaction;
+  loading?: boolean;
 }
 
 type TransactionMeta = {
@@ -60,7 +62,12 @@ const formatTimeAgo = (timestamp?: string) => {
   return `${diffInDays}d ago`;
 };
 
-const RecentActivityCard: React.FC<RecentActivityCardProps> = ({ transaction }) => {
+const RecentActivityCard: React.FC<RecentActivityCardProps> = ({ transaction, loading }) => {
+  if (loading) {
+    return <ListItemSkeleton />;
+  }
+  if (!transaction) return null;
+
   const {
     transaction_type = 'unknown',
     quantity = 0,

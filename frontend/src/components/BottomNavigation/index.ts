@@ -1,1 +1,2 @@
-export { BottomNavigation, BottomTabType } from './BottomNavigation'; 
+export { BottomNavigation } from './BottomNavigation';
+export type { BottomTabType } from './BottomNavigation';

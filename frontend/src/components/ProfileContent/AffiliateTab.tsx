@@ -17,6 +17,9 @@ interface AffiliateCompany {
   joinedDate: string;
   revenue: string;
   status: 'active' | 'pending' | 'inactive';
+  description?: string;
+  projects?: number;
+  rating?: number;
 }
 
 interface AffiliateTabProps {
@@ -33,13 +36,13 @@ export const AffiliateTab: React.FC<AffiliateTabProps> = ({
   const getStatusColor = (status: AffiliateCompany['status']) => {
     switch (status) {
       case 'active':
-        return COLORS.success;
+        return COLORS.status.success;
       case 'pending':
-        return COLORS.warning;
+        return COLORS.status.warning;
       case 'inactive':
-        return COLORS.error;
+        return COLORS.status.error;
       default:
-        return COLORS.textSecondary;
+        return COLORS.text.secondary;
     }
   };
 
@@ -63,15 +66,31 @@ export const AffiliateTab: React.FC<AffiliateTabProps> = ({
       onPress={() => onCompanyPress(company)}
     >
       <View style={styles.companyLogo}>
-        <Text style={styles.logoText}>{company.name.charAt(0)}</Text>
+        <Text style={styles.logoText}>{company.logo}</Text>
       </View>
       <View style={styles.companyInfo}>
         <Text style={styles.companyName}>{company.name}</Text>
+        {company.description && (
+          <Text style={styles.companyDescription} numberOfLines={1}>
+            {company.description}
+          </Text>
+        )}
         <Text style={styles.companyDate}>Joined on {company.joinedDate}</Text>
+        {company.projects !== undefined && (
+          <Text style={styles.companyProjects}>
+            {company.projects} projects completed
+          </Text>
+        )}
       </View>
       <View style={styles.companyStats}>
         <Text style={styles.revenueText}>Revenue</Text>
         <Text style={styles.revenueAmount}>{company.revenue}</Text>
+        {company.rating && company.rating > 0 && (
+          <View style={styles.ratingContainer}>
+            <Icon name="star" size={12} color="#FFD700" />
+            <Text style={styles.ratingText}>{company.rating}</Text>
+          </View>
+        )}
       </View>
       <View style={[styles.statusIndicator, { backgroundColor: getStatusColor(company.status) }]}>
         <Text style={styles.statusText}>{getStatusText(company.status)}</Text>
@@ -84,12 +103,25 @@ export const AffiliateTab: React.FC<AffiliateTabProps> = ({
       <ScrollView showsVerticalScrollIndicator={false}>
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Affiliate Companies</Text>
-          {companies.map(renderCompany)}
-          
-          {/* Join Now Button */}
-          <TouchableOpacity style={styles.joinButton} onPress={onJoinNow}>
-            <Text style={styles.joinButtonText}>Join Now</Text>
-          </TouchableOpacity>
+          {companies.length > 0 ? (
+            <>
+              {companies.map(renderCompany)}
+              
+              {/* Join Now Button */}
+              <TouchableOpacity style={styles.joinButton} onPress={onJoinNow}>
+                <Text style={styles.joinButtonText}>Join Now</Text>
+              </TouchableOpacity>
+            </>
+          ) : (
+            <View style={styles.emptyState}>
+              <Icon name="business" size={48} color={COLORS.text.secondary} />
+              <Text style={styles.emptyStateText}>No affiliate companies</Text>
+              <Text style={styles.emptyStateSubtext}>Join the affiliate program to start earning</Text>
+              <TouchableOpacity style={styles.joinButton} onPress={onJoinNow}>
+                <Text style={styles.joinButtonText}>Join Now</Text>
+              </TouchableOpacity>
+            </View>
+          )}
         </View>
       </ScrollView>
     </View>
@@ -101,6 +133,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.background,
   },
+
   section: {
     paddingHorizontal: SPACING.md,
     paddingTop: SPACING.md,
@@ -108,7 +141,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: COLORS.textPrimary,
+    color: COLORS.text.primary,
     marginBottom: SPACING.md,
   },
   companyItem: {
@@ -130,7 +163,7 @@ const styles = StyleSheet.create({
   logoText: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: COLORS.textLight,
+    color: COLORS.text.light,
   },
   companyInfo: {
     flex: 1,
@@ -138,12 +171,23 @@ const styles = StyleSheet.create({
   companyName: {
     fontSize: 14,
     fontWeight: '600',
-    color: COLORS.textPrimary,
+    color: COLORS.text.primary,
+    marginBottom: 2,
+  },
+  companyDescription: {
+    fontSize: 11,
+    color: COLORS.text.secondary,
     marginBottom: 2,
   },
   companyDate: {
     fontSize: 12,
-    color: COLORS.textSecondary,
+    color: COLORS.text.secondary,
+    marginBottom: 2,
+  },
+  companyProjects: {
+    fontSize: 11,
+    color: COLORS.text.secondary,
+    fontStyle: 'italic',
   },
   companyStats: {
     alignItems: 'flex-end',
@@ -151,13 +195,24 @@ const styles = StyleSheet.create({
   },
   revenueText: {
     fontSize: 10,
-    color: COLORS.textSecondary,
+    color: COLORS.text.secondary,
     marginBottom: 2,
   },
   revenueAmount: {
     fontSize: 14,
     fontWeight: '600',
-    color: COLORS.textPrimary,
+    color: COLORS.text.primary,
+    marginBottom: 4,
+  },
+  ratingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+  },
+  ratingText: {
+    fontSize: 10,
+    color: COLORS.text.secondary,
+    fontWeight: '500',
   },
   statusIndicator: {
     paddingHorizontal: SPACING.sm,
@@ -166,7 +221,7 @@ const styles = StyleSheet.create({
   },
   statusText: {
     fontSize: 10,
-    color: COLORS.textLight,
+    color: COLORS.text.light,
     fontWeight: '500',
   },
   joinButton: {
@@ -180,6 +235,26 @@ const styles = StyleSheet.create({
   joinButtonText: {
     fontSize: 16,
     fontWeight: '600',
-    color: COLORS.textLight,
+    color: COLORS.text.light,
   },
-}); 
+  emptyState: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: SPACING.xl * 2,
+    paddingHorizontal: SPACING.lg,
+  },
+  emptyStateText: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: COLORS.text.primary,
+    marginTop: SPACING.md,
+    marginBottom: SPACING.xs,
+  },
+  emptyStateSubtext: {
+    fontSize: 14,
+    color: COLORS.text.secondary,
+    textAlign: 'center',
+    marginBottom: SPACING.lg,
+  },
+});

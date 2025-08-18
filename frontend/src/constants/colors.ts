@@ -46,5 +46,13 @@ export const COLORS = {
     dark: 'rgba(0, 0, 0, 0.7)',
     light: 'rgba(255, 255, 255, 0.9)',
     card: 'rgba(0, 0, 0, 0.8)'
-  }
+  },
+  
+  // Legacy color properties for backward compatibility
+  success: '#28A745',
+  textPrimary: '#1A1A1A',
+  textSecondary: '#6C757D',
+  textLight: '#FFFFFF',
+  error: '#DC3545',
+  white: '#FFFFFF'
 }; 

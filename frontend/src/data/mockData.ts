@@ -1,4 +1,5 @@
 // Mock data for the contractor mobile app
+import { User, Post, ActivityItem, SavedItem, AboutUser, AffiliateCompany } from '../types/profile';
 
 export interface Service {
   id: string;
@@ -300,3 +301,271 @@ export const mockBeforeAfterProject: BeforeAfterProject = {
   beforeImage: 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=200&h=120&fit=crop',
     afterImage: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=200&h=120&fit=crop',
 }; 
+
+// Profile Mock Data
+
+// Mock User Profile
+export const mockUserProfile: User = {
+  name: 'Sarah Johnson',
+  company: 'Johnson Construction Co.',
+  description: 'Experienced contractor specializing in residential renovations and commercial projects. Passionate about quality craftsmanship and customer satisfaction.',
+  posts: 24,
+  followers: 156,
+  profileImage: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150&h=150&fit=crop&crop=face',
+  headerImage: 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=400&h=200&fit=crop',
+};
+
+// Mock About User Data
+export const mockAboutUser: AboutUser = {
+  description: 'Experienced contractor with over 10 years in the construction industry. Specializing in residential renovations, commercial projects, and sustainable building practices. Committed to delivering high-quality workmanship and exceptional customer service.',
+  email: 'sarah.johnson@johnsonconstruction.com',
+  phone: '+1 (555) 123-4567',
+  address: '123 Construction Ave, San Francisco, CA 94102',
+  website: 'www.johnsonconstruction.com',
+  socialMedia: {
+    linkedin: 'linkedin.com/in/sarahjohnson',
+    instagram: '@sarahjohnson_construction',
+    facebook: 'facebook.com/johnsonconstruction',
+  },
+  joinedDate: 'March 2020',
+};
+
+// Mock Posts
+export const mockPosts: Post[] = [
+  {
+    id: '1',
+    caption: 'Just completed this stunning kitchen renovation! Modern design meets functionality. The client is absolutely thrilled with the results. #KitchenRenovation #ModernDesign #ContractorLife',
+    image: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=400&h=300&fit=crop',
+    timestamp: '2024-01-15T10:30:00Z',
+    likes: 89,
+    comments: 12,
+    shares: 5,
+  },
+  {
+    id: '2',
+    caption: 'Before and after of this bathroom transformation. From outdated to luxurious! The attention to detail makes all the difference. #BathroomRenovation #BeforeAfter #LuxuryDesign',
+    image: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=400&h=300&fit=crop',
+    timestamp: '2024-01-10T14:20:00Z',
+    likes: 156,
+    comments: 23,
+    shares: 18,
+  },
+  {
+    id: '3',
+    caption: 'Working on this beautiful outdoor deck project. Perfect weather for construction! The natural wood finish is coming out beautifully. #OutdoorConstruction #DeckBuilding #NaturalMaterials',
+    image: 'https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=400&h=300&fit=crop',
+    timestamp: '2024-01-05T09:15:00Z',
+    likes: 67,
+    comments: 8,
+    shares: 3,
+  },
+  {
+    id: '4',
+    caption: 'Office space renovation completed! Modern, functional, and beautiful. The open concept design really maximizes the space. #OfficeRenovation #ModernOffice #CommercialConstruction',
+    image: 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=400&h=300&fit=crop',
+    timestamp: '2023-12-28T16:45:00Z',
+    likes: 203,
+    comments: 31,
+    shares: 25,
+  },
+  {
+    id: '5',
+    caption: 'Custom built-in shelving project. Every detail matters! The client wanted a unique storage solution that would be both functional and beautiful. #CustomCarpentry #BuiltInShelving #InteriorDesign',
+    image: 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=400&h=300&fit=crop',
+    timestamp: '2023-12-20T11:30:00Z',
+    likes: 134,
+    comments: 19,
+    shares: 12,
+  },
+];
+
+// Mock Activities
+export const mockActivities: ActivityItem[] = [
+  {
+    id: '1',
+    type: 'project',
+    title: 'Kitchen Renovation Project Completed',
+    subtitle: 'Client: Maria Rodriguez - $45,000',
+    timestamp: '2024-01-15T10:30:00Z',
+    icon: '🏠',
+  },
+  {
+    id: '2',
+    type: 'certification',
+    title: 'Green Building Certification Renewed',
+    subtitle: 'Valid until December 2025',
+    timestamp: '2024-01-12T14:20:00Z',
+    icon: '🌱',
+  },
+  {
+    id: '3',
+    type: 'review',
+    title: '5-star review received',
+    subtitle: 'From: David Chen - "Exceptional work quality!"',
+    timestamp: '2024-01-10T09:15:00Z',
+    icon: '⭐',
+  },
+  {
+    id: '4',
+    type: 'meeting',
+    title: 'Client Consultation Scheduled',
+    subtitle: 'Lisa Thompson - Bathroom renovation project',
+    timestamp: '2024-01-08T16:45:00Z',
+    icon: '📅',
+  },
+  {
+    id: '5',
+    type: 'purchase',
+    title: 'Materials ordered',
+    subtitle: 'Premium hardwood flooring - $3,200',
+    timestamp: '2024-01-05T11:30:00Z',
+    icon: '🛒',
+  },
+  {
+    id: '6',
+    type: 'like',
+    title: 'Post liked by 15 followers',
+    subtitle: 'Kitchen renovation showcase',
+    timestamp: '2024-01-03T13:20:00Z',
+    icon: '❤️',
+  },
+  {
+    id: '7',
+    type: 'comment',
+    title: 'New comment on your post',
+    subtitle: 'John Smith: "Amazing transformation!"',
+    timestamp: '2024-01-02T10:15:00Z',
+    icon: '💬',
+  },
+  {
+    id: '8',
+    type: 'follow',
+    title: 'New follower',
+    subtitle: 'Mike Johnson started following you',
+    timestamp: '2023-12-30T08:45:00Z',
+    icon: '👥',
+  },
+];
+
+// Mock Saved Items
+export const mockSavedItems: SavedItem[] = [
+  {
+    id: '1',
+    title: 'Modern Kitchen Design Inspiration',
+    image: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=200&h=150&fit=crop',
+    type: 'design',
+    description: 'Contemporary kitchen with open shelving and marble countertops',
+    location: 'San Francisco, CA',
+    rating: 4.8,
+    savedDate: '2024-01-10',
+  },
+  {
+    id: '2',
+    title: 'Premium Hardwood Flooring Supplier',
+    image: 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=200&h=150&fit=crop',
+    type: 'supplier',
+    description: 'Oak and walnut flooring options for residential projects',
+    location: 'Oakland, CA',
+    rating: 4.9,
+    savedDate: '2024-01-08',
+  },
+  {
+    id: '3',
+    title: 'Smart Home Technology Integration',
+    image: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=200&h=150&fit=crop',
+    type: 'technology',
+    description: 'Automated lighting and security systems for modern homes',
+    location: 'San Jose, CA',
+    rating: 4.7,
+    savedDate: '2024-01-05',
+  },
+  {
+    id: '4',
+    title: 'Luxury Bathroom Fixtures',
+    image: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=200&h=150&fit=crop',
+    type: 'supplier',
+    description: 'High-end faucets, showers, and accessories',
+    location: 'Los Angeles, CA',
+    rating: 4.6,
+    savedDate: '2023-12-28',
+  },
+  {
+    id: '5',
+    title: 'Sustainable Building Materials Guide',
+    image: 'https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=200&h=150&fit=crop',
+    type: 'inspiration',
+    description: 'Eco-friendly materials for green building projects',
+    location: 'Berkeley, CA',
+    rating: 4.9,
+    savedDate: '2023-12-25',
+  },
+  {
+    id: '6',
+    title: 'Commercial Office Renovation Project',
+    image: 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=200&h=150&fit=crop',
+    type: 'project',
+    description: 'Modern office space transformation case study',
+    location: 'San Francisco, CA',
+    rating: 4.8,
+    savedDate: '2023-12-20',
+  },
+];
+
+// Mock Affiliate Companies
+export const mockAffiliateCompanies: AffiliateCompany[] = [
+  {
+    id: '1',
+    name: 'Premium Materials Co.',
+    logo: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80&h=80&fit=crop',
+    joinedDate: 'January 2023',
+    revenue: '$12,450',
+    status: 'active',
+    description: 'High-quality building materials and supplies',
+    projects: 8,
+    rating: 4.8,
+  },
+  {
+    id: '2',
+    name: 'Smart Home Solutions',
+    logo: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80&h=80&fit=crop',
+    joinedDate: 'March 2023',
+    revenue: '$8,920',
+    status: 'active',
+    description: 'Automation and smart home technology',
+    projects: 5,
+    rating: 4.6,
+  },
+  {
+    id: '3',
+    name: 'Eco-Friendly Builders',
+    logo: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80&h=80&fit=crop',
+    joinedDate: 'June 2023',
+    revenue: '$6,780',
+    status: 'active',
+    description: 'Sustainable building materials and practices',
+    projects: 3,
+    rating: 4.9,
+  },
+  {
+    id: '4',
+    name: 'Luxury Fixtures Inc.',
+    logo: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80&h=80&fit=crop',
+    joinedDate: 'September 2023',
+    revenue: '$4,230',
+    status: 'pending',
+    description: 'High-end bathroom and kitchen fixtures',
+    projects: 2,
+    rating: 4.7,
+  },
+  {
+    id: '5',
+    name: 'Custom Carpentry Works',
+    logo: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80&h=80&fit=crop',
+    joinedDate: 'November 2023',
+    revenue: '$2,150',
+    status: 'inactive',
+    description: 'Custom woodwork and cabinetry',
+    projects: 1,
+    rating: 4.5,
+  },
+]; 

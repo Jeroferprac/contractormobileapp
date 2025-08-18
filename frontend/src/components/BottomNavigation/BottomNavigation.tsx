@@ -38,7 +38,7 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
           <Icon
             name={tab.icon}
             size={24}
-            color={activeTab === tab.key ? COLORS.primary : COLORS.textSecondary}
+            color={activeTab === tab.key ? COLORS.primary : COLORS.text.secondary}
           />
           <Text
             style={[
@@ -70,7 +70,7 @@ const styles = StyleSheet.create({
   },
   tabLabel: {
     fontSize: 12,
-    color: COLORS.textSecondary,
+    color: COLORS.text.secondary,
     marginTop: SPACING.xs,
     fontWeight: '500',
   },
@@ -78,4 +78,4 @@ const styles = StyleSheet.create({
     color: COLORS.primary,
     fontWeight: '600',
   },
-}); 
+});

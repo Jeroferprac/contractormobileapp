@@ -6,6 +6,7 @@ import {
   ViewStyle,
   TextStyle,
   View,
+  ActivityIndicator,
 } from 'react-native';
 import { COLORS } from '../constants/colors';
 import { BORDER_RADIUS } from '../constants/spacing';
@@ -31,11 +32,13 @@ export const Button: React.FC<ButtonProps> = ({
   style,
   textStyle,
 }) => {
+  const isDisabled = disabled || loading;
+
   const buttonStyle = [
     styles.button,
     styles[variant],
     styles[size],
-    disabled && styles.disabled,
+    isDisabled && styles.disabled,
     style,
   ];
 
@@ -43,17 +46,21 @@ export const Button: React.FC<ButtonProps> = ({
     styles.text,
     styles[`${variant}Text`],
     styles[`${size}Text`],
-    disabled && styles.disabledText,
+    isDisabled && styles.disabledText,
     textStyle,
   ];
 
   return (
     <TouchableOpacity
-      style={buttonStyle}
+      style={[styles.button, variant === 'outline' && styles.outlineButton, style]}
       onPress={onPress}
+      activeOpacity={0.8}
     >
       {loading ? (
-        <View style={[styles.loadingSpinner, { borderColor: variant === 'primary' || variant === 'gradient' ? '#fff' : COLORS.primary }]} />
+        <ActivityIndicator 
+          size="small" 
+          color={variant === 'primary' || variant === 'gradient' ? COLORS.text.light : COLORS.primary} 
+        />
       ) : (
         <Text style={textStyleCombined}>{title}</Text>
       )}

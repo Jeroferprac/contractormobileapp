@@ -24,9 +24,11 @@ declare module 'react-native' {
     value?: string;
     onChangeText?: (text: string) => void;
     secureTextEntry?: boolean;
-    keyboardType?: 'default' | 'email-address' | 'phone-pad' | 'numeric';
+    keyboardType?: 'default' | 'email-address' | 'phone-pad' | 'numeric' | 'url';
     autoCapitalize?: 'none' | 'sentences' | 'words' | 'characters';
     autoCorrect?: boolean;
+    multiline?: boolean;
+    numberOfLines?: number;
   }
   
   export interface TouchableOpacityProps {
@@ -36,6 +38,7 @@ declare module 'react-native' {
     onPressOut?: () => void;
     children?: any;
     activeOpacity?: number;
+    disabled?: boolean;
   }
   
   export interface ScrollViewProps {
@@ -45,6 +48,7 @@ declare module 'react-native' {
     showsHorizontalScrollIndicator?: boolean;
     horizontal?: boolean;
     children?: any;
+    refreshControl?: any;
   }
   
   export interface SafeAreaViewProps {

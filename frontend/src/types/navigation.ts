@@ -5,7 +5,6 @@ export type MainTabParamList = {
   Home: undefined;
   Inventory: undefined;
   Bookings: undefined;
-  Profile: undefined;
 };
 
 export type RootStackParamList = {
@@ -22,7 +21,6 @@ export type RootStackParamList = {
   Warehouse: undefined;
   WarehouseReports: undefined;
 };
-
 export type LoginScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Login'>;
 export type SignupScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Signup'>;
 export type OnboardingScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Onboarding'>;

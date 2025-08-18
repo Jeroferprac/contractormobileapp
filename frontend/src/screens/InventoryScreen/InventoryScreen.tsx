@@ -6,7 +6,10 @@ import {
   StatusBar,
   StyleSheet,
   Alert,
+  TouchableOpacity,
+  Text,
 } from 'react-native';
+import Icon from 'react-native-vector-icons/MaterialIcons';
 import LinearGradient from 'react-native-linear-gradient';
 import { COLORS } from '../../constants/colors';
 import { SPACING, BORDER_RADIUS, SHADOWS } from '../../constants/spacing';
@@ -104,11 +107,11 @@ const InventoryScreen: React.FC<InventoryScreenProps> = ({ navigation }) => {
       }));
       setWarehouses(updatedWarehouses);
 
-      const formattedChartData = monthlySalesRes.data.map((item) => ({
+      const formattedChartData = Array.isArray(monthlySalesRes.data) ? monthlySalesRes.data.map((item) => ({
         value: item.total_sales,
         label: `${getMonthName(item.month)} ${item.year}`,
         dataPointText: `${item.total_sales} units`,
-      }));
+      })) : [];
 
       setChartData(formattedChartData);
     } catch (error) {
@@ -216,7 +219,12 @@ const InventoryScreen: React.FC<InventoryScreenProps> = ({ navigation }) => {
         title="Warehouses"
         onViewAllPress={() => navigation.navigate('Warehouses')}
       />
-      <WarehouseList warehouses={warehouses} loading={loading} />
+      <WarehouseList 
+        warehouses={warehouses} 
+        loading={loading} 
+        onWarehousePress={(warehouse) => Alert.alert('Warehouse', `Selected: ${warehouse.name}`)}
+        onViewAll={() => navigation.navigate('Warehouses')}
+      />
 
         <SectionHeader title="Recent Activity" />
         <View style={styles.activityContainer}>

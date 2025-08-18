@@ -6,14 +6,14 @@ import {
   TouchableOpacity,
   StyleSheet,
   Alert,
-  Platform,
+  
   ScrollView,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import Icon from 'react-native-vector-icons/Feather';
 import { useAuth } from '../context/AuthContext';
-import { COLORS } from '../constants/colors';
-import { SPACING } from '../constants/spacing';
+// import { COLORS } from '../constants/colors';
+// import { SPACING } from '../constants/spacing';
 import SuccessModal from '../components/SuccessModal';
 import apiService from '../api/api';
 

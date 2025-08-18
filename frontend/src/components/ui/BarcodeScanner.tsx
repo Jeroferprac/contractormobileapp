@@ -18,6 +18,28 @@ interface BarcodeScannerProps {
   onScan: (barcode: string) => void;
 }
 
+// Wrapper component for navigation
+export const BarcodeScannerScreen: React.FC = () => {
+  const [isVisible, setIsVisible] = useState(true);
+  
+  const handleClose = () => {
+    setIsVisible(false);
+  };
+  
+  const handleScan = (barcode: string) => {
+    console.log('Scanned barcode:', barcode);
+    // Handle the scanned barcode here
+  };
+  
+  return (
+    <BarcodeScanner
+      visible={isVisible}
+      onClose={handleClose}
+      onScan={handleScan}
+    />
+  );
+};
+
 const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
   visible,
   onClose,
@@ -44,9 +66,11 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
         const scannedCode = codes[0];
         // Call API to get product by barcode
         try {
-          const response = await inventoryApiService.getProductByBarcode(scannedCode.value);
-          setScannedProduct(response.data);
-          onScan(scannedCode.value);
+          if (scannedCode.value) {
+            const response = await inventoryApiService.getProductByBarcode(scannedCode.value);
+            setScannedProduct(response.data);
+            onScan(scannedCode.value);
+          }
         } catch (err) {
           setError('Product not found or API error.');
           console.error('Barcode scan API error:', err);
@@ -133,7 +157,7 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
 
         {/* Camera View */}
         <Camera
-          style={StyleSheet.absoluteFill}
+          style={{ flex: 1 }}
           device={device}
           isActive={visible && isScanning}
           codeScanner={codeScanner}
@@ -277,19 +301,6 @@ const styles = StyleSheet.create({
   controls: {
     padding: SPACING.lg,
     gap: SPACING.md,
-  },
-  scanButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: COLORS.primary,
-    paddingVertical: SPACING.lg,
-    borderRadius: 12,
-    elevation: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
   },
   scanButton: {
     flexDirection: 'row',

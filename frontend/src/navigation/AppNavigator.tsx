@@ -18,6 +18,10 @@ import InventoryScreen from '../screens/InventoryScreen/InventoryScreen';
 import AllProductsScreen from '../screens/AllProductsScreen/AllProductsScreen';
 import ProductScreen from '../screens/ProductScreen/ProductScreen';
 import AddProductScreen from '../screens/AddProductScreen/AddProductScreen';
+import  WarehouseScreen  from '../screens/WarehouseScreen/WarehouseScreen';
+import AllTransfersScreen from '../screens/AllTransfersScreen/AllTransfersScreen';
+import WarehouseReportsScreen from '../screens/WarehouseReportsScreen';
+import LowStockInventoryScreen from '../screens/LowStockInventoryScreen/LowStockInventoryScreen';
 import BarcodeScanner from '../components/ui/BarcodeScanner';
 import { ProfileScreen } from '../screens/ProfileScreen/ProfileScreen';
 import { useAuth } from '../context/AuthContext';
@@ -72,6 +76,16 @@ const MainTabNavigator = () => {
           tabBarLabel: 'Inventory',
           tabBarIcon: ({ color, size }) => (
             <Icon name="inventory" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="Warehouse"
+        component={WarehouseScreen}
+        options={{
+          tabBarLabel: 'Warehouse',
+          tabBarIcon: ({ color, size }) => (
+            <Icon name="warehouse" size={size} color={color} />
           ),
         }}
       />
@@ -173,6 +187,10 @@ export const AppNavigator: React.FC = () => {
             <Stack.Screen name="AllProducts" component={AllProductsScreen} />
             <Stack.Screen name="Product" component={ProductScreen} />
             <Stack.Screen name="AddProduct" component={AddProductScreen} />
+             <Stack.Screen name="Warehouse" component={WarehouseScreen} />
+             <Stack.Screen name="AllTransfers" component={AllTransfersScreen} /> 
+             <Stack.Screen name="WarehouseReports" component={WarehouseReportsScreen} />
+             <Stack.Screen name="LowStockInventory" component={LowStockInventoryScreen} />
           </>
         )}
       </Stack.Navigator>

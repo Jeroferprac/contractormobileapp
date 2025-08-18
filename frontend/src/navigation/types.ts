@@ -10,4 +10,9 @@ export type RootStackParamList = {
   ProductDetails: { productId: string };
   Settings: undefined;
   Profile: undefined;
+  Warehouse: undefined;
+  Warehouses: undefined;
+  Transactions: undefined;
+  AddProduct: undefined;
+  Product: { productId: string };
 }; 

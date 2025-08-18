@@ -4,4 +4,8 @@ export { CreateStoryScreen } from './CreateStoryScreen';
 export { CreateHighlightScreen } from './CreateHighlightScreen';
 export { AffiliateProgramScreen } from './AffiliateProgramScreen';
 export { HowItWorksScreen } from './HowItWorksScreen';
-export { AffiliateRegistrationScreen } from './AffiliateRegistrationScreen'; 
+export { AffiliateRegistrationScreen } from './AffiliateRegistrationScreen';
+export { default as AllTransfersScreen } from './AllTransfersScreen/AllTransfersScreen';
+export { default as LowStockInventoryScreen } from './LowStockInventoryScreen/LowStockInventoryScreen';
+export { default as WarehouseReportsScreen } from './WarehouseReportsScreen'; 
+

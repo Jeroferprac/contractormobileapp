@@ -155,10 +155,14 @@ class InventoryApiService {
 
   // ===== STOCK ENDPOINTS =====
 
-  async getStocks(params?: {
+  async getWarehouseStocks(params?: {
     warehouse_id?: string;
     product_id?: string;
     low_stock?: boolean;
+    page?: number;
+    limit?: number;
+    search?: string;
+    sort?: string;
   }): Promise<AxiosResponse<Stock[]>> {
     return this.api.get(`${this.basePath}/warehouse-stocks`, { params });
   }
@@ -202,6 +206,14 @@ class InventoryApiService {
 
   async createTransfer(transferData: CreateTransferRequest): Promise<AxiosResponse<Transfer>> {
     return this.api.post(`${this.basePath}/warehouses/transfer`, transferData);
+  }
+
+  async getTransferById(id: string): Promise<AxiosResponse<Transfer>> {
+    return this.api.get(`${this.basePath}/warehouses/transfers/${id}`);
+  }
+
+  async updateTransfer(id: string, transferData: Partial<CreateTransferRequest>): Promise<AxiosResponse<Transfer>> {
+    return this.api.put(`${this.basePath}/warehouses/transfers/${id}`, transferData);
   }
 
   async completeTransfer(id: string): Promise<AxiosResponse<Transfer>> {
@@ -311,7 +323,36 @@ class InventoryApiService {
   // ===== INVENTORY MANAGEMENT ENDPOINTS =====
 
   async getCurrentStockLevels(): Promise<AxiosResponse<Stock[]>> {
-    return this.api.get(`${this.basePath}/`);
+    return this.api.get(`${this.basePath}/warehouse-stocks`);
+  }
+
+  async getStocks(params?: {
+    warehouse_id?: string;
+    low_stock?: boolean;
+    product_id?: string;
+  }): Promise<AxiosResponse<Stock[]>> {
+    return this.api.get(`${this.basePath}/warehouse-stocks`, { params });
+  }
+
+  async getWarehouseStock(warehouseId: string): Promise<AxiosResponse<Stock[]>> {
+    return this.api.get(`${this.basePath}/warehouses/${warehouseId}/stocks`);
+  }
+
+  async getWarehouseStats(warehouseId: string): Promise<AxiosResponse<any>> {
+    return this.api.get(`${this.basePath}/warehouses/${warehouseId}/stats`);
+  }
+
+  async getLowStockItems(params?: {
+    warehouse_id?: string;
+    product_id?: string;
+    page?: number;
+    limit?: number;
+    search?: string;
+    sort?: string;
+  }): Promise<AxiosResponse<Stock[]>> {
+    return this.api.get(`${this.basePath}/warehouse-stocks`, { 
+      params: { ...params, low_stock: true } 
+    });
   }
 
   async adjustStockLevel(adjustmentData: StockAdjustmentRequest): Promise<AxiosResponse<StockAdjustment>> {

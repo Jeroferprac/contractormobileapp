@@ -244,9 +244,13 @@ export interface CreateStockRequest {
 export interface UpdateStockRequest extends Partial<CreateStockRequest> {}
 
 export interface CreateTransferRequest {
+  transfer_number?: string;
   from_warehouse_id: string;
   to_warehouse_id: string;
+  transfer_date?: string;
+  status?: TransferStatus;
   notes?: string;
+  created_by?: string;
   items: {
     product_id: string;
     quantity: number;

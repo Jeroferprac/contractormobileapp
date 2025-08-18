@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { View, StyleSheet, Animated } from 'react-native';
+import { LinearGradient } from 'react-native-linear-gradient';
 import { COLORS } from '../../constants/colors';
 import { SPACING, BORDER_RADIUS } from '../../constants/spacing';
 
@@ -16,40 +17,56 @@ const LoadingSkeleton: React.FC<LoadingSkeletonProps> = ({
   borderRadius = BORDER_RADIUS.sm,
   style,
 }) => {
-  const shimmerAnim = useRef(new Animated.Value(0)).current;
+  const shimmerValue = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     const shimmerAnimation = Animated.loop(
-      Animated.timing(shimmerAnim, {
+      Animated.sequence([
+        Animated.timing(shimmerValue, {
         toValue: 1,
-        duration: 1500,
-        useNativeDriver: true,
-      })
+          duration: 1000,
+          useNativeDriver: false,
+        }),
+        Animated.timing(shimmerValue, {
+          toValue: 0,
+          duration: 1000,
+          useNativeDriver: false,
+        }),
+      ])
     );
 
     shimmerAnimation.start();
 
     return () => shimmerAnimation.stop();
-  }, [shimmerAnim]);
+  }, []);
 
-  const opacity = shimmerAnim.interpolate({
+  const translateX = shimmerValue.interpolate({
     inputRange: [0, 1],
-    outputRange: [0.3, 0.7],
+    outputRange: [-200, 200],
   });
 
   return (
+    <View style={[styles.container, { width, height, borderRadius }, style]}>
     <Animated.View
       style={[
-        styles.skeleton,
-        {
-          width,
-          height,
-          borderRadius,
-          opacity,
-        },
-        style,
-      ]}
-    />
+          styles.shimmer,
+          {
+            transform: [{ translateX }],
+          },
+        ]}
+      >
+        <LinearGradient
+          colors={[
+            'rgba(255, 255, 255, 0)',
+            'rgba(255, 255, 255, 0.3)',
+            'rgba(255, 255, 255, 0)',
+          ]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+          style={styles.gradient}
+        />
+      </Animated.View>
+    </View>
   );
 };
 
@@ -139,6 +156,21 @@ const styles = StyleSheet.create({
   },
   subtitleSkeleton: {
     marginTop: SPACING.xs,
+  },
+  container: {
+    backgroundColor: COLORS.border.light,
+    overflow: 'hidden',
+  },
+  shimmer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+  },
+  gradient: {
+    flex: 1,
+    width: 200,
   },
 });
 

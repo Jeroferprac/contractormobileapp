@@ -47,7 +47,14 @@ const styles = StyleSheet.create({
     borderColor: COLORS.border.light,
   },
   elevated: {
-    ...SHADOWS.md,
+    backgroundColor: 'rgba(255, 255, 255, 0.98)',
+    shadowColor: COLORS.primary,
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.2,
+    shadowRadius: 20,
+    elevation: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.4)',
   },
   outlined: {
     borderWidth: 2,

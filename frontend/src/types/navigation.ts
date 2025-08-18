@@ -14,15 +14,18 @@ export type RootStackParamList = {
   ForgotPassword: undefined;
   MainTabs: undefined;
   AllProducts: undefined;
-  ProfileEdit: {
-    user: any;
-  };
-  ProfileApiTest: undefined;
+  Product: { product: any };
+  AddProduct: { product?: any };
+  AllTransfers: undefined;
+  LowStockInventory: undefined;
+  Warehouse: undefined;
+  WarehouseReports: undefined;
 };
-
 export type LoginScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Login'>;
 export type SignupScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Signup'>;
 export type OnboardingScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Onboarding'>;
 export type HomeScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'MainTabs'>;
 export type InventoryScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'MainTabs'>;
 export type AllProductsScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'AllProducts'>;
+export type AllTransfersScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'AllTransfers'>;
+export type LowStockInventoryScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'LowStockInventory'>;

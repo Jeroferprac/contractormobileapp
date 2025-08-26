@@ -16,6 +16,7 @@ import { SPACING, BORDER_RADIUS, SHADOWS } from '../../../constants/spacing';
 import { TYPOGRAPHY, TEXT_STYLES } from '../../../constants/typography';
 import { Transfer, Warehouse, Product, CreateTransferRequest, TransferStatus } from '../../../types/inventory';
 import inventoryApiService from '../../../api/inventoryApi';
+import stockNotificationService from '../../../utils/stockNotifications';
 import apiService from '../../../api/api';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import storageService from '../../../utils/storage';
@@ -47,8 +48,8 @@ const TransferForm: React.FC<TransferFormProps> = ({
   products,
 }) => {
   const { user: authUser } = useAuth();
-  console.log('TransferForm rendered with products:', products?.length || 0);
-  console.log('Products:', products);
+  
+  
   const isEditing = !!editingTransfer;
   const [loading, setLoading] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -148,8 +149,7 @@ const TransferForm: React.FC<TransferFormProps> = ({
 
   // Debug form state changes
   useEffect(() => {
-    console.log('Form state changed:', form);
-    console.log('Form items:', form.items);
+
   }, [form]);
 
   const handleChange = (key: string, value: any) => {
@@ -185,11 +185,7 @@ const TransferForm: React.FC<TransferFormProps> = ({
         product_id: product.id,
         product: product
       };
-      console.log('Setting both product_id and product object:', { product_id: product.id, product: product });
       setForm((prev) => ({ ...prev, items: newItems }));
-      console.log('Product selected for item', selectedItemIndex, ':', product.name);
-    } else {
-      console.log('No item index selected');
     }
     setShowProductPicker(false);
     setSelectedItemIndex(-1);
@@ -271,6 +267,9 @@ const TransferForm: React.FC<TransferFormProps> = ({
       } else {
         await inventoryApiService.createTransfer(transferData);
         Alert.alert('Success', 'Transfer created successfully');
+        
+        // Trigger transfer notification
+        await stockNotificationService.triggerTransferNotification(transferData, 'created');
       }
       
       onSuccess();
@@ -414,8 +413,7 @@ const TransferForm: React.FC<TransferFormProps> = ({
                       <TouchableOpacity
                         style={styles.dropdownInput}
                         onPress={() => {
-                          console.log('Opening product picker for item index:', index);
-                          console.log('Available products:', products?.length || 0);
+                          
                           setSelectedItemIndex(index);
                           setShowProductPicker(true);
                         }}
@@ -503,7 +501,7 @@ const TransferForm: React.FC<TransferFormProps> = ({
                       style={[styles.productOption, { backgroundColor: '#FFE4E1' }]}
                       onPress={() => {
                         if (products.length > 0) {
-                          console.log('Debug: Testing product selection with first product');
+                      
                           selectProduct(products[0]);
                         }
                       }}

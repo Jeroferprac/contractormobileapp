@@ -82,6 +82,8 @@ const InventoryScreen: React.FC<InventoryScreenProps> = ({ navigation }) => {
   const loadInventoryData = async () => {
     try {
       setLoading(true);
+      
+      // Add individual error handling for each API call
       const [
         summaryRes,
         topSellingRes,
@@ -89,33 +91,46 @@ const InventoryScreen: React.FC<InventoryScreenProps> = ({ navigation }) => {
         warehouseRes,
         monthlySalesRes,
       ] = await Promise.all([
-        inventoryApiService.getSummary(),
-        inventoryApiService.getSalesByProduct(),
-        inventoryApiService.getTransactions({ limit: 3 }),
-        inventoryApiService.getWarehouses(),
-        inventoryApiService.getMonthlySalesSummary(),
+        inventoryApiService.getSummary().catch(() => ({ data: null })),
+        inventoryApiService.getSalesByProduct().catch(() => ({ data: [] })),
+        inventoryApiService.getTransactions({ limit: 3 }).catch(() => ({ data: [] })),
+        inventoryApiService.getWarehouses().catch(() => ({ data: [] })),
+        inventoryApiService.getMonthlySalesSummary().catch(() => ({ 
+          data: { 
+            total_sales: 0, 
+            total_revenue: 0, 
+            average_order_value: 0, 
+            top_selling_products: [], 
+            monthly_trends: [] 
+          } 
+        })),
       ]);
 
       setSummary(summaryRes.data);
-      setProducts(topSellingRes.data);
-      setTransactions(transactionsRes.data);
+      setProducts(topSellingRes.data || []);
+      setTransactions(transactionsRes.data || []);
 
       // Attach image URL to each warehouse
-      const updatedWarehouses = warehouseRes.data.slice(0, 10).map((wh, idx) => ({
+      const updatedWarehouses = (warehouseRes.data || []).slice(0, 10).map((wh, idx) => ({
         ...wh,
         imageUrl: `${UNSPLASH_IMAGES[idx % UNSPLASH_IMAGES.length]}&sig=${idx}`,
       }));
       setWarehouses(updatedWarehouses);
-
-      const formattedChartData = Array.isArray(monthlySalesRes.data) ? monthlySalesRes.data.map((item) => ({
-        value: item.total_sales,
-        label: `${getMonthName(item.month)} ${item.year}`,
-        dataPointText: `${item.total_sales} units`,
-      })) : [];
-
+      
+      const formattedChartData = (monthlySalesRes.data?.monthly_trends || []).map((item) => ({
+        value: item.sales,
+        label: `${getMonthName(parseInt(item.month.split('-')[1]))} ${item.month.split('-')[0]}`,
+        dataPointText: `${item.sales} units`,
+      }));
       setChartData(formattedChartData);
     } catch (error) {
-      Alert.alert('Error', 'Failed to load inventory data');
+      console.error('Error loading inventory data:', error);
+      // Don't show alert, just set empty data
+      setSummary(null);
+      setProducts([]);
+      setTransactions([]);
+      setWarehouses([]);
+      setChartData([]);
     } finally {
       setLoading(false);
     }
@@ -208,11 +223,7 @@ const InventoryScreen: React.FC<InventoryScreenProps> = ({ navigation }) => {
         </View>
 
         <View style={styles.section}>
-          <TopSellingList
-            products={getTopSellingProducts()}
-            onPressProduct={handleProductPress}
-            onViewAll={() => navigation.navigate('AllProducts')}
-          />
+          <TopSellingList />
         </View>
 
       <SectionHeader
@@ -221,7 +232,7 @@ const InventoryScreen: React.FC<InventoryScreenProps> = ({ navigation }) => {
       />
       <WarehouseList 
         warehouses={warehouses} 
-        loading={loading} 
+        loading={loading}
         onWarehousePress={(warehouse) => Alert.alert('Warehouse', `Selected: ${warehouse.name}`)}
         onViewAll={() => navigation.navigate('Warehouses')}
       />

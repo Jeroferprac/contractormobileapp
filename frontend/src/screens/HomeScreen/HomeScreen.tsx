@@ -584,6 +584,7 @@ const styles = StyleSheet.create({
     color: COLORS.text.secondary,
     fontSize: 16,
   },
+
 });
 
 export default HomeScreen;

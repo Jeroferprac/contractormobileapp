@@ -73,6 +73,8 @@ const InventoryScreen: React.FC<InventoryScreenProps> = ({ navigation }) => {
   >([]);
   const [loading, setLoading] = useState(true);
   const [sidebarVisible, setSidebarVisible] = useState(false);
+  
+
   const [barcodeScannerVisible, setBarcodeScannerVisible] = useState(false);
   const [hasError, setHasError] = useState(false);
 
@@ -121,21 +123,21 @@ const InventoryScreen: React.FC<InventoryScreenProps> = ({ navigation }) => {
       const fallbackChartData: { value: number; label: string; dataPointText: string }[] = [];
 
       try {
-        const [
-          summaryRes,
-          topSellingRes,
-          transactionsRes,
+              const [
+        summaryRes,
+        topSellingRes,
+        transactionsRes,
           suppliersRes,
-          warehouseRes,
-          monthlySalesRes,
-        ] = await Promise.all([
-          inventoryApiService.getSummary().catch(() => ({ data: fallbackSummary })),
-          inventoryApiService.getSalesByProduct().catch(() => ({ data: fallbackProducts })),
-          inventoryApiService.getTransactions({ limit: 3 }).catch(() => ({ data: fallbackTransactions })),
+        warehouseRes,
+        monthlySalesRes,
+      ] = await Promise.all([
+        inventoryApiService.getSummary().catch(() => ({ data: fallbackSummary })),
+        inventoryApiService.getSalesByProduct().catch(() => ({ data: fallbackProducts })),
+        inventoryApiService.getTransactions({ limit: 3 }).catch(() => ({ data: fallbackTransactions })),
           inventoryApiService.getSuppliers().catch(() => ({ data: fallbackSuppliers })),
-          inventoryApiService.getWarehouses().catch(() => ({ data: fallbackWarehouses })),
-          inventoryApiService.getMonthlySalesSummary().catch(() => ({ data: fallbackChartData })),
-        ]);
+        inventoryApiService.getWarehouses().catch(() => ({ data: fallbackWarehouses })),
+        inventoryApiService.getMonthlySalesSummary().catch(() => ({ data: fallbackChartData })),
+      ]);
 
         setSummary(summaryRes.data || fallbackSummary);
         setProducts(topSellingRes.data || fallbackProducts);
@@ -151,11 +153,22 @@ const InventoryScreen: React.FC<InventoryScreenProps> = ({ navigation }) => {
         setWarehouses(updatedWarehouses);
 
         const monthlyData = monthlySalesRes.data || fallbackChartData;
-        const formattedChartData = Array.isArray(monthlyData) ? monthlyData.map((item: any) => ({
+        const formattedChartData = Array.isArray(monthlyData) ? monthlyData.map((item: any) => {
+          // Safely handle month data with proper null checks
+          let monthLabel = 'Unknown';
+          if (item.month && typeof item.month === 'string' && item.month.includes('-')) {
+            const monthParts = item.month.split('-');
+            if (monthParts.length >= 2) {
+              monthLabel = `${getMonthName(parseInt(monthParts[1]))} ${monthParts[0]}`;
+            }
+          }
+          
+          return {
           value: item.total_sales || item.sales || 0,
-          label: item.month ? `${getMonthName(parseInt(item.month.split('-')[1]))} ${item.month.split('-')[0]}` : 'Unknown',
+            label: monthLabel,
           dataPointText: `${item.total_sales || item.sales || 0} units`,
-        })) : [];
+          };
+        }) : [];
 
         setChartData(formattedChartData);
         console.log('✅ [InventoryScreen] Successfully loaded inventory data');
@@ -195,7 +208,7 @@ const InventoryScreen: React.FC<InventoryScreenProps> = ({ navigation }) => {
     return (
       <SafeAreaView style={styles.container}>
         <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
-        <LinearGradient colors={COLORS.gradient.primary} style={styles.headerGradient}>
+        <LinearGradient colors={COLORS.gradient.primary || ['#FF6B35', '#FF8C42']} style={styles.headerGradient}>
           <View style={styles.errorHeader}>
             <Text style={styles.errorTitle}>Inventory</Text>
           </View>
@@ -222,7 +235,7 @@ const InventoryScreen: React.FC<InventoryScreenProps> = ({ navigation }) => {
     return (
       <SafeAreaView style={styles.container}>
         <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
-        <LinearGradient colors={COLORS.gradient.primary} style={styles.headerGradient}>
+        <LinearGradient colors={COLORS.gradient.primary || ['#FF6B35', '#FF8C42']} style={styles.headerGradient}>
           <InventoryHeader
             onSidebarPress={() => setSidebarVisible(true)}
             onSettingsPress={() => Alert.alert('Settings', 'Coming soon')}
@@ -271,9 +284,12 @@ const InventoryScreen: React.FC<InventoryScreenProps> = ({ navigation }) => {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
-      <LinearGradient colors={COLORS.gradient.primary} style={styles.headerGradient}>
+      <LinearGradient colors={COLORS.gradient.primary || ['#FF6B35', '#FF8C42']} style={styles.headerGradient}>
         <InventoryHeader
-          onSidebarPress={() => setSidebarVisible(true)}
+          onSidebarPress={() => {
+            console.log('🔧 [DEBUG] Sidebar button pressed, setting visible to true');
+            setSidebarVisible(true);
+          }}
           onSettingsPress={() => Alert.alert('Settings', 'Coming soon')}
           onScanPress={() => setBarcodeScannerVisible(true)}
         />
@@ -339,7 +355,15 @@ const InventoryScreen: React.FC<InventoryScreenProps> = ({ navigation }) => {
       <Sidebar
         visible={sidebarVisible}
         onClose={() => setSidebarVisible(false)}
-        onNavigate={(screen) => navigation.navigate(screen as any)}
+        onNavigate={(screen) => {
+          console.log('🔧 [DEBUG] InventoryScreen: Sidebar requesting navigation to:', screen);
+          try {
+            navigation.navigate(screen as any);
+            console.log('✅ [DEBUG] InventoryScreen: Navigation successful to:', screen);
+          } catch (error) {
+            console.error('❌ [DEBUG] InventoryScreen: Navigation failed to:', screen, error);
+          }
+        }}
       />
 
       <BarcodeScanner

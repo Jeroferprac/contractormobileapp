@@ -32,12 +32,12 @@ const ProgressRing: React.FC<ProgressRingProps> = ({
         Animated.timing(animatedValue, {
           toValue: progress,
           duration: 1000,
-          useNativeDriver: false,
+          useNativeDriver: true,
         }),
         Animated.timing(animatedProgress, {
           toValue: progress,
           duration: 1500,
-          useNativeDriver: false,
+          useNativeDriver: true,
         }),
       ]).start();
     } else {

@@ -13,6 +13,11 @@ interface SupplierCardProps {
 }
 
 const SupplierCard: React.FC<SupplierCardProps> = ({ supplier, onPress }) => {
+  // Safety check for supplier object
+  if (!supplier) {
+    console.error('SupplierCard: supplier prop is undefined or null');
+    return null;
+  }
   const getStatusColor = (isActive: boolean) => {
     return isActive ? COLORS.status.success : COLORS.status.error;
   };
@@ -22,17 +27,32 @@ const SupplierCard: React.FC<SupplierCardProps> = ({ supplier, onPress }) => {
   };
 
   const getSupplierCardColors = () => {
-    const colorSchemes = [
-      [COLORS.card, COLORS.surface, '#F8F9FA'],
-      [COLORS.card, '#FFF8E1', '#FFF3E0'],
-      [COLORS.card, '#E8F5E8', '#E0F2E0'],
-      [COLORS.card, '#FFF3E0', '#FFE0B2'],
-      [COLORS.card, '#E3F2FD', '#BBDEFB'],
-      [COLORS.card, '#F3E5F5', '#E1BEE7'],
-    ];
-    // Use supplier ID to get consistent colors for each supplier
-    const index = parseInt(supplier.id) % colorSchemes.length;
-    return colorSchemes[index];
+    try {
+      const colorSchemes = [
+        [COLORS.card || '#FFFFFF', COLORS.surface || '#F8F9FA', '#F8F9FA'],
+        [COLORS.card || '#FFFFFF', '#FFF8E1', '#FFF3E0'],
+        [COLORS.card || '#FFFFFF', '#E8F5E8', '#E0F2E0'],
+        [COLORS.card || '#FFFFFF', '#FFF3E0', '#FFE0B2'],
+        [COLORS.card || '#FFFFFF', '#E3F2FD', '#BBDEFB'],
+        [COLORS.card || '#FFFFFF', '#F3E5F5', '#E1BEE7'],
+      ];
+      
+      // Use supplier ID to get consistent colors for each supplier
+      const supplierId = supplier.id || '0';
+      const index = (parseInt(supplierId) || 0) % colorSchemes.length;
+      const colors = colorSchemes[index];
+      
+      // Ensure colors array exists and is valid
+      if (!colors || !Array.isArray(colors)) {
+        return ['#FFFFFF', '#F8F9FA'];
+      }
+      
+      // Ensure all colors are valid strings
+      return colors.map(color => typeof color === 'string' ? color : '#FFFFFF');
+    } catch (error) {
+      console.error('Error in getSupplierCardColors:', error);
+      return ['#FFFFFF', '#F8F9FA'];
+    }
   };
 
   return (
@@ -41,12 +61,20 @@ const SupplierCard: React.FC<SupplierCardProps> = ({ supplier, onPress }) => {
       activeOpacity={0.9}
       onPress={() => onPress(supplier)}
     >
-      <LinearGradient
-        colors={getSupplierCardColors()}
-        style={styles.card}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-      >
+             <LinearGradient
+         colors={(() => {
+           try {
+             const colors = getSupplierCardColors();
+             return colors && Array.isArray(colors) && colors.length > 0 ? colors : ['#FFFFFF', '#F8F9FA'];
+           } catch (error) {
+             console.error('Error getting colors for LinearGradient:', error);
+             return ['#FFFFFF', '#F8F9FA'];
+           }
+         })()}
+         style={styles.card}
+         start={{ x: 0, y: 0 }}
+         end={{ x: 1, y: 1 }}
+       >
         {/* Card Header with Status and Actions */}
         <View style={styles.header}>
           <View style={styles.statusContainer}>

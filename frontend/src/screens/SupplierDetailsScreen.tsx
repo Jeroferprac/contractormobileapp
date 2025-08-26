@@ -110,7 +110,7 @@ const SupplierDetailsScreen: React.FC<SupplierDetailsScreenProps> = ({ navigatio
     return (
       <SafeAreaView style={styles.container} edges={['top']}>
         <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
-        <LinearGradient colors={COLORS.gradient.primary} style={styles.headerGradient}>
+        <LinearGradient colors={COLORS.gradient.primary || ['#FF6B35', '#FF8C42']} style={styles.headerGradient}>
           <View style={styles.header}>
             <TouchableOpacity onPress={() => navigation.goBack()}>
               <Icon name="arrow-back" size={24} color={COLORS.text.light} />
@@ -131,7 +131,7 @@ const SupplierDetailsScreen: React.FC<SupplierDetailsScreenProps> = ({ navigatio
     return (
       <SafeAreaView style={styles.container} edges={['top']}>
         <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
-        <LinearGradient colors={COLORS.gradient.primary} style={styles.headerGradient}>
+        <LinearGradient colors={COLORS.gradient.primary || ['#FF6B35', '#FF8C42']} style={styles.headerGradient}>
           <View style={styles.header}>
             <TouchableOpacity onPress={() => navigation.goBack()}>
               <Icon name="arrow-back" size={24} color={COLORS.text.light} />
@@ -153,7 +153,7 @@ const SupplierDetailsScreen: React.FC<SupplierDetailsScreenProps> = ({ navigatio
     <SafeAreaView style={styles.container} edges={['top']}>
       <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
                    <LinearGradient 
-        colors={COLORS.gradient.primary} 
+        colors={COLORS.gradient.primary || ['#FF6B35', '#FF8C42']} 
         style={styles.headerGradient}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
@@ -194,7 +194,7 @@ const SupplierDetailsScreen: React.FC<SupplierDetailsScreenProps> = ({ navigatio
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
                          <LinearGradient
-          colors={[COLORS.card, COLORS.surface, '#F8F9FA']}
+          colors={[COLORS.card || '#FFFFFF', COLORS.surface || '#F8F9FA', '#F8F9FA']}
           style={styles.card}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}

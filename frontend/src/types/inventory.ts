@@ -35,6 +35,9 @@ export interface Warehouse {
   email: string;
   is_active: boolean;
   created_at: string;
+  used?: number;
+  capacity?: number;
+  location?: string;
 }
 
 export interface Stock {
@@ -78,13 +81,16 @@ export interface ProductSupplier {
   id: string;
   product_id: string;
   supplier_id: string;
-  supplier_code: string;
-  cost_price: number;
+  supplier_code?: string;
+  cost_price?: number;
   lead_time_days: number;
-  minimum_order_quantity: number;
+  minimum_order_quantity?: number;
   is_preferred: boolean;
   created_at: string;
   updated_at: string;
+  // API field names (from backend)
+  supplier_price?: number | null;
+  min_order_qty?: number | null;
   product?: Product;
   supplier?: Supplier;
 }
@@ -144,15 +150,17 @@ export interface SaleItem {
   product?: Product;
 }
 
-export type PurchaseOrderStatus = 'pending' | 'ordered' | 'received' | 'cancelled';
+export type PurchaseOrderStatus = 'draft' | 'pending' | 'approved' | 'ordered' | 'received' | 'cancelled';
 
 export interface PurchaseOrder {
   id: string;
+  po_number: string;
   supplier_id: string;
-  warehouse_id: string;
+  supplier_name?: string;
+  warehouse_id?: string;
   order_date: string;
-  expected_delivery_date: string;
-  total_amount: number;
+  expected_delivery_date?: string;
+  total_amount?: number;
   status: PurchaseOrderStatus;
   notes?: string;
   created_at: string;
@@ -163,12 +171,13 @@ export interface PurchaseOrder {
 }
 
 export interface PurchaseOrderItem {
-  id: string;
-  purchase_order_id: string;
+  id?: string;
+  purchase_order_id?: string;
   product_id: string;
+  product_name?: string;
   quantity: number;
-  unit_cost: number;
-  total_cost: number;
+  unit_price: number;
+  total_price: number;
   product?: Product;
 }
 

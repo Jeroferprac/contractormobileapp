@@ -9,6 +9,8 @@ import {
   TouchableOpacity,
   Text,
   ActivityIndicator,
+  Modal,
+  FlatList,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import LinearGradient from 'react-native-linear-gradient';
@@ -50,6 +52,8 @@ const ProductSupplierFormScreen: React.FC<ProductSupplierFormScreenProps> = ({ n
   const [loading, setLoading] = useState(false);
   const [loadingData, setLoadingData] = useState(true);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [showProductPicker, setShowProductPicker] = useState(false);
+  const [showSupplierPicker, setShowSupplierPicker] = useState(false);
 
   useEffect(() => {
     loadFormData();
@@ -121,13 +125,17 @@ const ProductSupplierFormScreen: React.FC<ProductSupplierFormScreenProps> = ({ n
         product_id: formData.product_id,
         supplier_id: formData.supplier_id,
         supplier_code: formData.supplier_code.trim(),
-        cost_price: Number(formData.cost_price),
-        lead_time_days: Number(formData.lead_time_days),
-        minimum_order_quantity: Number(formData.minimum_order_quantity),
+        supplier_price: parseFloat(formData.cost_price), // API expects supplier_price
+        lead_time_days: parseInt(formData.lead_time_days, 10),
+        min_order_qty: parseInt(formData.minimum_order_quantity, 10), // API expects min_order_qty
         is_preferred: formData.is_preferred,
       };
 
       console.log('🔄 [ProductSupplierForm] Sending product supplier data:', JSON.stringify(productSupplierData, null, 2));
+      console.log('🔄 [ProductSupplierForm] Cost price type:', typeof productSupplierData.supplier_price, 'Value:', productSupplierData.supplier_price);
+      console.log('🔄 [ProductSupplierForm] Lead time type:', typeof productSupplierData.lead_time_days, 'Value:', productSupplierData.lead_time_days);
+      console.log('🔄 [ProductSupplierForm] Min order type:', typeof productSupplierData.min_order_qty, 'Value:', productSupplierData.min_order_qty);
+      console.log('🔄 [ProductSupplierForm] Supplier code:', productSupplierData.supplier_code);
 
       if (isEditing && existingProductSupplier) {
         await inventoryApiService.updateProductSupplier(existingProductSupplier.id, productSupplierData);
@@ -152,9 +160,11 @@ const ProductSupplierFormScreen: React.FC<ProductSupplierFormScreenProps> = ({ n
       // Show more specific error message
       let errorMessage = 'Failed to save product supplier. Please try again.';
       if (error.response?.data?.detail) {
-        errorMessage = error.response.data.detail;
+        const detail = error.response.data.detail;
+        errorMessage = Array.isArray(detail) ? detail.join(', ') : String(detail);
       } else if (error.response?.data?.message) {
-        errorMessage = error.response.data.message;
+        const message = error.response.data.message;
+        errorMessage = Array.isArray(message) ? message.join(', ') : String(message);
       }
       
       Alert.alert('Error', errorMessage);
@@ -178,11 +188,21 @@ const ProductSupplierFormScreen: React.FC<ProductSupplierFormScreenProps> = ({ n
     return suppliers.find(s => s.id.toString() === formData.supplier_id);
   };
 
+  const handleProductSelect = (productId: string) => {
+    updateFormData('product_id', productId);
+    setShowProductPicker(false);
+  };
+
+  const handleSupplierSelect = (supplierId: string) => {
+    updateFormData('supplier_id', supplierId);
+    setShowSupplierPicker(false);
+  };
+
   if (loadingData) {
     return (
       <SafeAreaView style={styles.container}>
         <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
-        <LinearGradient colors={COLORS.gradient.primary} style={styles.headerGradient}>
+        <LinearGradient colors={COLORS.gradient.primary || ['#FF6B35', '#FF8C42']} style={styles.headerGradient}>
           <View style={styles.header}>
             <TouchableOpacity onPress={() => navigation.goBack()}>
               <Icon name="arrow-back" size={24} color={COLORS.text.light} />
@@ -246,10 +266,7 @@ const ProductSupplierFormScreen: React.FC<ProductSupplierFormScreenProps> = ({ n
             <Text style={styles.dropdownLabel}>Product *</Text>
             <TouchableOpacity
               style={[styles.dropdown, errors.product_id ? styles.dropdownError : null]}
-              onPress={() => {
-                // In a real app, you'd show a picker here
-                Alert.alert('Select Product', 'Product picker would open here');
-              }}
+              onPress={() => setShowProductPicker(true)}
             >
               <Text style={[
                 styles.dropdownText,
@@ -266,10 +283,7 @@ const ProductSupplierFormScreen: React.FC<ProductSupplierFormScreenProps> = ({ n
             <Text style={styles.dropdownLabel}>Supplier *</Text>
             <TouchableOpacity
               style={[styles.dropdown, errors.supplier_id ? styles.dropdownError : null]}
-              onPress={() => {
-                // In a real app, you'd show a picker here
-                Alert.alert('Select Supplier', 'Supplier picker would open here');
-              }}
+              onPress={() => setShowSupplierPicker(true)}
             >
               <Text style={[
                 styles.dropdownText,
@@ -354,6 +368,98 @@ const ProductSupplierFormScreen: React.FC<ProductSupplierFormScreenProps> = ({ n
           )}
         </View>
       </ScrollView>
+
+      {/* Product Picker Modal */}
+      <Modal
+        visible={showProductPicker}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setShowProductPicker(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.pickerContainer}>
+            <View style={styles.pickerHeader}>
+              <Text style={styles.pickerTitle}>Select Product</Text>
+              <TouchableOpacity
+                onPress={() => setShowProductPicker(false)}
+                style={styles.closeButton}
+              >
+                <Icon name="close" size={24} color={COLORS.text.primary} />
+              </TouchableOpacity>
+            </View>
+            <FlatList
+              data={products}
+              keyExtractor={(item) => item.id.toString()}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={[
+                    styles.pickerItem,
+                    formData.product_id === item.id.toString() && styles.pickerItemSelected
+                  ]}
+                  onPress={() => handleProductSelect(item.id.toString())}
+                >
+                  <Text style={[
+                    styles.pickerItemText,
+                    formData.product_id === item.id.toString() && styles.pickerItemTextSelected
+                  ]}>
+                    {item.name}
+                  </Text>
+                  {formData.product_id === item.id.toString() && (
+                    <Icon name="check" size={20} color={COLORS.primary} />
+                  )}
+                </TouchableOpacity>
+              )}
+              style={styles.pickerList}
+            />
+          </View>
+        </View>
+      </Modal>
+
+      {/* Supplier Picker Modal */}
+      <Modal
+        visible={showSupplierPicker}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setShowSupplierPicker(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.pickerContainer}>
+            <View style={styles.pickerHeader}>
+              <Text style={styles.pickerTitle}>Select Supplier</Text>
+              <TouchableOpacity
+                onPress={() => setShowSupplierPicker(false)}
+                style={styles.closeButton}
+              >
+                <Icon name="close" size={24} color={COLORS.text.primary} />
+              </TouchableOpacity>
+            </View>
+            <FlatList
+              data={suppliers}
+              keyExtractor={(item) => item.id.toString()}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={[
+                    styles.pickerItem,
+                    formData.supplier_id === item.id.toString() && styles.pickerItemSelected
+                  ]}
+                  onPress={() => handleSupplierSelect(item.id.toString())}
+                >
+                  <Text style={[
+                    styles.pickerItemText,
+                    formData.supplier_id === item.id.toString() && styles.pickerItemTextSelected
+                  ]}>
+                    {item.name}
+                  </Text>
+                  {formData.supplier_id === item.id.toString() && (
+                    <Icon name="check" size={20} color={COLORS.primary} />
+                  )}
+                </TouchableOpacity>
+              )}
+              style={styles.pickerList}
+            />
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -485,6 +591,60 @@ const styles = StyleSheet.create({
     marginLeft: SPACING.sm,
     fontSize: TYPOGRAPHY.sizes.md,
     color: '#6B7280',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  pickerContainer: {
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: BORDER_RADIUS.xl,
+    borderTopRightRadius: BORDER_RADIUS.xl,
+    paddingBottom: SPACING.lg,
+    ...SHADOWS.lg,
+  },
+  pickerHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.md,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
+  },
+  pickerTitle: {
+    fontSize: TYPOGRAPHY.sizes.lg,
+    fontWeight: TYPOGRAPHY.weights.bold,
+    color: COLORS.text.primary,
+  },
+  closeButton: {
+    padding: SPACING.xs,
+  },
+  pickerList: {
+    maxHeight: 300,
+  },
+  pickerItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.md,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F3F4F6',
+  },
+  pickerItemSelected: {
+    backgroundColor: '#F0F9FF',
+    borderBottomColor: '#E0F2FE',
+  },
+  pickerItemText: {
+    fontSize: TYPOGRAPHY.sizes.md,
+    color: COLORS.text.primary,
+    flex: 1,
+  },
+  pickerItemTextSelected: {
+    color: COLORS.primary,
+    fontWeight: TYPOGRAPHY.weights.medium,
   },
 });
 

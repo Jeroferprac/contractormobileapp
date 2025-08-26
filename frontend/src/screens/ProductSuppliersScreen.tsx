@@ -11,6 +11,7 @@ import {
   FlatList,
   Dimensions,
 } from 'react-native';
+import { useFocusEffect } from '@react-navigation/core';
 
 const { width } = Dimensions.get('window');
 import Icon from 'react-native-vector-icons/MaterialIcons';
@@ -39,30 +40,123 @@ const ProductSuppliersScreen: React.FC<ProductSuppliersScreenProps> = ({ navigat
   const [filteredProductSuppliers, setFilteredProductSuppliers] = useState<ProductSupplier[]>([]);
   const [searchText, setSearchText] = useState('');
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [hasError, setHasError] = useState(false);
+  const [renderError, setRenderError] = useState(false);
 
   useEffect(() => {
-    loadProductSuppliers();
+    loadProductSuppliers(false);
   }, []);
+
+  // Refresh data when screen comes into focus
+  useFocusEffect(
+    React.useCallback(() => {
+      loadProductSuppliers(false);
+    }, [])
+  );
 
   useEffect(() => {
     filterProductSuppliers();
   }, [searchText, productSuppliers]);
 
-  const loadProductSuppliers = async () => {
+  const loadProductSuppliers = async (isRefreshing = false) => {
     try {
       console.log('🔄 [ProductSuppliersScreen] Loading product suppliers...');
-      setLoading(true);
+      if (isRefreshing) {
+        setRefreshing(true);
+      } else {
+        setLoading(true);
+      }
       
-      const response = await inventoryApiService.getProductSuppliers();
-      setProductSuppliers(response.data || []);
-      console.log('✅ [ProductSuppliersScreen] Loaded product suppliers:', response.data?.length || 0);
+      // Fetch product suppliers
+      const productSuppliersResponse = await inventoryApiService.getProductSuppliers();
+      const productSuppliers = productSuppliersResponse.data || [];
+      
+             console.log('📊 [ProductSuppliersScreen] Raw product suppliers data:', JSON.stringify(productSuppliers, null, 2));
+       
+       // Debug individual fields for the first item
+       if (productSuppliers.length > 0) {
+         const firstItem = productSuppliers[0];
+                 console.log('🔍 [ProductSuppliersScreen] First item details:');
+        console.log('  - Supplier code:', firstItem.supplier_code, 'Type:', typeof firstItem.supplier_code);
+        console.log('  - Supplier price:', firstItem.supplier_price, 'Type:', typeof firstItem.supplier_price);
+        console.log('  - Lead time:', firstItem.lead_time_days, 'Type:', typeof firstItem.lead_time_days);
+        console.log('  - Min order qty:', firstItem.min_order_qty, 'Type:', typeof firstItem.min_order_qty);
+        console.log('  - Is preferred:', firstItem.is_preferred, 'Type:', typeof firstItem.is_preferred);
+       }
+      
+      // If we have product suppliers, fetch related products and suppliers
+      if (productSuppliers.length > 0) {
+        try {
+          // Fetch all products and suppliers
+          const [productsResponse, suppliersResponse] = await Promise.all([
+            inventoryApiService.getProducts(),
+            inventoryApiService.getSuppliers(),
+          ]);
+          
+          const products = productsResponse.data || [];
+          const suppliers = suppliersResponse.data || [];
+          
+          console.log('📦 [ProductSuppliersScreen] Loaded products:', products.length);
+          console.log('🏢 [ProductSuppliersScreen] Loaded suppliers:', suppliers.length);
+          
+                     // Merge the data and map API field names to frontend field names
+           const enrichedProductSuppliers = productSuppliers.map(ps => {
+             try {
+               const enriched = {
+                 ...ps,
+                 // Map API field names to frontend field names
+                 supplier_code: ps.supplier_code || 'N/A',
+                 cost_price: ps.supplier_price || 0,
+                 minimum_order_quantity: ps.min_order_qty || 0,
+                 product: products.find(p => p.id === ps.product_id),
+                 supplier: suppliers.find(s => s.id === ps.supplier_id),
+               };
+               
+               // Validate the enriched data
+               if (!enriched.id) {
+                 console.error('❌ [ProductSuppliersScreen] Missing ID in enriched data:', enriched);
+               }
+               
+               return enriched;
+             } catch (error) {
+               console.error('❌ [ProductSuppliersScreen] Error enriching product supplier:', error, ps);
+               return {
+                 ...ps,
+                 supplier_code: 'N/A',
+                 cost_price: 0,
+                 minimum_order_quantity: 0,
+                 product: undefined,
+                 supplier: undefined,
+               };
+             }
+           });
+          
+          console.log('🔗 [ProductSuppliersScreen] Enriched product suppliers:', JSON.stringify(enrichedProductSuppliers, null, 2));
+          
+          setProductSuppliers(enrichedProductSuppliers);
+        } catch (relatedDataError) {
+          console.error('❌ [ProductSuppliersScreen] Error loading related data:', relatedDataError);
+          // Still set the product suppliers even if related data fails
+          setProductSuppliers(productSuppliers);
+        }
+      } else {
+        setProductSuppliers(productSuppliers);
+      }
+      
+      setHasError(false);
+      console.log('✅ [ProductSuppliersScreen] Loaded product suppliers:', productSuppliers.length);
     } catch (error) {
       console.error('❌ [ProductSuppliersScreen] Error loading product suppliers:', error);
       setHasError(true);
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
+  };
+
+  const handleRefresh = () => {
+    loadProductSuppliers(true);
   };
 
   const filterProductSuppliers = () => {
@@ -72,9 +166,9 @@ const ProductSuppliersScreen: React.FC<ProductSuppliersScreenProps> = ({ navigat
     }
 
     const filtered = productSuppliers.filter(productSupplier =>
-      productSupplier.supplier_code.toLowerCase().includes(searchText.toLowerCase()) ||
-      productSupplier.product?.name.toLowerCase().includes(searchText.toLowerCase()) ||
-      productSupplier.supplier?.name.toLowerCase().includes(searchText.toLowerCase())
+      (productSupplier.supplier_code || '').toLowerCase().includes(searchText.toLowerCase()) ||
+      (productSupplier.product?.name || '').toLowerCase().includes(searchText.toLowerCase()) ||
+      (productSupplier.supplier?.name || '').toLowerCase().includes(searchText.toLowerCase())
     );
     setFilteredProductSuppliers(filtered);
   };
@@ -122,100 +216,278 @@ const ProductSuppliersScreen: React.FC<ProductSuppliersScreenProps> = ({ navigat
     navigation.navigate('ProductSupplierForm', { isEditing: false });
   };
 
-  const renderProductSupplierItem = ({ item, index }: { item: ProductSupplier; index: number }) => (
-    <FadeSlideInView delay={index * 100}>
-      <TouchableOpacity
-        style={styles.productSupplierItem}
-        activeOpacity={0.9}
-        onPress={() => handleProductSupplierPress(item)}
-      >
-        <LinearGradient
-          colors={getProductSupplierCardColors(index)}
-          style={styles.itemCard}
+  const renderProductSupplierItem = ({ item, index }: { item: ProductSupplier; index: number }) => {
+    try {
+      // Debug logging for the first item
+      if (index === 0) {
+        console.log('🔍 [ProductSuppliersScreen] Rendering item:', JSON.stringify(item, null, 2));
+        console.log('🔍 [ProductSuppliersScreen] Product:', item.product?.name || 'Missing product');
+        console.log('🔍 [ProductSuppliersScreen] Supplier:', item.supplier?.name || 'Missing supplier');
+        console.log('🔍 [ProductSuppliersScreen] Product ID:', item.product_id);
+        console.log('🔍 [ProductSuppliersScreen] Supplier ID:', item.supplier_id);
+      }
+
+      // Validate item data
+      if (!item) {
+        console.error('❌ [ProductSuppliersScreen] Item is null or undefined');
+        throw new Error('Item is null or undefined');
+      }
+      
+      if (!item.id) {
+        console.error('❌ [ProductSuppliersScreen] Item missing ID:', item);
+        throw new Error('Item missing ID');
+      }
+      
+             // Ensure all required fields have fallback values
+       const safeItem = {
+         ...item,
+         product_id: item.product_id || 'unknown',
+         supplier_id: item.supplier_id || 'unknown',
+         supplier_code: item.supplier_code || 'N/A',
+         cost_price: typeof item.cost_price === 'number' ? item.cost_price : 0,
+         lead_time_days: typeof item.lead_time_days === 'number' ? item.lead_time_days : 0,
+         minimum_order_quantity: typeof item.minimum_order_quantity === 'number' ? item.minimum_order_quantity : 0,
+         is_preferred: typeof item.is_preferred === 'boolean' ? item.is_preferred : false,
+         product: item.product || undefined,
+         supplier: item.supplier || undefined,
+       };
+    
+          return (
+     <FadeSlideInView delay={index * 100} key={`fade-${item.id}-${index}`}>
+                <TouchableOpacity
+           style={styles.productSupplierItem}
+           activeOpacity={0.9}
+           onPress={() => {
+             try {
+               handleProductSupplierPress(safeItem);
+             } catch (error) {
+               console.error('❌ [ProductSuppliersScreen] Error handling press:', error);
+             }
+           }}
+         >
+         <LinearGradient
+           colors={(() => {
+             try {
+               return getProductSupplierCardColors(index);
+             } catch (error) {
+               return ['#FFFFFF', '#F8FAFC', '#F1F5F9'];
+             }
+           })()}
+           style={styles.itemCard}
+           start={{ x: 0, y: 0 }}
+           end={{ x: 1, y: 1 }}
+           key={`gradient-${item.id}-${index}`}
+         >
+           <View style={styles.cardHeader}>
+             <View style={styles.statusContainer}>
+                                <View
+                                   style={[
+                     styles.statusDot,
+                     { backgroundColor: (() => {
+                       try {
+                         return (item.is_preferred || false) ? (COLORS.status?.success || '#10B981') : (COLORS.status?.warning || '#F59E0B');
+                       } catch (error) {
+                         return '#F59E0B';
+                       }
+                     })() }
+                   ]}
+                />
+                <Text style={styles.statusText}>
+                  {(() => {
+                    try {
+                      return (item.is_preferred || false) ? 'Preferred' : 'Standard';
+                    } catch (error) {
+                      return 'Standard';
+                    }
+                  })()}
+                </Text>
+             </View>
+                          <View style={styles.iconContainer}>
+                <Icon name="link" size={24} color={COLORS.primary || '#FF6B35'} />
+              </View>
+           </View>
+
+           <View style={styles.productSupplierInfo}>
+             <Text style={styles.productName}>
+               {(() => {
+                 try {
+                   return item.product?.name || `Product ID: ${item.product_id || 'Unknown'}`;
+                 } catch (error) {
+                   return 'Product Name Unavailable';
+                 }
+               })()}
+             </Text>
+             <Text style={styles.supplierName}>
+               {(() => {
+                 try {
+                   return item.supplier?.name || `Supplier ID: ${item.supplier_id || 'Unknown'}`;
+                 } catch (error) {
+                   return 'Supplier Name Unavailable';
+                 }
+               })()}
+             </Text>
+             
+             <View style={styles.infoGrid}>
+               <View style={styles.infoItem}>
+                                  <View style={styles.iconWrapper}>
+                    <Icon name="code" size={16} color={COLORS.primary || '#FF6B35'} />
+                  </View>
+                                  <Text style={styles.infoText} numberOfLines={1}>Code: {(() => {
+                                    try {
+                                      return item.supplier_code || 'N/A';
+                                    } catch (error) {
+                                      return 'N/A';
+                                    }
+                                  })()}</Text>
+               </View>
+
+               <View style={styles.infoItem}>
+                                  <View style={styles.iconWrapper}>
+                    <Icon name="euro" size={16} color={COLORS.status?.success || '#10B981'} />
+                  </View>
+                 <Text style={styles.infoText} numberOfLines={1}>Cost: €{(() => {
+                   try {
+                     const cost = item.cost_price || 0;
+                     return typeof cost === 'number' ? cost.toFixed(2) : '0.00';
+                   } catch (error) {
+                     return '0.00';
+                   }
+                 })()}</Text>
+               </View>
+
+               <View style={styles.infoItem}>
+                                  <View style={styles.iconWrapper}>
+                    <Icon name="schedule" size={16} color={COLORS.status?.info || '#3B82F6'} />
+                  </View>
+                 <Text style={styles.infoText} numberOfLines={1}>Lead Time: {(() => {
+                   try {
+                     const leadTime = item.lead_time_days || 0;
+                     return typeof leadTime === 'number' ? `${leadTime} days` : '0 days';
+                   } catch (error) {
+                     return '0 days';
+                   }
+                 })()}</Text>
+               </View>
+
+               <View style={styles.infoItem}>
+                                  <View style={styles.iconWrapper}>
+                    <Icon name="shopping-cart" size={16} color={COLORS.status?.warning || '#F59E0B'} />
+                  </View>
+                 <Text style={styles.infoText} numberOfLines={1}>Min Order: {(() => {
+                   try {
+                     const minOrder = item.minimum_order_quantity || 0;
+                     return typeof minOrder === 'number' ? minOrder.toString() : '0';
+                   } catch (error) {
+                     return '0';
+                   }
+                 })()}</Text>
+               </View>
+             </View>
+           </View>
+
+           <View style={styles.cardFooter}>
+             <View style={styles.actionHint}>
+                              <Icon name="touch-app" size={14} color={COLORS.text?.secondary || '#6B7280'} />
+               <Text style={styles.actionHintText}>Tap for options</Text>
+             </View>
+           </View>
+                  </LinearGradient>
+        </TouchableOpacity>
+      </FadeSlideInView>
+    );
+         } catch (error) {
+       console.error('❌ [ProductSuppliersScreen] Error rendering item:', error);
+       console.error('❌ [ProductSuppliersScreen] Item data:', JSON.stringify(item, null, 2));
+       console.error('❌ [ProductSuppliersScreen] Index:', index);
+       
+       // Instead of showing an error card, return a simple fallback card
+       return (
+         <View style={styles.productSupplierItem}>
+           <View style={styles.itemCard}>
+             <Text style={styles.productName}>
+               {item?.product?.name || `Product ID: ${item?.product_id || 'Unknown'}`}
+             </Text>
+             <Text style={styles.supplierName}>
+               {item?.supplier?.name || `Supplier ID: ${item?.supplier_id || 'Unknown'}`}
+             </Text>
+             <Text style={styles.infoText}>Data temporarily unavailable</Text>
+           </View>
+         </View>
+       );
+     }
+    };
+
+  const getProductSupplierCardColors = (index: number) => {
+    try {
+      const colorSchemes = [
+        ['#FFFFFF', '#F8FAFC', '#F1F5F9'],
+        ['#FFFFFF', '#FEF7FF', '#F3E8FF'],
+        ['#FFFFFF', '#F0FDF4', '#DCFCE7'],
+        ['#FFFFFF', '#FEF3C7', '#FDE68A'],
+        ['#FFFFFF', '#EFF6FF', '#DBEAFE'],
+        ['#FFFFFF', '#FDF2F8', '#FCE7F3'],
+      ];
+      return colorSchemes[index % colorSchemes.length] || ['#FFFFFF', '#F8FAFC', '#F1F5F9'];
+    } catch (error) {
+      console.error('❌ [ProductSuppliersScreen] Error getting colors:', error);
+      return ['#FFFFFF', '#F8FAFC', '#F1F5F9'];
+    }
+  };
+
+  if (renderError) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
+        <LinearGradient 
+          colors={COLORS.gradient.primary || ['#FF6B35', '#FF8C42']} 
+          style={styles.headerGradient}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
         >
-          <View style={styles.cardHeader}>
-            <View style={styles.statusContainer}>
-              <View
-                                 style={[
-                   styles.statusDot,
-                   { backgroundColor: item.is_preferred ? COLORS.status.success : COLORS.status.warning }
-                 ]}
-              />
-              <Text style={styles.statusText}>
-                {item.is_preferred ? 'Preferred' : 'Standard'}
-              </Text>
+          <View style={styles.header}>
+            <TouchableOpacity 
+              style={styles.headerButton}
+              onPress={() => navigation.goBack()}
+            >
+              <Icon name="arrow-back" size={24} color="#FFFFFF" />
+            </TouchableOpacity>
+            <View style={styles.headerTitleContainer}>
+              <Text style={styles.headerTitle}>Product Suppliers</Text>
+              <Text style={styles.headerSubtitle}>Manage product-supplier relationships</Text>
             </View>
-                         <View style={styles.iconContainer}>
-               <Icon name="link" size={24} color={COLORS.primary} />
-             </View>
-          </View>
-
-          <View style={styles.productSupplierInfo}>
-            <Text style={styles.productName}>{item.product?.name || 'Unknown Product'}</Text>
-            <Text style={styles.supplierName}>{item.supplier?.name || 'Unknown Supplier'}</Text>
-            
-            <View style={styles.infoGrid}>
-              <View style={styles.infoItem}>
-                                 <View style={styles.iconWrapper}>
-                   <Icon name="code" size={16} color={COLORS.primary} />
-                 </View>
-                <Text style={styles.infoText} numberOfLines={1}>Code: {item.supplier_code}</Text>
-              </View>
-
-              <View style={styles.infoItem}>
-                                 <View style={styles.iconWrapper}>
-                   <Icon name="euro" size={16} color={COLORS.status.success} />
-                 </View>
-                <Text style={styles.infoText} numberOfLines={1}>Cost: €{item.cost_price.toFixed(2)}</Text>
-              </View>
-
-              <View style={styles.infoItem}>
-                                 <View style={styles.iconWrapper}>
-                   <Icon name="schedule" size={16} color={COLORS.status.info} />
-                 </View>
-                <Text style={styles.infoText} numberOfLines={1}>Lead Time: {item.lead_time_days} days</Text>
-              </View>
-
-              <View style={styles.infoItem}>
-                                 <View style={styles.iconWrapper}>
-                   <Icon name="shopping-cart" size={16} color={COLORS.status.warning} />
-                 </View>
-                <Text style={styles.infoText} numberOfLines={1}>Min Order: {item.minimum_order_quantity}</Text>
-              </View>
-            </View>
-          </View>
-
-          <View style={styles.cardFooter}>
-            <View style={styles.actionHint}>
-                             <Icon name="touch-app" size={14} color={COLORS.text.secondary} />
-              <Text style={styles.actionHintText}>Tap for options</Text>
-            </View>
+            <View style={{ width: 48 }} />
           </View>
         </LinearGradient>
-      </TouchableOpacity>
-    </FadeSlideInView>
-  );
-
-  const getProductSupplierCardColors = (index: number) => {
-    const colorSchemes = [
-      ['#FFFFFF', '#F8FAFC', '#F1F5F9'],
-      ['#FFFFFF', '#FEF7FF', '#F3E8FF'],
-      ['#FFFFFF', '#F0FDF4', '#DCFCE7'],
-      ['#FFFFFF', '#FEF3C7', '#FDE68A'],
-      ['#FFFFFF', '#EFF6FF', '#DBEAFE'],
-      ['#FFFFFF', '#FDF2F8', '#FCE7F3'],
-    ];
-    return colorSchemes[index % colorSchemes.length];
-  };
+        <View style={styles.errorContainer}>
+          <LinearGradient
+            colors={['#FEF2F2', '#FEE2E2']}
+            style={styles.emptyCard}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+          >
+            <View style={styles.emptyIconContainer}>
+              <Icon name="error" size={80} color="#EF4444" />
+            </View>
+            <Text style={styles.emptyTitle}>Screen Error</Text>
+            <Text style={styles.emptySubtitle}>
+              There was an error rendering this screen. Please try again.
+            </Text>
+            <TouchableOpacity style={styles.emptyActionButton} onPress={() => setRenderError(false)}>
+              <Icon name="refresh" size={20} color="#FFFFFF" />
+              <Text style={styles.emptyActionText}>Retry</Text>
+            </TouchableOpacity>
+          </LinearGradient>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   if (hasError) {
     return (
       <SafeAreaView style={styles.container}>
         <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
         <LinearGradient 
-          colors={COLORS.gradient.primary} 
+          colors={COLORS.gradient.primary || ['#FF6B35', '#FF8C42']} 
           style={styles.headerGradient}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
@@ -264,72 +536,80 @@ const ProductSuppliersScreen: React.FC<ProductSuppliersScreenProps> = ({ navigat
     );
   }
 
-  return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
-                   <LinearGradient 
-         colors={COLORS.gradient.primary} 
-         style={styles.headerGradient}
-         start={{ x: 0, y: 0 }}
-         end={{ x: 1, y: 1 }}
-       >
-        <View style={styles.header}>
-          <TouchableOpacity 
-            style={styles.headerButton}
-            onPress={() => navigation.goBack()}
-          >
-            <Icon name="arrow-back" size={24} color="#FFFFFF" />
-          </TouchableOpacity>
-          <View style={styles.headerTitleContainer}>
-            <Text style={styles.headerTitle}>Product Suppliers</Text>
-            <Text style={styles.headerSubtitle}>Manage product-supplier relationships</Text>
+    try {
+    return (
+      <SafeAreaView style={styles.container}>
+        <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
+                      <LinearGradient 
+          colors={COLORS.gradient.primary || ['#FF6B35', '#FF8C42']} 
+          style={styles.headerGradient}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+        >
+          <View style={styles.header}>
+            <TouchableOpacity 
+              style={styles.headerButton}
+              onPress={() => navigation.goBack()}
+            >
+              <Icon name="arrow-back" size={24} color="#FFFFFF" />
+            </TouchableOpacity>
+            <View style={styles.headerTitleContainer}>
+              <Text style={styles.headerTitle}>Product Suppliers</Text>
+              <Text style={styles.headerSubtitle}>Manage product-supplier relationships</Text>
+            </View>
+            <Button
+              title="Add"
+              onPress={handleAddProductSupplier}
+              variant="primary"
+              size="small"
+              style={styles.addButton}
+            />
           </View>
-          <Button
-            title="Add"
-            onPress={handleAddProductSupplier}
-            variant="primary"
-            size="small"
-            style={styles.addButton}
-          />
-        </View>
-        <View style={styles.searchWrapper}>
-          <SearchBar
-            placeholder="Search product suppliers..."
-            value={searchText}
-            onChangeText={setSearchText}
-            onFilterPress={() => {}}
-          />
-        </View>
-      </LinearGradient>
+          <View style={styles.searchWrapper}>
+            <SearchBar
+              placeholder="Search product suppliers..."
+              value={searchText}
+              onChangeText={setSearchText}
+              onFilterPress={() => {}}
+            />
+          </View>
+        </LinearGradient>
 
-      {loading ? (
-        <ScrollView style={styles.content}>
-          {[...Array(6)].map((_, index) => (
-            <View key={index} style={styles.skeletonItem}>
-              <LoadingSkeleton height={140} borderRadius={BORDER_RADIUS.lg} />
-            </View>
-          ))}
-        </ScrollView>
-      ) : (
-        <FlatList
-          data={filteredProductSuppliers}
-          renderItem={renderProductSupplierItem}
-          keyExtractor={(item) => item.id}
-          contentContainerStyle={styles.listContainer}
-          showsVerticalScrollIndicator={false}
-          ListEmptyComponent={
-            <View style={styles.emptyContainer}>
-              <Icon name="link" size={64} color={COLORS.text.tertiary} />
-              <Text style={styles.emptyTitle}>No Product Suppliers Found</Text>
-              <Text style={styles.emptySubtitle}>
-                {searchText ? 'Try adjusting your search' : 'Add your first product supplier to get started'}
-              </Text>
-            </View>
-          }
-        />
-      )}
-    </SafeAreaView>
-  );
+        {loading ? (
+          <ScrollView style={styles.content}>
+            {[...Array(6)].map((_, index) => (
+              <View key={index} style={styles.skeletonItem}>
+                <LoadingSkeleton height={140} borderRadius={BORDER_RADIUS.lg} />
+              </View>
+            ))}
+          </ScrollView>
+        ) : (
+          <FlatList
+            data={filteredProductSuppliers}
+            renderItem={renderProductSupplierItem}
+            keyExtractor={(item) => item.id}
+            contentContainerStyle={styles.listContainer}
+            showsVerticalScrollIndicator={false}
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+            ListEmptyComponent={
+              <View style={styles.emptyContainer}>
+                <Icon name="link" size={64} color={COLORS.text?.tertiary || '#9CA3AF'} />
+                <Text style={styles.emptyTitle}>No Product Suppliers Found</Text>
+                <Text style={styles.emptySubtitle}>
+                  {searchText ? 'Try adjusting your search' : 'Add your first product supplier to get started'}
+                </Text>
+              </View>
+            }
+          />
+        )}
+      </SafeAreaView>
+    );
+  } catch (error) {
+    console.error('❌ [ProductSuppliersScreen] Render error:', error);
+    setRenderError(true);
+    return null;
+  }
 };
 
 const styles = StyleSheet.create({
@@ -485,6 +765,18 @@ const styles = StyleSheet.create({
   emptyContainer: {
     alignItems: 'center',
     paddingVertical: SPACING.xl * 2,
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: SPACING.lg,
+  },
+  errorText: {
+    fontSize: TYPOGRAPHY.sizes.md,
+    color: '#EF4444',
+    textAlign: 'center',
+    padding: SPACING.md,
   },
   retryButtonText: {
     color: COLORS.text.light,

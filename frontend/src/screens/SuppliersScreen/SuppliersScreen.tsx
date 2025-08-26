@@ -17,6 +17,8 @@ import LinearGradient from 'react-native-linear-gradient';
 import { COLORS } from '../../constants/colors';
 import { SPACING, BORDER_RADIUS, SHADOWS } from '../../constants/spacing';
 import { TYPOGRAPHY } from '../../constants/typography';
+import { extractApiErrorMessage } from '../../utils/errorHandler';
+import Sidebar from '../../components/ui/Sidebar';
 
 const { width, height } = Dimensions.get('window');
 
@@ -55,6 +57,7 @@ const SuppliersScreen: React.FC<SuppliersScreenProps> = ({ navigation }) => {
   const [loading, setLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
   const [deletingSupplierId, setDeletingSupplierId] = useState<string | null>(null);
+  const [sidebarVisible, setSidebarVisible] = useState(false);
 
   useEffect(() => {
     loadSuppliers();
@@ -145,8 +148,8 @@ const SuppliersScreen: React.FC<SuppliersScreenProps> = ({ navigation }) => {
               let errorMessage = 'Failed to delete supplier. Please try again.';
               if (error.response?.data?.detail) {
                 errorMessage = error.response.data.detail;
-              } else if (error.response?.data?.message) {
-                errorMessage = error.response.data.message;
+              } else {
+                errorMessage = extractApiErrorMessage(error, 'Failed to delete supplier. Please try again.');
               }
               
               Alert.alert('Error', errorMessage);
@@ -200,7 +203,7 @@ const SuppliersScreen: React.FC<SuppliersScreenProps> = ({ navigation }) => {
 
           {/* Supplier Name with Enhanced Styling */}
           <View style={styles.supplierNameContainer}>
-            <Text style={styles.supplierName}>{item.name}</Text>
+          <Text style={styles.supplierName}>{item.name}</Text>
             <View style={styles.supplierBadge}>
               <Icon name="verified" size={16} color="#10B981" />
               <Text style={styles.supplierBadgeText}>Verified</Text>
@@ -217,7 +220,7 @@ const SuppliersScreen: React.FC<SuppliersScreenProps> = ({ navigation }) => {
                 <Text style={styles.contactLabel}>Contact</Text>
                 <Text style={styles.contactText} numberOfLines={1}>{item.contact_person}</Text>
               </View>
-            </View>
+          </View>
 
             <View style={styles.contactItem}>
               <View style={styles.iconWrapper}>
@@ -227,7 +230,7 @@ const SuppliersScreen: React.FC<SuppliersScreenProps> = ({ navigation }) => {
                 <Text style={styles.contactLabel}>Email</Text>
                 <Text style={styles.contactText} numberOfLines={1}>{item.email}</Text>
               </View>
-            </View>
+          </View>
 
             <View style={styles.contactItem}>
               <View style={styles.iconWrapper}>
@@ -237,9 +240,9 @@ const SuppliersScreen: React.FC<SuppliersScreenProps> = ({ navigation }) => {
                 <Text style={styles.contactLabel}>Phone</Text>
                 <Text style={styles.contactText} numberOfLines={1}>{item.phone}</Text>
               </View>
-            </View>
+          </View>
 
-            {item.tax_number && (
+          {item.tax_number && (
               <View style={styles.contactItem}>
                 <View style={styles.iconWrapper}>
                   <Icon name="receipt" size={18} color="#F59E0B" />
@@ -264,8 +267,8 @@ const SuppliersScreen: React.FC<SuppliersScreenProps> = ({ navigation }) => {
               <View style={styles.infoChip}>
                 <Icon name="account-balance-wallet" size={14} color="#10B981" />
                 <Text style={styles.infoChipText}>€{item.credit_limit.toLocaleString()}</Text>
-              </View>
-            )}
+            </View>
+          )}
           </View>
 
           {/* Card Footer with Action Hint */}
@@ -282,12 +285,12 @@ const SuppliersScreen: React.FC<SuppliersScreenProps> = ({ navigation }) => {
 
   const getSupplierCardColors = (index: number) => {
     const colorSchemes = [
-      [COLORS.card, COLORS.surface, '#F8F9FA'],
-      [COLORS.card, '#FFF8E1', '#FFF3E0'],
-      [COLORS.card, '#E8F5E8', '#E0F2E0'],
-      [COLORS.card, '#FFF3E0', '#FFE0B2'],
-      [COLORS.card, '#E3F2FD', '#BBDEFB'],
-      [COLORS.card, '#F3E5F5', '#E1BEE7'],
+      [COLORS.card || '#FFFFFF', COLORS.surface || '#F8F9FA', '#F8F9FA'],
+      [COLORS.card || '#FFFFFF', '#FFF8E1', '#FFF3E0'],
+      [COLORS.card || '#FFFFFF', '#E8F5E8', '#E0F2E0'],
+      [COLORS.card || '#FFFFFF', '#FFF3E0', '#FFE0B2'],
+      [COLORS.card || '#FFFFFF', '#E3F2FD', '#BBDEFB'],
+      [COLORS.card || '#FFFFFF', '#F3E5F5', '#E1BEE7'],
     ];
     return colorSchemes[index % colorSchemes.length];
   };
@@ -297,7 +300,7 @@ const SuppliersScreen: React.FC<SuppliersScreenProps> = ({ navigation }) => {
       <SafeAreaView style={styles.container} edges={['top']}>
         <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
         <LinearGradient 
-          colors={COLORS.gradient.primary} 
+          colors={COLORS.gradient.primary || ['#FF6B35', '#FF8C42']} 
           style={styles.headerGradient}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
@@ -305,20 +308,34 @@ const SuppliersScreen: React.FC<SuppliersScreenProps> = ({ navigation }) => {
           <View style={styles.header}>
             <TouchableOpacity 
               style={styles.headerButton}
-              onPress={() => navigation.goBack()}
+              onPress={() => setSidebarVisible(true)}
             >
-              <Icon name="arrow-back" size={24} color="#FFFFFF" />
+              <Icon name="menu" size={24} color="#FFFFFF" />
             </TouchableOpacity>
             <View style={styles.headerTitleContainer}>
-              <Text style={styles.headerTitle}>Suppliers</Text>
+            <Text style={styles.headerTitle}>Suppliers</Text>
               <Text style={styles.headerSubtitle}>Manage your business partners</Text>
             </View>
-                         <TouchableOpacity 
-               style={styles.addButton}
-               onPress={handleAddSupplier}
-             >
-               <Icon name="add" size={24} color="#FFFFFF" />
-             </TouchableOpacity>
+            <View style={styles.headerActions}>
+              <TouchableOpacity 
+                style={styles.headerActionButton}
+                onPress={() => navigation.navigate('PurchaseOrders')}
+              >
+                <Icon name="receipt" size={20} color="#FFFFFF" />
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={styles.headerActionButton}
+                onPress={() => navigation.navigate('ProductSuppliers')}
+              >
+                <Icon name="link" size={20} color="#FFFFFF" />
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={styles.addButton}
+                onPress={handleAddSupplier}
+              >
+                <Icon name="add" size={24} color="#FFFFFF" />
+              </TouchableOpacity>
+            </View>
           </View>
         </LinearGradient>
         <View style={styles.errorContainer}>
@@ -338,7 +355,7 @@ const SuppliersScreen: React.FC<SuppliersScreenProps> = ({ navigation }) => {
             <TouchableOpacity style={styles.emptyActionButton} onPress={loadSuppliers}>
               <Icon name="refresh" size={20} color="#FFFFFF" />
               <Text style={styles.emptyActionText}>Retry</Text>
-            </TouchableOpacity>
+          </TouchableOpacity>
           </LinearGradient>
         </View>
       </SafeAreaView>
@@ -349,23 +366,29 @@ const SuppliersScreen: React.FC<SuppliersScreenProps> = ({ navigation }) => {
     <SafeAreaView style={styles.container} edges={['top']}>
       <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
              <LinearGradient 
-         colors={COLORS.gradient.primary} 
+         colors={COLORS.gradient.primary || ['#FF6B35', '#FF8C42']} 
          style={styles.headerGradient}
          start={{ x: 0, y: 0 }}
          end={{ x: 1, y: 1 }}
        >
-         <View style={styles.header}>
+        <View style={styles.header}>
            <TouchableOpacity 
              style={styles.headerButton}
-             onPress={() => navigation.goBack()}
+             onPress={() => setSidebarVisible(true)}
            >
-                           <Icon name="arrow-back" size={24} color="#FFFFFF" />
-           </TouchableOpacity>
+             <Icon name="menu" size={24} color="#FFFFFF" />
+          </TouchableOpacity>
            <View style={styles.headerTitleContainer}>
-             <Text style={styles.headerTitle}>Suppliers</Text>
+          <Text style={styles.headerTitle}>Suppliers</Text>
              <Text style={styles.headerSubtitle}>Manage your business partners</Text>
            </View>
            <View style={styles.headerActions}>
+             <TouchableOpacity 
+               style={styles.headerActionButton}
+               onPress={() => navigation.navigate('PurchaseOrders')}
+             >
+               <Icon name="receipt" size={20} color="#FFFFFF" />
+             </TouchableOpacity>
              <TouchableOpacity 
                style={styles.headerActionButton}
                onPress={() => navigation.navigate('ProductSuppliers')}
@@ -379,16 +402,94 @@ const SuppliersScreen: React.FC<SuppliersScreenProps> = ({ navigation }) => {
                <Icon name="add" size={24} color="#FFFFFF" />
              </TouchableOpacity>
            </View>
-         </View>
-         <View style={styles.searchWrapper}>
-           <SearchBar
-             placeholder="Search suppliers..."
-             value={searchText}
-             onChangeText={setSearchText}
-             onFilterPress={() => {}}
-           />
-         </View>
-       </LinearGradient>
+        </View>
+        <View style={styles.searchWrapper}>
+          <SearchBar
+            placeholder="Search suppliers..."
+            value={searchText}
+            onChangeText={setSearchText}
+            onFilterPress={() => {}}
+          />
+        </View>
+      </LinearGradient>
+
+      {/* Top Matches Section */}
+      {!loading && filteredSuppliers.length > 0 && (
+        <View style={styles.topMatchesSection}>
+          <View style={styles.sectionHeader}>
+            <View style={styles.sectionTitleContainer}>
+              <Text style={styles.sectionTitle}>🏆 Top Matches</Text>
+              <View style={styles.matchesBadge}>
+                <Text style={styles.matchesBadgeText}>BEST</Text>
+              </View>
+            </View>
+          </View>
+          <ScrollView 
+            horizontal 
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.topMatchesContainer}
+          >
+            {filteredSuppliers.slice(0, 3).map((supplier, index) => (
+              <FadeSlideInView key={supplier.id} delay={index * 100}>
+                <TouchableOpacity
+                  style={styles.topMatchCard}
+                  activeOpacity={0.9}
+                  onPress={() => handleSupplierPress(supplier)}
+                >
+                  <LinearGradient
+                    colors={['#667eea', '#764ba2']}
+                    style={styles.topMatchGradient}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                  >
+                    <View style={styles.topMatchHeader}>
+                      <View style={styles.topMatchRank}>
+                        <Text style={styles.topMatchRankText}>#{index + 1}</Text>
+                      </View>
+                      <View style={styles.topMatchStatus}>
+                        <View style={[
+                          styles.topMatchStatusDot,
+                          { backgroundColor: supplier.is_active ? '#10B981' : '#EF4444' }
+                        ]} />
+                        <Text style={styles.topMatchStatusText}>
+                          {supplier.is_active ? 'Active' : 'Inactive'}
+                        </Text>
+                      </View>
+                    </View>
+                    
+                    <View style={styles.topMatchContent}>
+                      <Icon name="business" size={32} color="#FFFFFF" />
+                      <Text style={styles.topMatchName} numberOfLines={1}>
+                        {supplier.name}
+                      </Text>
+                      <Text style={styles.topMatchContact} numberOfLines={1}>
+                        {supplier.contact_person}
+                      </Text>
+                    </View>
+
+                    <View style={styles.topMatchFooter}>
+                      <View style={styles.topMatchInfo}>
+                        <Icon name="email" size={14} color="rgba(255, 255, 255, 0.8)" />
+                        <Text style={styles.topMatchInfoText} numberOfLines={1}>
+                          {supplier.email}
+                        </Text>
+                      </View>
+                      {supplier.credit_limit && (
+                        <View style={styles.topMatchInfo}>
+                          <Icon name="account-balance-wallet" size={14} color="rgba(255, 255, 255, 0.8)" />
+                          <Text style={styles.topMatchInfoText}>
+                            €{supplier.credit_limit.toLocaleString()}
+                          </Text>
+                        </View>
+                      )}
+                    </View>
+                  </LinearGradient>
+                </TouchableOpacity>
+              </FadeSlideInView>
+            ))}
+          </ScrollView>
+        </View>
+      )}
 
       {loading ? (
         <ScrollView style={styles.content}>
@@ -399,14 +500,14 @@ const SuppliersScreen: React.FC<SuppliersScreenProps> = ({ navigation }) => {
           ))}
         </ScrollView>
       ) : (
-                 <FlatList
-           data={filteredSuppliers}
-           renderItem={renderSupplierItem}
-           keyExtractor={(item) => item.id}
-           contentContainerStyle={styles.listContainer}
-           showsVerticalScrollIndicator={false}
-           ListEmptyComponent={
-             <View style={styles.emptyContainer}>
+        <FlatList
+          data={filteredSuppliers}
+          renderItem={renderSupplierItem}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={styles.listContainer}
+          showsVerticalScrollIndicator={false}
+          ListEmptyComponent={
+            <View style={styles.emptyContainer}>
                <LinearGradient
                  colors={['#F8FAFC', '#E2E8F0']}
                  style={styles.emptyCard}
@@ -416,10 +517,10 @@ const SuppliersScreen: React.FC<SuppliersScreenProps> = ({ navigation }) => {
                  <View style={styles.emptyIconContainer}>
                    <Icon name="business" size={80} color="#94A3B8" />
                  </View>
-                 <Text style={styles.emptyTitle}>No Suppliers Found</Text>
-                 <Text style={styles.emptySubtitle}>
+              <Text style={styles.emptyTitle}>No Suppliers Found</Text>
+              <Text style={styles.emptySubtitle}>
                    {searchText ? 'Try adjusting your search criteria' : 'Start building your supplier network'}
-                 </Text>
+              </Text>
                  {!searchText && (
                    <TouchableOpacity style={styles.emptyActionButton} onPress={handleAddSupplier}>
                      <Icon name="add" size={20} color="#FFFFFF" />
@@ -427,10 +528,16 @@ const SuppliersScreen: React.FC<SuppliersScreenProps> = ({ navigation }) => {
                    </TouchableOpacity>
                  )}
                </LinearGradient>
-             </View>
-           }
-         />
+            </View>
+          }
+        />
       )}
+
+      <Sidebar
+        visible={sidebarVisible}
+        onClose={() => setSidebarVisible(false)}
+        onNavigate={(screen) => navigation.navigate(screen as any)}
+      />
     </SafeAreaView>
   );
 };
@@ -730,6 +837,121 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: FONTS.lg,
     fontWeight: TYPOGRAPHY.weights.medium,
+  },
+  // Top Matches Section Styles
+  topMatchesSection: {
+    paddingHorizontal: SPACING.lg,
+    marginBottom: SPACING.lg,
+  },
+  sectionHeader: {
+    marginBottom: SPACING.md,
+  },
+  sectionTitleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  sectionTitle: {
+    ...TYPOGRAPHY.h2,
+    color: COLORS.text.primary,
+    fontSize: FONTS.xl,
+    fontWeight: '700',
+    flex: 1,
+  },
+  matchesBadge: {
+    backgroundColor: '#fdcb6e',
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: SPACING.xs,
+    borderRadius: BORDER_RADIUS.full,
+  },
+  matchesBadgeText: {
+    ...TYPOGRAPHY.caption,
+    color: '#d63031',
+    fontSize: FONTS.xs,
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  topMatchesContainer: {
+    paddingRight: SPACING.lg,
+  },
+  topMatchCard: {
+    width: 200,
+    marginRight: SPACING.md,
+    borderRadius: BORDER_RADIUS.xl,
+    overflow: 'hidden',
+    ...SHADOWS.md,
+  },
+  topMatchGradient: {
+    padding: SPACING.lg,
+    minHeight: 160,
+  },
+  topMatchHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: SPACING.md,
+  },
+  topMatchRank: {
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: SPACING.xs,
+    borderRadius: BORDER_RADIUS.full,
+  },
+  topMatchRankText: {
+    ...TYPOGRAPHY.caption,
+    color: COLORS.white,
+    fontSize: FONTS.sm,
+    fontWeight: '700',
+  },
+  topMatchStatus: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  topMatchStatusDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginRight: SPACING.xs,
+  },
+  topMatchStatusText: {
+    ...TYPOGRAPHY.caption,
+    color: 'rgba(255, 255, 255, 0.9)',
+    fontSize: FONTS.xs,
+    fontWeight: '500',
+  },
+  topMatchContent: {
+    alignItems: 'center',
+    marginBottom: SPACING.md,
+  },
+  topMatchName: {
+    ...TYPOGRAPHY.h3,
+    color: COLORS.white,
+    fontSize: FONTS.lg,
+    fontWeight: '700',
+    textAlign: 'center',
+    marginTop: SPACING.sm,
+    marginBottom: SPACING.xs,
+  },
+  topMatchContact: {
+    ...TYPOGRAPHY.body2,
+    color: 'rgba(255, 255, 255, 0.8)',
+    fontSize: FONTS.sm,
+    textAlign: 'center',
+  },
+  topMatchFooter: {
+    gap: SPACING.xs,
+  },
+  topMatchInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.xs,
+  },
+  topMatchInfoText: {
+    ...TYPOGRAPHY.caption,
+    color: 'rgba(255, 255, 255, 0.8)',
+    fontSize: FONTS.xs,
+    flex: 1,
   },
 });
 

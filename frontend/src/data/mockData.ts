@@ -64,6 +64,21 @@ export interface BeforeAfterProject {
   afterImage: string;
 }
 
+export interface PriceList {
+  id: string;
+  name: string;
+  description: string;
+  currency: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+  total_items: number;
+  total_value: number;
+  category: string;
+  icon: string;
+  color: string;
+}
+
 // Services
 export const mockServices: Service[] = [
   {
@@ -529,7 +544,7 @@ export const mockAffiliateCompanies: AffiliateCompany[] = [
     projects: 1,
     rating: 4.5,
   },
-]; 
+];
 
 // ===== INVENTORY MOCK DATA =====
 
@@ -765,3 +780,77 @@ export const mockInventorySummary: InventorySummary = {
     { label: 'Jun 2024', value: 155000, dataPointText: '€155K' },
   ],
 };
+
+// Mock Price Lists
+export const mockPriceLists: PriceList[] = [
+  {
+    id: '1',
+    name: 'Standard Pricing',
+    description: 'Default pricing for all products and services',
+    currency: 'USD',
+    is_active: true,
+    created_at: '2024-01-15T10:30:00Z',
+    updated_at: '2024-01-20T14:20:00Z',
+    total_items: 156,
+    total_value: 1250000,
+    category: 'General',
+    icon: 'tag',
+    color: '#3B82F6',
+  },
+  {
+    id: '2',
+    name: 'Premium Services',
+    description: 'High-end pricing for luxury and premium services',
+    currency: 'USD',
+    is_active: true,
+    created_at: '2024-01-10T09:15:00Z',
+    updated_at: '2024-01-18T16:45:00Z',
+    total_items: 89,
+    total_value: 850000,
+    category: 'Premium',
+    icon: 'star',
+    color: '#F59E0B',
+  },
+  {
+    id: '3',
+    name: 'Contractor Rates',
+    description: 'Specialized pricing for contractor services',
+    currency: 'USD',
+    is_active: true,
+    created_at: '2024-01-05T11:30:00Z',
+    updated_at: '2024-01-15T12:00:00Z',
+    total_items: 67,
+    total_value: 420000,
+    category: 'Contractor',
+    icon: 'tool',
+    color: '#10B981',
+  },
+  {
+    id: '4',
+    name: 'Wholesale Pricing',
+    description: 'Bulk pricing for large orders and wholesale customers',
+    currency: 'USD',
+    is_active: true,
+    created_at: '2024-01-12T13:45:00Z',
+    updated_at: '2024-01-19T10:30:00Z',
+    total_items: 234,
+    total_value: 2100000,
+    category: 'Wholesale',
+    icon: 'package',
+    color: '#8B5CF6',
+  },
+  {
+    id: '5',
+    name: 'Seasonal Offers',
+    description: 'Limited-time pricing for seasonal promotions',
+    currency: 'USD',
+    is_active: false,
+    created_at: '2024-01-01T08:00:00Z',
+    updated_at: '2024-01-31T23:59:00Z',
+    total_items: 45,
+    total_value: 180000,
+    category: 'Seasonal',
+    icon: 'calendar',
+    color: '#EF4444',
+  },
+];

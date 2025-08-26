@@ -185,20 +185,7 @@ export const ProfileEditScreen: React.FC<ProfileEditScreenProps> = ({ navigation
               />
                 </View>
               </View>
-          <TouchableOpacity 
-            onPress={handleSave} 
-            style={[
-              styles.headerSaveButton, 
-              (!hasChanges || loading) && styles.headerSaveButtonDisabled
-            ]} 
-            disabled={!hasChanges || loading}
-          >
-            {loading ? (
-              <ActivityIndicator color={COLORS.primary} size="small" />
-            ) : (
-              <Text style={styles.headerSaveButtonText}>Save</Text>
-            )}
-          </TouchableOpacity>
+
             </LinearGradient>
 
         {/* Background Pattern */}
@@ -345,6 +332,24 @@ export const ProfileEditScreen: React.FC<ProfileEditScreenProps> = ({ navigation
             </Card>
         </View>
       </ScrollView>
+      
+      {/* Bottom Save Button */}
+      <View style={styles.bottomButtonContainer}>
+        <TouchableOpacity 
+          onPress={handleSave} 
+          style={[
+            styles.bottomSaveButton, 
+            (!hasChanges || loading) && styles.bottomSaveButtonDisabled
+          ]} 
+          disabled={!hasChanges || loading}
+        >
+          {loading ? (
+            <ActivityIndicator color={COLORS.text.light} size="small" />
+          ) : (
+            <Text style={styles.bottomSaveButtonText}>Save Changes</Text>
+          )}
+        </TouchableOpacity>
+      </View>
     </SafeAreaView>
   );
 };
@@ -381,22 +386,35 @@ const styles = StyleSheet.create({
   headerBadgeContainer: {
     marginTop: SPACING.xs,
   },
-  headerSaveButton: {
-    backgroundColor: COLORS.text.light,
+  bottomButtonContainer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: COLORS.background,
     paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.sm,
-    borderRadius: BORDER_RADIUS.md,
-    minWidth: 60,
+    paddingVertical: SPACING.md,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.border.light,
+    ...SHADOWS.lg,
+  },
+  bottomSaveButton: {
+    backgroundColor: COLORS.primary,
+    paddingVertical: SPACING.md,
+    borderRadius: BORDER_RADIUS.lg,
     alignItems: 'center',
-    ...SHADOWS.sm,
+    justifyContent: 'center',
+    ...SHADOWS.md,
+    elevation: 8,
   },
-  headerSaveButtonDisabled: {
-    backgroundColor: 'rgba(255, 255, 255, 0.5)',
+  bottomSaveButtonDisabled: {
+    backgroundColor: COLORS.border.medium,
   },
-  headerSaveButtonText: {
-    color: COLORS.primary,
-    fontSize: 16,
-    fontWeight: '600',
+  bottomSaveButtonText: {
+    color: COLORS.text.light,
+    fontSize: 18,
+    fontWeight: '700',
+    letterSpacing: 0.5,
   },
   backgroundPattern: {
     position: 'absolute',
@@ -437,7 +455,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingBottom: SPACING.lg,
+    paddingBottom: 100, // Extra padding for bottom button
   },
   
   // Form Container

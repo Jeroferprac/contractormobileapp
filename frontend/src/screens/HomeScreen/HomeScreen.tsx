@@ -26,13 +26,14 @@ import {
   ServiceGrid,
   ProfessionalCard,
   ProjectCard,
+  PriceListCard,
 } from '../../components/home';
 
 // Layout Components
 import { SectionHeader } from '../../components/layout';
 
 // Mock Data
-import { mockServices, mockProjects, mockProfessionals, mockDiscounts, mockFilters, mockBeforeAfterProject, mockReviews } from '../../data/mockData';
+import { mockServices, mockProjects, mockProfessionals, mockDiscounts, mockFilters, mockBeforeAfterProject, mockReviews, mockPriceLists } from '../../data/mockData';
 
 interface HomeScreenProps {
   navigation: HomeScreenNavigationProp;
@@ -61,6 +62,11 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
 
   const handleProfessionalPress = (professional: any) => {
     console.log('Professional pressed:', professional.name);
+  };
+
+  const handlePriceListPress = (priceList: any) => {
+    console.log('Price List pressed:', priceList.name);
+    navigation.navigate('PriceLists');
   };
 
   const handleLogout = async () => {
@@ -131,6 +137,8 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
         {activeFilters.length > 0 && FilterChips && (
           <FilterChips
             filters={activeFilters}
+            selectedFilters={[]}
+            onFilterChange={() => {}}
             onRemoveFilter={handleRemoveFilter}
             style={styles.filterChips}
           />
@@ -343,6 +351,25 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
             </View>
           </View>
         </View>
+
+        {/* Price Lists Section */}
+        <View style={styles.section}>
+          <SectionHeader
+            title="Price Lists"
+            subtitle="Manage and view your pricing strategies for different customer segments."
+            onViewAllPress={() => navigation.navigate('PriceLists')}
+          />
+          <View style={styles.horizontalScrollContent}>
+            {mockPriceLists.map((priceList) => (
+              <PriceListCard
+                key={priceList.id}
+                priceList={priceList}
+                onPress={() => handlePriceListPress(priceList)}
+                style={styles.priceListCard}
+              />
+            ))}
+          </View>
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -378,6 +405,9 @@ const styles = StyleSheet.create({
     marginRight: SPACING.md,
   },
   professionalCard: {
+    marginRight: SPACING.md,
+  },
+  priceListCard: {
     marginRight: SPACING.md,
   },
   professionalSection: {

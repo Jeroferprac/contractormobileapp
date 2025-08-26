@@ -65,7 +65,7 @@ const WarehouseCard: React.FC<WarehouseCardProps> = ({ warehouse, onPress, isLoa
       Animated.timing(animatedShadowOpacity, {
         toValue: 0.4,
         duration: 150,
-        useNativeDriver: false,
+        useNativeDriver: true,
       }),
     ]).start();
   };
@@ -81,7 +81,7 @@ const WarehouseCard: React.FC<WarehouseCardProps> = ({ warehouse, onPress, isLoa
       Animated.timing(animatedShadowOpacity, {
         toValue: 0.15,
         duration: 150,
-        useNativeDriver: false,
+        useNativeDriver: true,
       }),
     ]).start();
   };

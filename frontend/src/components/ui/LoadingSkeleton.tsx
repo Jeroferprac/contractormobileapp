@@ -25,12 +25,12 @@ const LoadingSkeleton: React.FC<LoadingSkeletonProps> = ({
         Animated.timing(shimmerValue, {
         toValue: 1,
           duration: 1000,
-          useNativeDriver: false,
+          useNativeDriver: true,
         }),
         Animated.timing(shimmerValue, {
           toValue: 0,
           duration: 1000,
-          useNativeDriver: false,
+          useNativeDriver: true,
         }),
       ])
     );

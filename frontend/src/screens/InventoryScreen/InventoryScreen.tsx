@@ -32,7 +32,8 @@ import {
   InventoryStats,
   TopSellingList,
   RecentActivityCard,
-  WarehouseList
+  WarehouseList,
+  SupplierList
 } from '../../components/inventory';
 import { SectionHeader } from '../../components/layout';
 
@@ -41,6 +42,7 @@ import {
   InventorySummary,
   Transaction,
   Warehouse,
+  Supplier,
 } from '../../types/inventory';
 
 import { InventoryScreenNavigationProp } from '../../types/navigation';
@@ -65,22 +67,42 @@ const InventoryScreen: React.FC<InventoryScreenProps> = ({ navigation }) => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [summary, setSummary] = useState<InventorySummary | null>(null);
   const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
+  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [chartData, setChartData] = useState<
     { value: number; label: string; dataPointText: string }[]
   >([]);
   const [loading, setLoading] = useState(true);
   const [sidebarVisible, setSidebarVisible] = useState(false);
+  
+
   const [barcodeScannerVisible, setBarcodeScannerVisible] = useState(false);
+  const [hasError, setHasError] = useState(false);
 
   useEffect(() => {
-    loadInventoryData();
+    try {
+      loadInventoryData();
+    } catch (error) {
+      console.error('Error in useEffect:', error);
+      setHasError(true);
+      setLoading(false);
+    }
   }, []);
+
+  // Refresh data when screen comes into focus
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', () => {
+      loadInventoryData();
+    });
+
+    return unsubscribe;
+  }, [navigation]);
 
   const getMonthName = (monthNumber: number): string =>
     new Date(2000, monthNumber - 1).toLocaleString('default', { month: 'short' });
 
   const loadInventoryData = async () => {
     try {
+      console.log('🔄 [InventoryScreen] Starting to load inventory data...');
       setLoading(true);
       
       // Add individual error handling for each API call
@@ -88,6 +110,7 @@ const InventoryScreen: React.FC<InventoryScreenProps> = ({ navigation }) => {
         summaryRes,
         topSellingRes,
         transactionsRes,
+          suppliersRes,
         warehouseRes,
         monthlySalesRes,
       ] = await Promise.all([
@@ -133,22 +156,54 @@ const InventoryScreen: React.FC<InventoryScreenProps> = ({ navigation }) => {
       setChartData([]);
     } finally {
       setLoading(false);
+      console.log('🏁 [InventoryScreen] Finished loading inventory data');
     }
   };
 
   const getTopSellingProducts = () => products.slice(0, 4);
   const getRecentActivity = () => transactions.slice(0, 3);
+  const getTopSuppliers = () => suppliers.slice(0, 4);
 
   const handleProductPress = (product: Product) => {
     Alert.alert('Product Details', `Selected: ${product.name}`);
   };
+
+  const handleSupplierPress = (supplier: Supplier) => {
+    navigation.navigate('SupplierDetails', { supplierId: supplier.id });
+  };
+
+  if (hasError) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
+        <LinearGradient colors={COLORS.gradient.primary || ['#FF6B35', '#FF8C42']} style={styles.headerGradient}>
+          <View style={styles.errorHeader}>
+            <Text style={styles.errorTitle}>Inventory</Text>
+          </View>
+        </LinearGradient>
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorText}>Something went wrong</Text>
+          <TouchableOpacity 
+            style={styles.retryButton}
+            onPress={() => {
+              setHasError(false);
+              setLoading(true);
+              loadInventoryData();
+            }}
+          >
+            <Text style={styles.retryButtonText}>Retry</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   if (loading) {
     // Skeleton loading UI
     return (
       <SafeAreaView style={styles.container}>
         <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
-        <LinearGradient colors={COLORS.gradient.primary} style={styles.headerGradient}>
+        <LinearGradient colors={COLORS.gradient.primary || ['#FF6B35', '#FF8C42']} style={styles.headerGradient}>
           <InventoryHeader
             onSidebarPress={() => setSidebarVisible(true)}
             onSettingsPress={() => Alert.alert('Settings', 'Coming soon')}
@@ -197,9 +252,12 @@ const InventoryScreen: React.FC<InventoryScreenProps> = ({ navigation }) => {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
-      <LinearGradient colors={COLORS.gradient.primary} style={styles.headerGradient}>
+      <LinearGradient colors={COLORS.gradient.primary || ['#FF6B35', '#FF8C42']} style={styles.headerGradient}>
         <InventoryHeader
-          onSidebarPress={() => setSidebarVisible(true)}
+          onSidebarPress={() => {
+            console.log('🔧 [DEBUG] Sidebar button pressed, setting visible to true');
+            setSidebarVisible(true);
+          }}
           onSettingsPress={() => Alert.alert('Settings', 'Coming soon')}
           onScanPress={() => setBarcodeScannerVisible(true)}
         />
@@ -250,7 +308,15 @@ const InventoryScreen: React.FC<InventoryScreenProps> = ({ navigation }) => {
       <Sidebar
         visible={sidebarVisible}
         onClose={() => setSidebarVisible(false)}
-        onNavigate={(screen) => navigation.navigate(screen as any)}
+        onNavigate={(screen) => {
+          console.log('🔧 [DEBUG] InventoryScreen: Sidebar requesting navigation to:', screen);
+          try {
+            navigation.navigate(screen as any);
+            console.log('✅ [DEBUG] InventoryScreen: Navigation successful to:', screen);
+          } catch (error) {
+            console.error('❌ [DEBUG] InventoryScreen: Navigation failed to:', screen, error);
+          }
+        }}
       />
 
       <BarcodeScanner
@@ -294,5 +360,37 @@ const styles = StyleSheet.create({
   warehousesContainer: {
     paddingHorizontal: SPACING.lg,
     paddingVertical: SPACING.sm,
+  },
+  errorHeader: {
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.md,
+  },
+  errorTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: COLORS.text.light,
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: SPACING.lg,
+  },
+  errorText: {
+    fontSize: 18,
+    color: COLORS.text.secondary,
+    marginBottom: SPACING.lg,
+    textAlign: 'center',
+  },
+  retryButton: {
+    backgroundColor: COLORS.primary,
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.md,
+    borderRadius: BORDER_RADIUS.md,
+  },
+  retryButtonText: {
+    color: COLORS.text.light,
+    fontSize: 16,
+    fontWeight: '600',
   },
 });

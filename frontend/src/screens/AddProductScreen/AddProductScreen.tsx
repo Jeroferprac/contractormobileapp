@@ -1,22 +1,20 @@
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import inventoryApiService from '../../api/inventoryApi';
-import LottieView from 'lottie-react-native';
+// import LottieView from 'lottie-react-native';
 import {
-  Alert,
-  Modal,
-  Animated,
-  ScrollView,
   View,
   Text,
-  TextInput,
+  ScrollView,
   TouchableOpacity,
   StyleSheet,
+  Alert,
+  TextInput,
   Platform,
-  ImageBackground,
-  StatusBar,
-  SafeAreaView,
+  Switch,
+  Modal,
 } from 'react-native';
-import { Switch } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import Animated, { useSharedValue, withSpring } from 'react-native-reanimated';
 import Icon from 'react-native-vector-icons/Feather';
 import LinearGradient from 'react-native-linear-gradient';
 import { COLORS } from '../../constants/colors';
@@ -86,10 +84,10 @@ const AddProductScreen: React.FC<AddProductScreenProps> = ({ navigation, route }
 
   const [saving, setSaving] = useState(false);
   const [successVisible, setSuccessVisible] = useState(false);
-  const successScale = useRef(new Animated.Value(0)).current;
+  const successScale = useSharedValue(0);
 
   const [failureVisible, setFailureVisible] = useState(false);
-  const failureScale = useRef(new Animated.Value(0)).current;
+  const failureScale = useSharedValue(0);
 
   const handleChange = (key: string, value: any) => {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -105,27 +103,19 @@ const AddProductScreen: React.FC<AddProductScreenProps> = ({ navigation, route }
       }
       setSaving(false);
       setSuccessVisible(true);
-      successScale.setValue(0);
-      Animated.parallel([
-        Animated.spring(successScale, {
-          toValue: 1,
-          useNativeDriver: true,
-          friction: 6,
-          tension: 80,
-        }),
-      ]).start();
+      successScale.value = 0;
+      successScale.value = withSpring(1, {
+        damping: 6,
+        stiffness: 80,
+      });
     } catch (error) {
       setSaving(false);
       setFailureVisible(true);
-      failureScale.setValue(0);
-      Animated.parallel([
-        Animated.spring(failureScale, {
-          toValue: 1,
-          useNativeDriver: true,
-          friction: 6,
-          tension: 80,
-        })
-      ]).start();
+      failureScale.value = 0;
+      failureScale.value = withSpring(1, {
+        damping: 6,
+        stiffness: 80,
+      });
     }
   };
 
@@ -138,21 +128,11 @@ const AddProductScreen: React.FC<AddProductScreenProps> = ({ navigation, route }
     setFailureVisible(false);
   };
 
-  const getHeaderImage = () => {
-    return 'https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=800&h=600&fit=crop';
-  };
-
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
-      
       {/* Header with Image */}
       <View style={styles.header}>
-        <ImageBackground
-          source={{ uri: getHeaderImage() }}
-          style={styles.headerImage}
-          imageStyle={styles.headerImageStyle}
-        >
+        <View style={styles.headerImage}>
           <View style={styles.headerOverlay}>
             {/* Back Button */}
             <TouchableOpacity 
@@ -168,7 +148,7 @@ const AddProductScreen: React.FC<AddProductScreenProps> = ({ navigation, route }
             
             <View style={{width: 40}} />
           </View>
-        </ImageBackground>
+        </View>
       </View>
       
       {/* Form Content */}
@@ -429,12 +409,9 @@ const AddProductScreen: React.FC<AddProductScreenProps> = ({ navigation, route }
             </TouchableOpacity>
 
             <View style={styles.successIconCircle}>
-              <LottieView
-                source={require('../../assets/animations/success.json')} // Assuming you have a success.json animation
-                autoPlay
-                loop={false}
-                style={{ width: 80, height: 80 }}
-              />
+              <View style={{ width: 80, height: 80, backgroundColor: '#10B981', borderRadius: 40, justifyContent: 'center', alignItems: 'center' }}>
+                <Icon name="check" size={40} color="#FFFFFF" />
+              </View>
             </View>
 
             <Text style={styles.successTitle}>Successful!</Text>
@@ -460,12 +437,9 @@ const AddProductScreen: React.FC<AddProductScreenProps> = ({ navigation, route }
             </TouchableOpacity>
 
             <View style={styles.failureIconCircle}>
-              <LottieView
-                source={require('../../assets/animations/failure.json')} // Assuming you have a failure.json animation
-                autoPlay
-                loop={false}
-                style={{ width: 80, height: 80 }}
-              />
+              <View style={{ width: 80, height: 80, backgroundColor: '#EF4444', borderRadius: 40, justifyContent: 'center', alignItems: 'center' }}>
+                <Icon name="x" size={40} color="#FFFFFF" />
+              </View>
             </View>
 
             <Text style={styles.failureTitle}>Failed!</Text>

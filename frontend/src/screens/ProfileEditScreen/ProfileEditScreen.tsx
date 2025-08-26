@@ -8,17 +8,21 @@ import {
   TouchableOpacity,
   Alert,
   ActivityIndicator,
-  TextInput,
   Platform,
+  Dimensions,
+  StatusBar,
 } from 'react-native';
-import Icon from 'react-native-vector-icons/MaterialIcons';
+import Icon from 'react-native-vector-icons/Feather';
 import LinearGradient from 'react-native-linear-gradient';
-import { StatusBar } from '../../components/StatusBar';
 import { COLORS } from '../../constants/colors';
 import { SPACING, BORDER_RADIUS, SHADOWS } from '../../constants/spacing';
 import { useAuth } from '../../context/AuthContext';
 import profileService from '../../services/profileService';
 import { User } from '../../types/api';
+import { Input } from '../../components/Input';
+import { Card, Badge } from '../../components/ui';
+
+const { width } = Dimensions.get('window');
 
 interface ProfileEditScreenProps {
   navigation: any;
@@ -34,6 +38,8 @@ export const ProfileEditScreen: React.FC<ProfileEditScreenProps> = ({ navigation
   const user = route.params?.user || authUser;
   
   const [loading, setLoading] = useState(false);
+  const [hasChanges, setHasChanges] = useState(false);
+  const [errors, setErrors] = useState<{[key: string]: string}>({});
   const [formData, setFormData] = useState({
     full_name: user?.full_name || '',
     bio: user?.bio || '',
@@ -47,42 +53,63 @@ export const ProfileEditScreen: React.FC<ProfileEditScreenProps> = ({ navigation
     facebook: user?.social_media?.facebook || '',
   });
 
-  // Custom Input Component
-  const CustomInput = ({ 
-    label, 
-    value, 
-    onChangeText, 
-    placeholder, 
-    multiline = false, 
-    numberOfLines = 1,
-    keyboardType = 'default',
-    icon,
-    ...props 
-  }: any) => (
-    <View style={styles.inputContainer}>
-      <View style={styles.inputLabelContainer}>
-        {icon && <Icon name={icon} size={20} color={COLORS.primary} style={styles.inputIcon} />}
-        <Text style={styles.inputLabel}>{label}</Text>
-      </View>
-      <TextInput
-        style={[
-          styles.textInput,
-          multiline && styles.textInputMultiline,
-          value && styles.textInputFilled
-        ]}
-        value={value}
-        onChangeText={onChangeText}
-        placeholder={placeholder}
-        placeholderTextColor={COLORS.text.tertiary}
-        multiline={multiline}
-        numberOfLines={numberOfLines}
-        keyboardType={keyboardType}
-        {...props}
-      />
-    </View>
-  );
+  // Track changes
+  useEffect(() => {
+    const originalData = {
+      full_name: user?.full_name || '',
+      bio: user?.bio || '',
+      phone: user?.phone || '',
+      location: user?.location || '',
+      website: user?.website || '',
+      company: user?.company || '',
+      job_title: user?.job_title || '',
+      linkedin: user?.social_media?.linkedin || '',
+      instagram: user?.social_media?.instagram || '',
+      facebook: user?.social_media?.facebook || '',
+    };
+    
+    setHasChanges(JSON.stringify(formData) !== JSON.stringify(originalData));
+  }, [formData, user]);
+
+  // Form validation
+  const validateForm = () => {
+    const newErrors: {[key: string]: string} = {};
+
+    if (!formData.full_name.trim()) {
+      newErrors.full_name = 'Full name is required';
+    }
+
+    if (formData.phone && !/^[\+]?[1-9][\d]{0,15}$/.test(formData.phone.replace(/\s/g, ''))) {
+      newErrors.phone = 'Please enter a valid phone number';
+    }
+
+    if (formData.website && !/^https?:\/\/.+/.test(formData.website)) {
+      newErrors.website = 'Please enter a valid URL starting with http:// or https://';
+    }
+
+    if (formData.linkedin && !/^https?:\/\/.+/.test(formData.linkedin)) {
+      newErrors.linkedin = 'Please enter a valid LinkedIn URL';
+    }
+
+    if (formData.facebook && !/^https?:\/\/.+/.test(formData.facebook)) {
+      newErrors.facebook = 'Please enter a valid Facebook URL';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const handleSave = async () => {
+    if (!hasChanges) {
+      navigation.goBack();
+      return;
+    }
+
+    if (!validateForm()) {
+      Alert.alert('Validation Error', 'Please fix the errors in the form before saving.');
+      return;
+    }
+
     try {
       setLoading(true);
       
@@ -103,8 +130,11 @@ export const ProfileEditScreen: React.FC<ProfileEditScreenProps> = ({ navigation
 
       await profileService.updateUserProfile(updateData);
       
-      Alert.alert('Success', 'Profile updated successfully!');
-      navigation.goBack();
+      Alert.alert(
+        'Success', 
+        'Profile updated successfully!',
+        [{ text: 'OK', onPress: () => navigation.goBack() }]
+      );
     } catch (err: any) {
       console.error('Failed to update profile:', err);
       Alert.alert('Error', err.message || 'Failed to update profile');
@@ -114,171 +144,212 @@ export const ProfileEditScreen: React.FC<ProfileEditScreenProps> = ({ navigation
   };
 
   const handleCancel = () => {
+    if (hasChanges) {
+      Alert.alert(
+        'Discard Changes',
+        'You have unsaved changes. Are you sure you want to discard them?',
+        [
+          { text: 'Keep Editing', style: 'cancel' },
+          { text: 'Discard', style: 'destructive', onPress: () => navigation.goBack() }
+        ]
+      );
+    } else {
     navigation.goBack();
+    }
   };
+
+  const completedFields = Object.values(formData).filter(v => v.trim()).length;
+  const totalFields = Object.keys(formData).length;
+  const completionPercentage = Math.round((completedFields / totalFields) * 100);
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar />
-      
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={handleCancel} style={styles.cancelButton}>
-          <Text style={styles.cancelButtonText}>Cancel</Text>
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Edit Profile</Text>
-        <TouchableOpacity onPress={handleSave} style={styles.headerSaveButton} disabled={loading}>
-          <Text style={styles.headerSaveButtonText}>Save</Text>
-        </TouchableOpacity>
-      </View>
-
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        <View style={styles.form}>
-          {/* Profile Header */}
-          <View style={styles.profileHeader}>
+      <StatusBar barStyle="light-content" backgroundColor={COLORS.primary} translucent />
+        {/* Header with Gradient */}
             <LinearGradient
               colors={COLORS.gradient.primary}
-              style={styles.profileHeaderGradient}
-            >
-              <View style={styles.profileHeaderContent}>
-                <View style={styles.profileAvatar}>
-                  <Icon name="person" size={40} color={COLORS.white} />
+          style={styles.header}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+        >
+          <TouchableOpacity onPress={handleCancel} style={styles.headerButton}>
+            <Icon name="arrow-left" size={24} color={COLORS.text.light} />
+          </TouchableOpacity>
+          <View style={styles.headerCenter}>
+            <Text style={styles.headerTitle}>Edit Profile</Text>
+            <View style={styles.headerBadgeContainer}>
+              <Badge 
+                label={hasChanges ? 'Unsaved changes' : `${completionPercentage}% complete`}
+                variant={hasChanges ? 'warning' : 'info'}
+                size="sm"
+              />
                 </View>
-                <Text style={styles.profileHeaderTitle}>Edit Your Profile</Text>
-                <Text style={styles.profileHeaderSubtitle}>Update your information and preferences</Text>
               </View>
+
             </LinearGradient>
+
+        {/* Background Pattern */}
+        <View style={styles.backgroundPattern}>
+          <View style={styles.patternCircle1} />
+          <View style={styles.patternCircle2} />
+          <View style={styles.patternCircle3} />
           </View>
 
-          {/* Basic Information Section */}
-          <View style={styles.section}>
+        <ScrollView 
+          style={styles.content} 
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.scrollContent}
+        >
+          {/* Form Container */}
+          <View style={styles.formContainer}>
+            {/* Personal Information Section */}
+            <Card variant="elevated" padding="lg" margin="lg" style={styles.formCard}>
             <View style={styles.sectionHeader}>
-              <Icon name="person-outline" size={24} color={COLORS.primary} />
-              <Text style={styles.sectionTitle}>Basic Information</Text>
+                <View style={styles.sectionIcon}>
+                  <Icon name="user" size={20} color={COLORS.text.light} />
+                </View>
+                <Text style={styles.sectionTitle}>Personal Information</Text>
             </View>
             
-            <CustomInput
+              <Input
               label="Full Name"
               value={formData.full_name}
               onChangeText={(text: string) => setFormData(prev => ({ ...prev, full_name: text }))}
               placeholder="Enter your full name"
-              icon="person"
+                error={errors.full_name}
+                icon={<Icon name="user" size={20} color={COLORS.text.secondary} />}
+                autoCapitalize="words"
+                maxLength={50}
             />
 
-            <CustomInput
-              label="Bio"
+              <Input
               value={formData.bio}
               onChangeText={(text: string) => setFormData(prev => ({ ...prev, bio: text }))}
-              placeholder="Tell us about yourself"
+                placeholder="Describe your expertise and experience"
+                error={errors.bio}
+                icon={<Icon name="file-text" size={20} color={COLORS.text.secondary} />}
               multiline
-              numberOfLines={3}
-              icon="description"
+                numberOfLines={4}
+                maxLength={200}
             />
 
-            <CustomInput
-              label="Phone"
+              <Input
               value={formData.phone}
               onChangeText={(text: string) => setFormData(prev => ({ ...prev, phone: text }))}
               placeholder="Enter your phone number"
+                error={errors.phone}
+                icon={<Icon name="phone" size={20} color={COLORS.text.secondary} />}
               keyboardType="phone-pad"
-              icon="phone"
             />
 
-            <CustomInput
-              label="Location"
+              <Input
               value={formData.location}
               onChangeText={(text: string) => setFormData(prev => ({ ...prev, location: text }))}
-              placeholder="Enter your location"
-              icon="location-on"
-            />
+                placeholder="City, State or Country"
+                error={errors.location}
+                icon={<Icon name="map-pin" size={20} color={COLORS.text.secondary} />}
+                autoCapitalize="words"
+              />
 
-            <CustomInput
-              label="Website"
+              <Input
               value={formData.website}
               onChangeText={(text: string) => setFormData(prev => ({ ...prev, website: text }))}
-              placeholder="Enter your website URL"
+                placeholder="https://yourwebsite.com"
+                error={errors.website}
+                icon={<Icon name="globe" size={20} color={COLORS.text.secondary} />}
               keyboardType="url"
-              icon="language"
+                autoCapitalize="none"
             />
-          </View>
+            </Card>
 
           {/* Professional Information Section */}
-          <View style={styles.section}>
+            <Card variant="elevated" padding="lg" margin="lg" style={styles.formCard}>
             <View style={styles.sectionHeader}>
-              <Icon name="work-outline" size={24} color={COLORS.primary} />
+                <View style={styles.sectionIcon}>
+                  <Icon name="briefcase" size={20} color={COLORS.text.light} />
+                </View>
               <Text style={styles.sectionTitle}>Professional Information</Text>
             </View>
 
-            <CustomInput
-              label="Company"
+              <Input
               value={formData.company}
               onChangeText={(text: string) => setFormData(prev => ({ ...prev, company: text }))}
-              placeholder="Enter your company name"
-              icon="business"
-            />
+                placeholder="Your company or organization"
+                error={errors.company}
+                icon={<Icon name="building" size={20} color={COLORS.text.secondary} />}
+                autoCapitalize="words"
+                maxLength={50}
+              />
 
-            <CustomInput
-              label="Job Title"
+              <Input
               value={formData.job_title}
               onChangeText={(text: string) => setFormData(prev => ({ ...prev, job_title: text }))}
-              placeholder="Enter your job title"
-              icon="work"
-            />
-          </View>
+                placeholder="Your current position"
+                error={errors.job_title}
+                icon={<Icon name="award" size={20} color={COLORS.text.secondary} />}
+                autoCapitalize="words"
+                maxLength={50}
+              />
+            </Card>
 
           {/* Social Media Section */}
-          <View style={styles.section}>
+            <Card variant="elevated" padding="lg" margin="lg" style={styles.formCard}>
             <View style={styles.sectionHeader}>
-              <Icon name="share" size={24} color={COLORS.primary} />
+                <View style={styles.sectionIcon}>
+                  <Icon name="share-2" size={20} color={COLORS.text.light} />
+                </View>
               <Text style={styles.sectionTitle}>Social Media</Text>
             </View>
 
-            <CustomInput
-              label="LinkedIn"
+              <Input
               value={formData.linkedin}
               onChangeText={(text: string) => setFormData(prev => ({ ...prev, linkedin: text }))}
-              placeholder="Enter your LinkedIn profile"
+                placeholder="https://linkedin.com/in/yourprofile"
+                error={errors.linkedin}
+                icon={<Icon name="linkedin" size={20} color={COLORS.text.secondary} />}
               keyboardType="url"
-              icon="link"
+                autoCapitalize="none"
             />
 
-            <CustomInput
-              label="Instagram"
+              <Input
               value={formData.instagram}
               onChangeText={(text: string) => setFormData(prev => ({ ...prev, instagram: text }))}
-              placeholder="Enter your Instagram handle"
-              icon="camera-alt"
-            />
+                placeholder="@yourusername"
+                error={errors.instagram}
+                icon={<Icon name="instagram" size={20} color={COLORS.text.secondary} />}
+                autoCapitalize="none"
+              />
 
-            <CustomInput
-              label="Facebook"
+              <Input
               value={formData.facebook}
               onChangeText={(text: string) => setFormData(prev => ({ ...prev, facebook: text }))}
-              placeholder="Enter your Facebook profile"
+                placeholder="https://facebook.com/yourprofile"
+                error={errors.facebook}
+                icon={<Icon name="facebook" size={20} color={COLORS.text.secondary} />}
               keyboardType="url"
-              icon="facebook"
-            />
-          </View>
-
-          {/* Action Buttons */}
-          <View style={styles.buttonContainer}>
-            <TouchableOpacity
-              style={[styles.saveButton, loading && styles.saveButtonDisabled]}
-              onPress={handleSave}
-              disabled={loading}
-            >
-              {loading ? (
-                <ActivityIndicator color={COLORS.white} size="small" />
-              ) : (
-                <>
-                  <Icon name="save" size={20} color={COLORS.white} />
-                  <Text style={styles.saveButtonText}>Save Changes</Text>
-                </>
-              )}
-            </TouchableOpacity>
-          </View>
+                autoCapitalize="none"
+              />
+            </Card>
         </View>
       </ScrollView>
+      
+      {/* Bottom Save Button */}
+      <View style={styles.bottomButtonContainer}>
+        <TouchableOpacity 
+          onPress={handleSave} 
+          style={[
+            styles.bottomSaveButton, 
+            (!hasChanges || loading) && styles.bottomSaveButtonDisabled
+          ]} 
+          disabled={!hasChanges || loading}
+        >
+          {loading ? (
+            <ActivityIndicator color={COLORS.text.light} size="small" />
+          ) : (
+            <Text style={styles.bottomSaveButtonText}>Save Changes</Text>
+          )}
+        </TouchableOpacity>
+      </View>
     </SafeAreaView>
   );
 };
@@ -293,157 +364,134 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.md,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
-    backgroundColor: COLORS.white,
-    ...SHADOWS.sm,
+    paddingVertical: SPACING.sm,
+    paddingTop: SPACING.lg,
+    ...SHADOWS.lg,
   },
-  cancelButton: {
+  headerButton: {
     padding: SPACING.sm,
     borderRadius: BORDER_RADIUS.sm,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
   },
-  cancelButtonText: {
-    color: COLORS.text.secondary,
-    fontSize: 16,
-    fontWeight: '500',
+  headerCenter: {
+    flex: 1,
+    alignItems: 'center',
   },
   headerTitle: {
     fontSize: 18,
-    fontWeight: '600',
-    color: COLORS.text.primary,
+    fontWeight: '700',
+    color: COLORS.text.light,
+    marginBottom: SPACING.xs,
   },
-  headerSaveButton: {
-    padding: SPACING.sm,
-    borderRadius: BORDER_RADIUS.sm,
+  headerBadgeContainer: {
+    marginTop: SPACING.xs,
   },
-  headerSaveButtonText: {
-    color: COLORS.primary,
-    fontSize: 16,
-    fontWeight: '600',
+  bottomButtonContainer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: COLORS.background,
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.md,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.border.light,
+    ...SHADOWS.lg,
+  },
+  bottomSaveButton: {
+    backgroundColor: COLORS.primary,
+    paddingVertical: SPACING.md,
+    borderRadius: BORDER_RADIUS.lg,
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...SHADOWS.md,
+    elevation: 8,
+  },
+  bottomSaveButtonDisabled: {
+    backgroundColor: COLORS.border.medium,
+  },
+  bottomSaveButtonText: {
+    color: COLORS.text.light,
+    fontSize: 18,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+  },
+  backgroundPattern: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 300,
+    zIndex: -1,
+  },
+  patternCircle1: {
+    position: 'absolute',
+    top: 50,
+    right: -50,
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: COLORS.primary + '20',
+  },
+  patternCircle2: {
+    position: 'absolute',
+    top: 150,
+    left: -30,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: COLORS.secondary + '30',
+  },
+  patternCircle3: {
+    position: 'absolute',
+    top: 200,
+    right: 50,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: COLORS.accent + '25',
   },
   content: {
     flex: 1,
   },
-  form: {
-    flex: 1,
+  scrollContent: {
+    paddingBottom: 100, // Extra padding for bottom button
   },
   
-  // Profile Header
-  profileHeader: {
-    marginBottom: SPACING.lg,
+  // Form Container
+  formContainer: {
+    paddingHorizontal: SPACING.sm,
+    paddingTop: SPACING.sm,
   },
-  profileHeaderGradient: {
-    paddingVertical: SPACING.xl,
-    paddingHorizontal: SPACING.lg,
-    borderBottomLeftRadius: BORDER_RADIUS.xl,
-    borderBottomRightRadius: BORDER_RADIUS.xl,
-  },
-  profileHeaderContent: {
-    alignItems: 'center',
-  },
-  profileAvatar: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: SPACING.md,
-  },
-  profileHeaderTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: COLORS.white,
-    marginBottom: SPACING.xs,
-  },
-  profileHeaderSubtitle: {
-    fontSize: 14,
-    color: 'rgba(255, 255, 255, 0.8)',
-    textAlign: 'center',
+  formCard: {
+    borderRadius: BORDER_RADIUS.lg,
+    marginBottom: SPACING.sm,
+    ...SHADOWS.md,
   },
 
-  // Sections
-  section: {
-    marginBottom: SPACING.xl,
-    paddingHorizontal: SPACING.lg,
-  },
+  // Section Headers
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: SPACING.lg,
+    marginBottom: SPACING.md,
     paddingBottom: SPACING.sm,
     borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
+    borderBottomColor: COLORS.border.light,
   },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: COLORS.text.primary,
-    marginLeft: SPACING.sm,
-  },
-
-  // Input Styles
-  inputContainer: {
-    marginBottom: SPACING.lg,
-  },
-  inputLabelContainer: {
-    flexDirection: 'row',
+  sectionIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: COLORS.primary,
+    justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: SPACING.sm,
-  },
-  inputIcon: {
     marginRight: SPACING.sm,
-  },
-  inputLabel: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: COLORS.text.primary,
-  },
-  textInput: {
-    backgroundColor: COLORS.white,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    borderRadius: BORDER_RADIUS.md,
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.sm,
-    fontSize: 16,
-    color: COLORS.text.primary,
     ...SHADOWS.sm,
   },
-  textInputMultiline: {
-    minHeight: 80,
-    textAlignVertical: 'top',
-    paddingTop: SPACING.sm,
-  },
-  textInputFilled: {
-    borderColor: COLORS.primary,
-    backgroundColor: COLORS.surface,
-  },
-
-  // Button Styles
-  buttonContainer: {
-    paddingHorizontal: SPACING.lg,
-    paddingBottom: SPACING.xl,
-  },
-  saveButton: {
-    backgroundColor: COLORS.primary,
-    borderRadius: BORDER_RADIUS.lg,
-    paddingVertical: SPACING.lg,
-    paddingHorizontal: SPACING.xl,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    ...SHADOWS.md,
-  },
-  saveButtonDisabled: {
-    backgroundColor: COLORS.text.tertiary,
-  },
-  saveButtonText: {
-    color: COLORS.white,
-    fontSize: 18,
-    fontWeight: '600',
-    marginLeft: SPACING.sm,
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: COLORS.text.primary,
   },
 });
 

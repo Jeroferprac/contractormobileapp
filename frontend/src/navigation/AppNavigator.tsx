@@ -25,9 +25,19 @@ import AllWarehouseScreen from '../screens/AllWarehouseScreen';
 import BinManagementScreen from '../screens/BinManagementScreen';
 import BarcodeScanner from '../components/ui/BarcodeScanner';
 import { ProfileScreen } from '../screens/ProfileScreen/ProfileScreen';
-import { BarcodeScannerScreen } from '../components/ui/BarcodeScanner';
 import ProfileEditScreen from '../screens/ProfileEditScreen';
+import SuppliersScreen from '../screens/SuppliersScreen';
+import SupplierFormScreen from '../screens/SupplierFormScreen';
+import SupplierDetailsScreen from '../screens/SupplierDetailsScreen';
+import ProductSuppliersScreen from '../screens/ProductSuppliersScreen';
+import ProductSupplierFormScreen from '../screens/ProductSupplierFormScreen';
+import PurchaseOrdersScreen from '../screens/PurchaseOrdersScreen';
+import PurchaseOrderDetailsScreen from '../screens/PurchaseOrderDetails';
+import PurchaseOrderFormScreen from '../screens/PurchaseOrderForm';
+import InventoryReportsScreen from '../screens/InventoryReportsScreen/InventoryReportsScreen';
+import PriceListsScreen from '../screens/PriceListsScreen';
 import { useAuth } from '../context/AuthContext';
+
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
@@ -40,6 +50,33 @@ const BookingsScreen = () => {
     </View>
   );
 };
+
+// Tab Bar Icon Components
+const HomeIcon = ({ color, size }: { color: string; size: number }) => (
+  <Icon name="home" size={size} color={color} />
+);
+
+const InventoryIcon = ({ color, size }: { color: string; size: number }) => (
+  <Icon name="inventory" size={size} color={color} />
+);
+
+const WarehouseIcon = ({ color, size }: { color: string; size: number }) => (
+  <Icon name="warehouse" size={size} color={color} />
+);
+
+const ScanIcon = ({ _color, _size }: { _color: string; _size: number }) => (
+  <View style={styles.scanButton}>
+    <Icon name="qr-code-scanner" size={24} color="#FFFFFF" />
+  </View>
+);
+
+const BookingsIcon = ({ color, size }: { color: string; size: number }) => (
+  <Icon name="event" size={size} color={color} />
+);
+
+const ProfileIcon = ({ color, size }: { color: string; size: number }) => (
+  <Icon name="person" size={size} color={color} />
+);
 
 // Main Tab Navigator
 const MainTabNavigator = () => {
@@ -78,9 +115,7 @@ const MainTabNavigator = () => {
         component={HomeScreen}
         options={{
           tabBarLabel: 'Home',
-          tabBarIcon: ({ color, size }) => (
-            <Icon name="home" size={size} color={color} />
-          ),
+          tabBarIcon: HomeIcon,
         }}
       />
       <Tab.Screen
@@ -88,9 +123,7 @@ const MainTabNavigator = () => {
         component={InventoryScreen}
         options={{
           tabBarLabel: 'Inventory',
-          tabBarIcon: ({ color, size }) => (
-            <Icon name="inventory" size={size} color={color} />
-          ),
+          tabBarIcon: InventoryIcon,
         }}
       />
       <Tab.Screen
@@ -98,9 +131,7 @@ const MainTabNavigator = () => {
         component={AllWarehouseScreen}
         options={{
           tabBarLabel: 'Warehouses',
-          tabBarIcon: ({ color, size }) => (
-            <Icon name="warehouse" size={size} color={color} />
-          ),
+          tabBarIcon: WarehouseIcon,
         }}
       />
       <Tab.Screen
@@ -108,27 +139,7 @@ const MainTabNavigator = () => {
         component={BarcodeScanner}
         options={{
           tabBarLabel: '',
-          tabBarIcon: ({ color, size }) => (
-            <View style={{
-              backgroundColor: '#FF6B35',
-              width: 56,
-              height: 56,
-              borderRadius: 28,
-              justifyContent: 'center',
-              alignItems: 'center',
-              marginTop: -20,
-              shadowColor: '#000',
-              shadowOffset: {
-                width: 0,
-                height: 2,
-              },
-              shadowOpacity: 0.25,
-              shadowRadius: 4,
-              elevation: 5,
-            }}>
-              <Icon name="qr-code-scanner" size={24} color="#FFFFFF" />
-            </View>
-          ),
+          tabBarIcon: ScanIcon,
         }}
       />
       <Tab.Screen
@@ -136,9 +147,7 @@ const MainTabNavigator = () => {
         component={BookingsScreen}
         options={{
           tabBarLabel: 'Bookings',
-          tabBarIcon: ({ color, size }) => (
-            <Icon name="event" size={size} color={color} />
-          ),
+          tabBarIcon: BookingsIcon,
         }}
       />
       <Tab.Screen
@@ -146,9 +155,7 @@ const MainTabNavigator = () => {
         component={ProfileScreen}
         options={{
           tabBarLabel: 'Profile',
-          tabBarIcon: ({ color, size }) => (
-            <Icon name="person" size={size} color={color} />
-          ),
+          tabBarIcon: ProfileIcon,
         }}
       />
     </Tab.Navigator>
@@ -221,5 +228,22 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: 16,
     color: '#666',
+  },
+  scanButton: {
+    backgroundColor: '#FF6B35',
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: -20,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
   },
 });

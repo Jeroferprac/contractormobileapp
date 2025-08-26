@@ -8,6 +8,7 @@ import {
 } from 'react-native';
 import { COLORS } from '../../constants/colors';
 import { SPACING, BORDER_RADIUS } from '../../constants/spacing';
+import LinearGradient from 'react-native-linear-gradient';
 
 export type ProfileTabType = 'posts' | 'activity' | 'saved' | 'about' | 'affiliate';
 
@@ -21,14 +22,14 @@ const tabs: { key: ProfileTabType; label: string }[] = [
   { key: 'activity', label: 'Activity' },
   { key: 'saved', label: 'Saved' },
   { key: 'about', label: 'About' },
-  { key: 'affiliate', label: 'Affiliate Program' },
+  { key: 'affiliate', label: 'Affiliate P' },
 ];
 
 export const ProfileTabs: React.FC<ProfileTabsProps> = ({
   activeTab,
   onTabPress,
 }) => {
-  const scrollViewRef = useRef<ScrollView>(null);
+  const scrollViewRef = useRef<any>(null);
 
   const handleTabPress = (tabKey: ProfileTabType) => {
     onTabPress(tabKey);
@@ -53,7 +54,7 @@ export const ProfileTabs: React.FC<ProfileTabsProps> = ({
         ref={scrollViewRef}
         horizontal
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={styles.tabsContainer}
       >
         {tabs.map((tab) => (
           <TouchableOpacity
@@ -63,15 +64,14 @@ export const ProfileTabs: React.FC<ProfileTabsProps> = ({
               activeTab === tab.key && styles.activeTab,
             ]}
             onPress={() => handleTabPress(tab.key)}
+            activeOpacity={0.8}
           >
-            <Text
-              style={[
-                styles.tabText,
-                activeTab === tab.key && styles.activeTabText,
-              ]}
-            >
-              {tab.label}
-            </Text>
+                         <Text style={[
+               styles.tabText,
+               activeTab === tab.key && styles.activeTabText
+             ]}>
+               {tab.label}
+             </Text>
           </TouchableOpacity>
         ))}
       </ScrollView>
@@ -81,43 +81,39 @@ export const ProfileTabs: React.FC<ProfileTabsProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: COLORS.background,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
+    backgroundColor: '#FFFFFF',
+    paddingVertical: SPACING.sm,
   },
-  scrollContent: {
-    paddingHorizontal: SPACING.md,
+  tabsContainer: {
+    paddingHorizontal: SPACING.lg,
+    gap: SPACING.md,
   },
   tab: {
     paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.md,
-    marginRight: SPACING.sm,
-    borderRadius: 20,
-    backgroundColor: COLORS.background,
+    paddingVertical: SPACING.sm,
+    borderRadius: 24,
+    backgroundColor: '#F8F9FA',
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: '#E5E5EA',
     minWidth: 80,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   activeTab: {
-    backgroundColor: COLORS.primary,
-    borderColor: COLORS.primary,
-    shadowColor: COLORS.primary,
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 4,
+    backgroundColor: '#FF6B35',
+    borderWidth: 0,
   },
+
   tabText: {
     fontSize: 14,
-    fontWeight: '500',
-    color: COLORS.textSecondary,
+    fontWeight: '600',
+    color: '#5A6474',
+    letterSpacing: 0.2,
   },
   activeTabText: {
-    color: COLORS.textLight,
-    fontWeight: '600',
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    letterSpacing: 0.3,
   },
-}); 
+});

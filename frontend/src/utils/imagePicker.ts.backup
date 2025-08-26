@@ -1,0 +1,124 @@
+import { Alert, Platform } from 'react-native';
+import { launchImageLibrary, launchCamera, ImagePickerResponse, MediaType } from 'react-native-image-picker';
+
+export interface ImagePickerResult {
+  uri: string;
+  type: string;
+  name: string;
+  size: number;
+}
+
+export const showImagePickerOptions = (): Promise<ImagePickerResult | null> => {
+  return new Promise((resolve) => {
+    Alert.alert(
+      'Select Profile Picture',
+      'Choose how you want to select your profile picture',
+      [
+        {
+          text: 'Camera',
+          onPress: () => openCamera(resolve),
+        },
+        {
+          text: 'Photo Library',
+          onPress: () => openImageLibrary(resolve),
+        },
+        {
+          text: 'Cancel',
+          style: 'cancel',
+          onPress: () => resolve(null),
+        },
+      ],
+      { cancelable: true, onDismiss: () => resolve(null) }
+    );
+  });
+};
+
+const openCamera = (resolve: (result: ImagePickerResult | null) => void) => {
+  const options = {
+    mediaType: 'photo' as MediaType,
+    includeBase64: false,
+    maxHeight: 2000,
+    maxWidth: 2000,
+    quality: 0.8,
+  };
+
+  launchCamera(options, (response: ImagePickerResponse) => {
+    if (response.didCancel || response.errorMessage) {
+      console.log('Camera cancelled or error:', response.errorMessage);
+      resolve(null);
+      return;
+    }
+
+    if (response.assets && response.assets[0]) {
+      const asset = response.assets[0];
+      if (asset.uri && asset.type && asset.fileName) {
+        resolve({
+          uri: asset.uri,
+          type: asset.type,
+          name: asset.fileName,
+          size: asset.fileSize || 0,
+        });
+      } else {
+        resolve(null);
+      }
+    } else {
+      resolve(null);
+    }
+  });
+};
+
+const openImageLibrary = (resolve: (result: ImagePickerResult | null) => void) => {
+  const options = {
+    mediaType: 'photo' as MediaType,
+    includeBase64: false,
+    maxHeight: 2000,
+    maxWidth: 2000,
+    quality: 0.8,
+  };
+
+  launchImageLibrary(options, (response: ImagePickerResponse) => {
+    if (response.didCancel || response.errorMessage) {
+      console.log('Image library cancelled or error:', response.errorMessage);
+      resolve(null);
+      return;
+    }
+
+    if (response.assets && response.assets[0]) {
+      const asset = response.assets[0];
+      if (asset.uri && asset.type && asset.fileName) {
+        resolve({
+          uri: asset.uri,
+          type: asset.type,
+          name: asset.fileName,
+          size: asset.fileSize || 0,
+        });
+      } else {
+        resolve(null);
+      }
+    } else {
+      resolve(null);
+    }
+  });
+};
+
+export const createFormDataForAvatar = (imageResult: ImagePickerResult): FormData => {
+  const formData = new FormData();
+  
+  formData.append('avatar', {
+    uri: Platform.OS === 'ios' ? imageResult.uri.replace('file://', '') : imageResult.uri,
+    type: imageResult.type,
+    name: imageResult.name,
+  } as any);
+
+  return formData;
+};
+
+export const validateImageSize = (size: number, maxSizeMB: number = 5): boolean => {
+  const maxSizeBytes = maxSizeMB * 1024 * 1024;
+  return size <= maxSizeBytes;
+};
+
+export const validateImageType = (type: string): boolean => {
+  const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+  return allowedTypes.includes(type.toLowerCase());
+};

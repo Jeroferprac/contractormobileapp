@@ -6,7 +6,10 @@ import {
   StatusBar,
   StyleSheet,
   Alert,
+  TouchableOpacity,
+  Text,
 } from 'react-native';
+import Icon from 'react-native-vector-icons/MaterialIcons';
 import LinearGradient from 'react-native-linear-gradient';
 import { COLORS } from '../../constants/colors';
 import { SPACING, BORDER_RADIUS, SHADOWS } from '../../constants/spacing';
@@ -113,13 +116,12 @@ const InventoryScreen: React.FC<InventoryScreenProps> = ({ navigation }) => {
         imageUrl: `${UNSPLASH_IMAGES[idx % UNSPLASH_IMAGES.length]}&sig=${idx}`,
       }));
       setWarehouses(updatedWarehouses);
-
+      
       const formattedChartData = (monthlySalesRes.data?.monthly_trends || []).map((item) => ({
         value: item.sales,
         label: `${getMonthName(parseInt(item.month.split('-')[1]))} ${item.month.split('-')[0]}`,
         dataPointText: `${item.sales} units`,
       }));
-
       setChartData(formattedChartData);
     } catch (error) {
       console.error('Error loading inventory data:', error);

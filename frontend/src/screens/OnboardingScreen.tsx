@@ -11,7 +11,7 @@ import Icon from 'react-native-vector-icons/Feather';
 import MaterialIcon from 'react-native-vector-icons/MaterialIcons';
 import { Button } from '../components';
 import { COLORS } from '../constants/colors';
-import { SPACING, BORDER_RADIUS } from '../constants/spacing';
+import { SPACING } from '../constants/spacing';
 import { OnboardingScreenNavigationProp } from '../types/navigation';
 
 interface OnboardingScreenProps {
@@ -22,21 +22,24 @@ const onboardingData = [
   {
     id: 1,
     title: 'Turn Your Space into Something Extraordinary',
-    description: 'Explore design ideas, get inspired, and connect with top-tier professionals to bring your dream home to life.',
+    description:
+      'Explore design ideas, get inspired, and connect with top-tier professionals to bring your dream home to life.',
     icon: 'home',
     iconType: 'feather',
   },
   {
     id: 2,
     title: 'Plumbers, Electricians & More — All Nearby',
-    description: 'Need a quick fix or a major upgrade? Find trusted local experts for every job, big or small, right when you need them.',
+    description:
+      'Need a quick fix or a major upgrade? Find trusted local experts for every job, big or small, right when you need them.',
     icon: 'build',
     iconType: 'material',
   },
   {
     id: 3,
     title: 'Book Home Services, All in One App',
-    description: 'From design to delivery — compare reviews, chat with pros, and book your next project hassle-free.',
+    description:
+      'From design to delivery — compare reviews, chat with pros, and book your next project hassle-free.',
     icon: 'phone',
     iconType: 'feather',
   },
@@ -69,42 +72,31 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ navigation }
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />
-      
-      {/* Skip Button */}
       <TouchableOpacity style={styles.skipButton} onPress={handleSkip}>
         <Text style={styles.skipText}>Skip</Text>
       </TouchableOpacity>
 
-      {/* Content */}
       <View style={styles.content}>
-        {/* Icon */}
         <View style={styles.iconContainer}>
           {renderIcon(currentSlide.icon, currentSlide.iconType)}
         </View>
 
-        {/* Text Content */}
         <View style={styles.textContainer}>
           <Text style={styles.title}>{currentSlide.title}</Text>
           <Text style={styles.description}>{currentSlide.description}</Text>
         </View>
       </View>
 
-      {/* Pagination and Button */}
       <View style={styles.bottomContainer}>
-        {/* Pagination Dots */}
         <View style={styles.pagination}>
           {onboardingData.map((_, index) => (
             <View
               key={index}
-              style={[
-                styles.dot,
-                index === currentIndex && styles.activeDot,
-              ]}
+              style={[styles.dot, index === currentIndex && styles.activeDot]}
             />
           ))}
         </View>
 
-        {/* Next/Get Started Button */}
         <Button
           title={currentIndex === onboardingData.length - 1 ? 'Get Started' : 'Next'}
           onPress={handleNext}
@@ -147,10 +139,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     shadowColor: '#000000',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 4,
@@ -196,4 +185,4 @@ const styles = StyleSheet.create({
   nextButton: {
     width: '100%',
   },
-}); 
+});

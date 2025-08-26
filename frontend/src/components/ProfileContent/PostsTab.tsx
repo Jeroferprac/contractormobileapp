@@ -3,10 +3,10 @@ import {
   View,
   Text,
   StyleSheet,
-  Image,
   TouchableOpacity,
   ScrollView,
 } from 'react-native';
+import FastImage from 'react-native-fast-image';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { COLORS } from '../../constants/colors';
 import { SPACING, BORDER_RADIUS } from '../../constants/spacing';
@@ -23,84 +23,89 @@ interface Post {
 
 interface PostsTabProps {
   posts: Post[];
+  userAvatar?: string;
+  userName?: string;
   onCreatePost: () => void;
 }
 
-export const PostsTab: React.FC<PostsTabProps> = ({ posts, onCreatePost }) => {
+export const PostsTab: React.FC<PostsTabProps> = ({ posts, userAvatar, userName, onCreatePost }) => {
   const renderPost = (post: Post) => (
     <View key={post.id} style={styles.postCard}>
       {/* Post Header */}
       <View style={styles.postHeader}>
         <View style={styles.postAvatar}>
-          <Icon name="person" size={24} color={COLORS.textSecondary} />
+          {userAvatar ? (
+            <FastImage
+              source={{ uri: userAvatar }}
+              style={styles.postAvatarImage}
+              resizeMode={FastImage.resizeMode.cover}
+            />
+          ) : (
+            <View style={styles.postAvatarPlaceholder}>
+              <Icon name="person" size={20} color={COLORS.text.secondary} />
+            </View>
+          )}
         </View>
         <View style={styles.postInfo}>
-          <Text style={styles.postAuthor}>John Doe</Text>
-          <Text style={styles.postTimestamp}>Today, 2:13PM</Text>
+          <View style={styles.postAuthorContainer}>
+            <Text style={styles.postAuthor}>{userName || 'User'}</Text>
+            <Icon name="verified" size={14} color="#2196F3" style={styles.verifiedIcon} />
+          </View>
+          <Text style={styles.postTimestamp}>{post.timestamp}</Text>
         </View>
+        <TouchableOpacity style={styles.postMenu}>
+          <Icon name="more-vert" size={20} color={COLORS.text.secondary} />
+        </TouchableOpacity>
       </View>
 
       {/* Post Caption */}
-      <Text style={styles.postCaption}>Just Finished overseeing a major renovation project in downtown Abu Dhabi. The transformation is incredible</Text>
-      <Text style={styles.postHashtags}>#RealEstate #Construction</Text>
+      <Text style={styles.postCaption}>{post.caption}</Text>
+      
+
 
       {/* Post Image */}
       <View style={styles.postImageContainer}>
-        <Image
+        <FastImage
           source={{ uri: post.image }}
           style={styles.postImage}
-          resizeMode="cover"
+          resizeMode={FastImage.resizeMode.cover}
         />
-      </View>
-
-      {/* Post Actions */}
-      <View style={styles.postActions}>
-        <TouchableOpacity style={styles.actionButton}>
-          <Icon name="favorite-border" size={20} color={COLORS.textSecondary} />
-          <Text style={styles.actionText}>{post.likes}</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.actionButton}>
-          <Icon name="chat-bubble-outline" size={20} color={COLORS.textSecondary} />
-          <Text style={styles.actionText}>{post.comments}</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.actionButton}>
-          <Icon name="share" size={20} color={COLORS.textSecondary} />
-          <Text style={styles.actionText}>{post.shares}</Text>
-        </TouchableOpacity>
+        
+        {/* Engagement Icons Overlay */}
+        <View style={styles.engagementOverlay}>
+          <TouchableOpacity style={styles.engagementIcon}>
+            <Icon name="favorite" size={20} color="#FF6B6B" />
+            <Text style={styles.engagementText}>Like</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.engagementIcon}>
+            <Icon name="chat-bubble-outline" size={20} color="#FFFFFF" />
+            <Text style={styles.engagementText}>Comment</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.engagementIcon}>
+            <Icon name="send" size={20} color="#FFFFFF" />
+            <Text style={styles.engagementText}>Share</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     </View>
   );
 
   return (
     <View style={styles.container}>
-      {/* Action Buttons Row */}
-      <View style={styles.actionButtonsRow}>
-        <TouchableOpacity style={styles.circularActionButton}>
-          <Icon name="add" size={20} color={COLORS.primary} />
-          <Text style={styles.actionButtonText}>Add Highlights</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.circularActionButton}>
-          <Icon name="people" size={20} color={COLORS.primary} />
-          <Text style={styles.actionButtonText}>Team</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.circularActionButton}>
-          <Icon name="description" size={20} color={COLORS.primary} />
-          <Text style={styles.actionButtonText}>New project</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.circularActionButton}>
-          <Icon name="location-on" size={20} color={COLORS.primary} />
-          <Text style={styles.actionButtonText}>Site Visit</Text>
-        </TouchableOpacity>
-      </View>
-
       <ScrollView showsVerticalScrollIndicator={false}>
-        {posts.map(renderPost)}
+        {posts.length > 0 ? (
+          posts.map(renderPost)
+        ) : (
+          <View style={styles.emptyState}>
+            <Icon name="post-add" size={48} color={COLORS.text.secondary} />
+            <Text style={styles.emptyStateText}>No posts yet</Text>
+            <Text style={styles.emptyStateSubtext}>Create your first post to get started</Text>
+            <TouchableOpacity style={styles.createPostButton} onPress={onCreatePost}>
+              <Text style={styles.createPostButtonText}>Create Post</Text>
+            </TouchableOpacity>
+          </View>
+        )}
       </ScrollView>
-      
-      {/* Floating Action Button */}
-      <TouchableOpacity style={styles.fab} onPress={onCreatePost}>
-        <Icon name="add" size={24} color={COLORS.textLight} />
-      </TouchableOpacity>
     </View>
   );
 };
@@ -110,30 +115,9 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.background,
   },
-  actionButtonsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.sm,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
-    backgroundColor: COLORS.background,
-  },
-  circularActionButton: {
-    alignItems: 'center',
-    paddingVertical: SPACING.sm,
-  },
-  actionButtonText: {
-    fontSize: 12,
-    color: COLORS.primary,
-    marginTop: SPACING.xs,
-    fontWeight: '500',
-  },
   postCard: {
     backgroundColor: COLORS.background,
     marginBottom: SPACING.md,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
     paddingBottom: SPACING.md,
   },
   postHeader: {
@@ -151,74 +135,131 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: SPACING.sm,
+    overflow: 'hidden',
+  },
+  postAvatarPlaceholder: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 20,
+    backgroundColor: COLORS.surface,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  postAvatarImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 20,
   },
   postInfo: {
     flex: 1,
   },
+  postAuthorContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
   postAuthor: {
     fontSize: 16,
     fontWeight: '600',
-    color: COLORS.textPrimary,
+    color: COLORS.text.primary,
+    marginRight: SPACING.xs,
+  },
+  verifiedIcon: {
+    marginLeft: SPACING.xs,
   },
   postTimestamp: {
     fontSize: 12,
-    color: COLORS.textSecondary,
+    color: COLORS.text.secondary,
     marginTop: 2,
+  },
+  postMenu: {
+    padding: SPACING.xs,
   },
   postCaption: {
     fontSize: 14,
-    color: COLORS.textPrimary,
+    color: COLORS.text.primary,
     lineHeight: 20,
     paddingHorizontal: SPACING.md,
-    marginBottom: SPACING.xs,
+    marginBottom: SPACING.sm,
   },
-  postHashtags: {
-    fontSize: 12,
-    color: COLORS.primary,
+  hashtagsContainer: {
+    flexDirection: 'row',
     paddingHorizontal: SPACING.md,
     marginBottom: SPACING.sm,
+    gap: SPACING.xs,
+  },
+  hashtag: {
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: COLORS.primary,
+    borderRadius: 12,
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: 2,
+  },
+  hashtagText: {
+    fontSize: 12,
+    color: COLORS.primary,
     fontWeight: '500',
   },
   postImageContainer: {
     paddingHorizontal: SPACING.md,
     marginBottom: SPACING.sm,
+    position: 'relative',
   },
   postImage: {
     width: '100%',
-    height: 200,
+    height: 250,
     borderRadius: BORDER_RADIUS.md,
   },
-  postActions: {
-    flexDirection: 'row',
-    paddingHorizontal: SPACING.md,
-    gap: SPACING.lg,
-  },
-  actionButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.xs,
-  },
-  actionText: {
-    fontSize: 14,
-    color: COLORS.textSecondary,
-  },
-  fab: {
+  engagementOverlay: {
     position: 'absolute',
-    bottom: SPACING.lg,
-    right: SPACING.lg,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: COLORS.primary,
+    bottom: SPACING.sm,
+    right: SPACING.md,
+    flexDirection: 'row',
+    gap: SPACING.sm,
+  },
+  engagementIcon: {
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    borderRadius: 20,
+    padding: SPACING.xs,
+    alignItems: 'center',
+    minWidth: 40,
+  },
+  engagementText: {
+    fontSize: 8,
+    color: '#FFFFFF',
+    marginTop: 2,
+    textAlign: 'center',
+  },
+  emptyState: {
+    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    elevation: 8,
-    shadowColor: COLORS.primary,
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
+    paddingVertical: SPACING.xl * 2,
+    paddingHorizontal: SPACING.lg,
   },
-}); 
+  emptyStateText: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: COLORS.text.primary,
+    marginTop: SPACING.md,
+    marginBottom: SPACING.xs,
+  },
+  emptyStateSubtext: {
+    fontSize: 14,
+    color: COLORS.text.secondary,
+    textAlign: 'center',
+    marginBottom: SPACING.lg,
+  },
+  createPostButton: {
+    backgroundColor: COLORS.primary,
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.md,
+    borderRadius: BORDER_RADIUS.md,
+  },
+  createPostButtonText: {
+    color: COLORS.text.light,
+    fontSize: 16,
+    fontWeight: '600',
+  },
+
+});

@@ -194,7 +194,7 @@ const WarehouseDashboard: React.FC<WarehouseScreenProps> = ({ navigation }) => {
 
   const handleViewAllWarehouses = useCallback(() => {
     try {
-      navigation.navigate('Warehouses');
+      navigation.navigate('AllWarehouses');
     } catch (err) {
       Alert.alert('Navigation Error', 'Unable to navigate to warehouses');
     }

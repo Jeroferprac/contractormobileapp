@@ -1,34 +1,31 @@
 import React, { useState } from 'react';
 import {
   View,
-  ScrollView,
-  Modal,
   Text,
   TouchableOpacity,
   StyleSheet,
+  Modal,
+  ScrollView,
 } from 'react-native';
+import LinearGradient from 'react-native-linear-gradient';
 import Icon from 'react-native-vector-icons/Feather';
-import DateTimePicker from '@react-native-community/datetimepicker';
 import { COLORS } from '../../constants/colors';
-import { SPACING, BORDER_RADIUS } from '../../constants/spacing';
-import { TYPOGRAPHY, TEXT_STYLES } from '../../constants/typography';
-import { TransferStatus, Warehouse } from '../../types/inventory';
 
 interface FilterModalProps {
   visible: boolean;
   onClose: () => void;
   onApply: () => void;
-  onClear: () => void;
-  filterStatus: TransferStatus | 'all';
-  setFilterStatus: (status: TransferStatus | 'all') => void;
-  selectedWarehouse: string;
-  setSelectedWarehouse: (warehouse: string) => void;
-  dateRange: { start: string; end: string };
-  setDateRange: (range: { start: string; end: string }) => void;
-  warehouses: Warehouse[];
-  getWarehouseName: (id: string) => string;
-  filteredTransfersCount: number;
-  getActiveFilterCount: () => number;
+  onClear?: () => void;
+  filterStatus?: string;
+  setFilterStatus?: (status: string) => void;
+  selectedWarehouse?: string;
+  setSelectedWarehouse?: (warehouse: string) => void;
+  dateRange?: { start: string; end: string };
+  setDateRange?: (range: { start: string; end: string }) => void;
+  warehouses?: any[];
+  getWarehouseName?: (id: string) => string;
+  filteredTransfersCount?: number;
+  getActiveFilterCount?: () => number;
 }
 
 const FilterModal: React.FC<FilterModalProps> = ({
@@ -36,564 +33,309 @@ const FilterModal: React.FC<FilterModalProps> = ({
   onClose,
   onApply,
   onClear,
-  filterStatus,
+  filterStatus = 'all',
   setFilterStatus,
-  selectedWarehouse,
+  selectedWarehouse = 'all',
   setSelectedWarehouse,
-  dateRange,
+  dateRange = { start: '', end: '' },
   setDateRange,
-  warehouses,
+  warehouses = [],
   getWarehouseName,
-  filteredTransfersCount,
-  getActiveFilterCount,
+  filteredTransfersCount = 0,
+  getActiveFilterCount = () => 0,
 }) => {
-  const [showStartDatePicker, setShowStartDatePicker] = useState(false);
-  const [showEndDatePicker, setShowEndDatePicker] = useState(false);
-  const [showWarehousePicker, setShowWarehousePicker] = useState(false);
-  const [startDate, setStartDate] = useState(new Date());
-  const [endDate, setEndDate] = useState(new Date());
+  const [localFilterStatus, setLocalFilterStatus] = useState(filterStatus);
+  const [localSelectedWarehouse, setLocalSelectedWarehouse] = useState(selectedWarehouse);
+  const [localDateRange, setLocalDateRange] = useState(dateRange);
 
-  const formatDateForDisplay = (date: Date): string => {
-    return date.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    });
+  const handleApply = () => {
+    if (setFilterStatus) setFilterStatus(localFilterStatus);
+    if (setSelectedWarehouse) setSelectedWarehouse(localSelectedWarehouse);
+    if (setDateRange) setDateRange(localDateRange);
+    onApply();
   };
 
-  const handleStartDateChange = (event: any, selectedDate?: Date) => {
-    setShowStartDatePicker(false);
-    if (selectedDate) {
-      setStartDate(selectedDate);
-      const newDateRange = { ...dateRange, start: selectedDate.toISOString().split('T')[0] };
-      setDateRange(newDateRange);
-    }
+  const handleReset = () => {
+    setLocalFilterStatus('all');
+    setLocalSelectedWarehouse('all');
+    setLocalDateRange({ start: '', end: '' });
+    if (onClear) onClear();
   };
 
-  const handleEndDateChange = (event: any, selectedDate?: Date) => {
-    setShowEndDatePicker(false);
-    if (selectedDate) {
-      setEndDate(selectedDate);
-      const newDateRange = { ...dateRange, end: selectedDate.toISOString().split('T')[0] };
-      setDateRange(newDateRange);
-    }
-  };
+  const statusOptions = [
+    { key: 'all', label: 'All Status' },
+    { key: 'pending', label: 'Pending' },
+    { key: 'completed', label: 'Completed' },
+    { key: 'cancelled', label: 'Cancelled' },
+  ];
 
-  const handleQuickDateFilter = (days: number) => {
-    const end = new Date();
-    const start = new Date();
-    start.setDate(start.getDate() - days);
-    
-    setDateRange({
-      start: start.toISOString().split('T')[0],
-      end: end.toISOString().split('T')[0]
-    });
-  };
-
-  const activeFilterCount = getActiveFilterCount();
+  const renderOptionGroup = (
+    title: string,
+    options: Array<{ key: string; label: string }>,
+    currentValue: string,
+    onSelect: (value: string) => void
+  ) => (
+    <View style={styles.optionGroup}>
+      <Text style={styles.optionGroupTitle}>{title}</Text>
+      <View style={styles.optionsContainer}>
+        {options.map((option) => (
+          <TouchableOpacity
+            key={option.key}
+            style={[
+              styles.optionButton,
+              currentValue === option.key && styles.optionButtonActive,
+            ]}
+            onPress={() => onSelect(option.key)}
+          >
+            <Text
+              style={[
+                styles.optionText,
+                currentValue === option.key && styles.optionTextActive,
+              ]}
+            >
+              {option.label}
+            </Text>
+            {currentValue === option.key && (
+              <Icon name="check" size={16} color={COLORS.primary} />
+            )}
+          </TouchableOpacity>
+        ))}
+      </View>
+    </View>
+  );
 
   return (
-    <>
-      <Modal
-        visible={visible}
-        transparent={true}
-        animationType="slide"
-        onRequestClose={onClose}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <View style={styles.modalTitleContainer}>
-                <Text style={styles.modalTitle}>Filter Transfers</Text>
-                {activeFilterCount > 0 && (
-                  <View style={styles.activeFilterBadge}>
-                    <Text style={styles.activeFilterBadgeText}>{activeFilterCount}</Text>
-                  </View>
-                )}
-              </View>
-              <TouchableOpacity onPress={onClose} style={styles.modalCloseButton}>
-                <Icon name="x" size={20} color={COLORS.text.primary} />
+    <Modal
+      visible={visible}
+      transparent
+      animationType="slide"
+      onRequestClose={onClose}
+    >
+      <View style={styles.modalOverlay}>
+        <View style={styles.modalContent}>
+          {/* Header */}
+          <LinearGradient
+            colors={[COLORS.gradient.primary[0], COLORS.gradient.primary[1]]}
+            style={styles.header}
+          >
+            <View style={styles.headerContent}>
+              <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+                <Icon name="x" size={24} color="#fff" />
+              </TouchableOpacity>
+              <Text style={styles.headerTitle}>Filter Options</Text>
+              <TouchableOpacity onPress={handleReset} style={styles.resetButton}>
+                <Text style={styles.resetButtonText}>Reset</Text>
               </TouchableOpacity>
             </View>
+          </LinearGradient>
 
-            <ScrollView style={styles.modalBody} showsVerticalScrollIndicator={false}>
-              {/* Status Filter */}
-              <View style={styles.filterSection}>
-                <Text style={styles.filterSectionTitle}>Status</Text>
-                <View style={styles.filterChipsContainer}>
-                  {['all', 'pending', 'in_transit', 'completed', 'cancelled'].map((status) => (
-                    <TouchableOpacity
-                      key={status}
-                      style={[styles.filterChip, filterStatus === status && styles.filterChipActive]}
-                      onPress={() => setFilterStatus(status as TransferStatus | 'all')}
+          {/* Filter Options */}
+          <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+            {renderOptionGroup(
+              'Status',
+              statusOptions,
+              localFilterStatus,
+              setLocalFilterStatus
+            )}
+
+            {/* Warehouse Selection */}
+            {warehouses.length > 0 && (
+              <View style={styles.optionGroup}>
+                <Text style={styles.optionGroupTitle}>Warehouse</Text>
+                <View style={styles.optionsContainer}>
+                  <TouchableOpacity
+                    style={[
+                      styles.optionButton,
+                      localSelectedWarehouse === 'all' && styles.optionButtonActive,
+                    ]}
+                    onPress={() => setLocalSelectedWarehouse('all')}
+                  >
+                    <Text
+                      style={[
+                        styles.optionText,
+                        localSelectedWarehouse === 'all' && styles.optionTextActive,
+                      ]}
                     >
-                      <Text style={[styles.filterChipText, filterStatus === status && styles.filterChipTextActive]}>
-                        {status === 'all' ? 'All' : status.replace('_', ' ').toUpperCase()}
+                      All Warehouses
+                    </Text>
+                    {localSelectedWarehouse === 'all' && (
+                      <Icon name="check" size={16} color={COLORS.primary} />
+                    )}
+                  </TouchableOpacity>
+                  {warehouses.map((warehouse) => (
+                    <TouchableOpacity
+                      key={warehouse.id}
+                      style={[
+                        styles.optionButton,
+                        localSelectedWarehouse === warehouse.id && styles.optionButtonActive,
+                      ]}
+                      onPress={() => setLocalSelectedWarehouse(warehouse.id)}
+                    >
+                      <Text
+                        style={[
+                          styles.optionText,
+                          localSelectedWarehouse === warehouse.id && styles.optionTextActive,
+                        ]}
+                      >
+                        {warehouse.name}
                       </Text>
+                      {localSelectedWarehouse === warehouse.id && (
+                        <Icon name="check" size={16} color={COLORS.primary} />
+                      )}
                     </TouchableOpacity>
                   ))}
                 </View>
               </View>
+            )}
 
-              {/* Warehouse Filter */}
-              <View style={styles.filterSection}>
-                <Text style={styles.filterSectionTitle}>Warehouse</Text>
-                <View style={styles.dropdownContainer}>
-                  <TouchableOpacity
-                    style={[styles.dropdownButton, selectedWarehouse !== 'all' && styles.dropdownButtonActive]}
-                    onPress={() => setShowWarehousePicker(true)}
-                  >
-                    <Text style={[styles.dropdownButtonText, selectedWarehouse !== 'all' && styles.dropdownButtonTextActive]}>
-                      {selectedWarehouse === 'all' ? 'All Warehouses' : getWarehouseName(selectedWarehouse)}
-                    </Text>
-                    <Icon name="chevron-down" size={16} color={selectedWarehouse !== 'all' ? COLORS.primary : COLORS.text.secondary} />
-                  </TouchableOpacity>
-                </View>
-              </View>
-
-              {/* Quick Date Filters */}
-              <View style={styles.filterSection}>
-                <Text style={styles.filterSectionTitle}>Quick Filters</Text>
-                <View style={styles.filterChipsContainer}>
-                  {[
-                    { label: '7 Days', days: 7 },
-                    { label: '30 Days', days: 30 },
-                    { label: '7 Months', days: 210 }
-                  ].map((filter) => (
-                    <TouchableOpacity
-                      key={filter.label}
-                      style={styles.quickFilterChip}
-                      onPress={() => handleQuickDateFilter(filter.days)}
-                    >
-                      <Text style={styles.quickFilterChipText}>{filter.label}</Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              </View>
-
-              {/* Date Range Filter */}
-              <View style={styles.filterSection}>
-                <Text style={styles.filterSectionTitle}>Custom Date Range</Text>
-                <View style={styles.dateRangeContainer}>
-                  <TouchableOpacity
-                    style={[styles.dateInput, dateRange.start && styles.dateInputActive]}
-                    onPress={() => {
-                      setStartDate(new Date());
-                      setShowStartDatePicker(true);
-                    }}
-                  >
-                    <Text style={[styles.dateInputText, dateRange.start && styles.dateInputTextActive]}>
-                      {dateRange.start ? formatDateForDisplay(new Date(dateRange.start)) : 'Start Date'}
-                    </Text>
-                    <Icon name="calendar" size={14} color={dateRange.start ? COLORS.primary : COLORS.text.secondary} />
-                  </TouchableOpacity>
-                  <Text style={styles.dateRangeSeparator}>to</Text>
-                  <TouchableOpacity
-                    style={[styles.dateInput, dateRange.end && styles.dateInputActive]}
-                    onPress={() => {
-                      setEndDate(new Date());
-                      setShowEndDatePicker(true);
-                    }}
-                  >
-                    <Text style={[styles.dateInputText, dateRange.end && styles.dateInputTextActive]}>
-                      {dateRange.end ? formatDateForDisplay(new Date(dateRange.end)) : 'End Date'}
-                    </Text>
-                    <Icon name="calendar" size={14} color={dateRange.end ? COLORS.primary : COLORS.text.secondary} />
-                  </TouchableOpacity>
-                </View>
-              </View>
-
-              {/* Filter Summary */}
-              {activeFilterCount > 0 && (
-                <View style={styles.filterSummary}>
-                  <Text style={styles.filterSummaryTitle}>Active Filters:</Text>
-                  <View style={styles.filterSummaryItems}>
-                    {filterStatus !== 'all' && (
-                      <View style={styles.filterSummaryItem}>
-                        <Text style={styles.filterSummaryText}>Status: {filterStatus.replace('_', ' ').toUpperCase()}</Text>
-                        <TouchableOpacity onPress={() => setFilterStatus('all')}>
-                          <Icon name="x" size={12} color={COLORS.text.secondary} />
-                        </TouchableOpacity>
-                      </View>
-                    )}
-                    {selectedWarehouse !== 'all' && (
-                      <View style={styles.filterSummaryItem}>
-                        <Text style={styles.filterSummaryText}>Warehouse: {getWarehouseName(selectedWarehouse)}</Text>
-                        <TouchableOpacity onPress={() => setSelectedWarehouse('all')}>
-                          <Icon name="x" size={12} color={COLORS.text.secondary} />
-                        </TouchableOpacity>
-                      </View>
-                    )}
-                    {(dateRange.start || dateRange.end) && (
-                      <View style={styles.filterSummaryItem}>
-                        <Text style={styles.filterSummaryText}>
-                          Date: {dateRange.start ? formatDateForDisplay(new Date(dateRange.start)) : 'Any'} to {dateRange.end ? formatDateForDisplay(new Date(dateRange.end)) : 'Any'}
-                        </Text>
-                        <TouchableOpacity onPress={() => setDateRange({ start: '', end: '' })}>
-                          <Icon name="x" size={12} color={COLORS.text.secondary} />
-                        </TouchableOpacity>
-                      </View>
-                    )}
-                  </View>
-                </View>
-              )}
-            </ScrollView>
-
-            <View style={styles.modalFooter}>
-              <TouchableOpacity onPress={onClear} style={styles.modalButtonSecondary}>
-                <Text style={styles.modalButtonSecondaryText}>Clear All</Text>
-              </TouchableOpacity>
-              <TouchableOpacity onPress={onApply} style={styles.modalButtonPrimary}>
-                <Text style={styles.modalButtonPrimaryText}>Apply Filters</Text>
-              </TouchableOpacity>
+            {/* Results Count */}
+            <View style={styles.resultsContainer}>
+              <Text style={styles.resultsText}>
+                {filteredTransfersCount} results found
+              </Text>
             </View>
+          </ScrollView>
+
+          {/* Action Buttons */}
+          <View style={styles.buttonContainer}>
+            <TouchableOpacity style={styles.cancelButton} onPress={onClose}>
+              <Text style={styles.cancelButtonText}>Cancel</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.applyButton} onPress={handleApply}>
+              <Text style={styles.applyButtonText}>Apply Filters</Text>
+            </TouchableOpacity>
           </View>
         </View>
-      </Modal>
-
-      {/* Warehouse Picker Modal */}
-      <Modal
-        visible={showWarehousePicker}
-        transparent={true}
-        animationType="slide"
-        onRequestClose={() => setShowWarehousePicker(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Select Warehouse</Text>
-              <TouchableOpacity onPress={() => setShowWarehousePicker(false)} style={styles.modalCloseButton}>
-                <Icon name="x" size={20} color={COLORS.text.primary} />
-              </TouchableOpacity>
-            </View>
-
-            <ScrollView style={styles.modalBody} showsVerticalScrollIndicator={false}>
-              <TouchableOpacity
-                style={[styles.warehouseOption, selectedWarehouse === 'all' && styles.warehouseOptionActive]}
-                onPress={() => {
-                  setSelectedWarehouse('all');
-                  setShowWarehousePicker(false);
-                }}
-              >
-                <View style={styles.warehouseOptionIcon}>
-                  <Icon name="grid" size={18} color={selectedWarehouse === 'all' ? '#FFFFFF' : COLORS.primary} />
-                </View>
-                <View style={styles.warehouseOptionContent}>
-                  <Text style={[styles.warehouseOptionTitle, selectedWarehouse === 'all' && styles.warehouseOptionTitleActive]}>
-                    All Warehouses
-                  </Text>
-                  <Text style={[styles.warehouseOptionSubtitle, selectedWarehouse === 'all' && styles.warehouseOptionSubtitleActive]}>
-                    Show transfers from all warehouses
-                  </Text>
-                </View>
-              </TouchableOpacity>
-
-              {warehouses.map((warehouse) => (
-                <TouchableOpacity
-                  key={warehouse.id}
-                  style={[styles.warehouseOption, selectedWarehouse === warehouse.id && styles.warehouseOptionActive]}
-                  onPress={() => {
-                    setSelectedWarehouse(warehouse.id);
-                    setShowWarehousePicker(false);
-                  }}
-                >
-                  <View style={styles.warehouseOptionIcon}>
-                    <Icon name="home" size={18} color={selectedWarehouse === warehouse.id ? '#FFFFFF' : COLORS.primary} />
-                  </View>
-                  <View style={styles.warehouseOptionContent}>
-                    <Text style={[styles.warehouseOptionTitle, selectedWarehouse === warehouse.id && styles.warehouseOptionTitleActive]}>
-                      {warehouse.name}
-                    </Text>
-                    <Text style={[styles.warehouseOptionSubtitle, selectedWarehouse === warehouse.id && styles.warehouseOptionSubtitleActive]}>
-                      {warehouse.address.split(',')[0]}
-                    </Text>
-                  </View>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-          </View>
-        </View>
-      </Modal>
-
-      {/* Date Pickers */}
-      {showStartDatePicker && (
-        <DateTimePicker
-          value={startDate}
-          mode="date"
-          display="default"
-          onChange={handleStartDateChange}
-        />
-      )}
-
-      {showEndDatePicker && (
-        <DateTimePicker
-          value={endDate}
-          mode="date"
-          display="default"
-          onChange={handleEndDateChange}
-        />
-      )}
-    </>
+      </View>
+    </Modal>
   );
 };
 
 const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: COLORS.overlay.dark,
     justifyContent: 'flex-end',
   },
   modalContent: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORS.background,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    maxHeight: '75%', // Reduced from 80%
+    maxHeight: '80%',
+    minHeight: '60%',
   },
-  modalHeader: {
+  header: {
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingTop: 20,
+    paddingBottom: 20,
+    paddingHorizontal: 20,
+  },
+  headerContent: {
     flexDirection: 'row',
+    alignItems: 'center',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: SPACING.sm, // Reduced from md
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(0, 0, 0, 0.1)',
   },
-  modalTitleContainer: {
+  closeButton: {
+    padding: 8,
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: COLORS.text.light,
+    textAlign: 'center',
+  },
+  resetButton: {
+    padding: 8,
+  },
+  resetButtonText: {
+    fontSize: 16,
+    color: COLORS.text.light,
+    fontWeight: '500',
+  },
+  content: {
+    flex: 1,
+    padding: 20,
+  },
+  optionGroup: {
+    marginBottom: 24,
+  },
+  optionGroupTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: COLORS.text.primary,
+    marginBottom: 12,
+  },
+  optionsContainer: {
+    gap: 8,
+  },
+  optionButton: {
     flexDirection: 'row',
     alignItems: 'center',
-  },
-  modalTitle: {
-    ...TEXT_STYLES.h3,
-    color: COLORS.text.primary,
-    fontSize: 16, // Reduced font size
-  },
-  activeFilterBadge: {
-    backgroundColor: COLORS.primary,
-    borderRadius: 8, // Reduced from 10
-    paddingHorizontal: 4, // Reduced from 6
-    paddingVertical: 1, // Reduced from 2
-    marginLeft: 6, // Reduced from 8
-  },
-  activeFilterBadgeText: {
-    ...TEXT_STYLES.caption,
-    color: '#FFFFFF',
-    fontWeight: 'bold',
-    fontSize: 9, // Reduced from 10
-  },
-  modalCloseButton: {
-    padding: 2, // Reduced from 4
-  },
-  modalBody: {
-    padding: SPACING.sm, // Reduced from md
-    paddingBottom: 0,
-  },
-  filterSection: {
-    marginBottom: SPACING.sm, // Reduced from md
-  },
-  filterSectionTitle: {
-    ...TEXT_STYLES.h4,
-    color: COLORS.text.primary,
-    marginBottom: SPACING.xs,
-    fontSize: 12, // Reduced from 13
-  },
-  filterChipsContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: SPACING.xs,
-  },
-  filterChip: {
-    paddingHorizontal: SPACING.xs,
-    paddingVertical: SPACING.xs,
-    borderRadius: BORDER_RADIUS.sm,
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: COLORS.surface,
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: 'rgba(0, 0, 0, 0.1)',
-    backgroundColor: '#FFFFFF',
+    borderColor: COLORS.border.medium,
   },
-  filterChipActive: {
-    backgroundColor: COLORS.primary,
-    borderColor: COLORS.primary,
-  },
-  filterChipText: {
-    ...TEXT_STYLES.caption,
-    color: COLORS.text.secondary,
-    fontSize: 9, // Reduced from 10
-  },
-  filterChipTextActive: {
-    color: '#FFFFFF',
-    fontWeight: 'bold',
-  },
-  quickFilterChip: {
-    paddingHorizontal: SPACING.xs,
-    paddingVertical: SPACING.xs,
-    borderRadius: BORDER_RADIUS.sm,
-    borderWidth: 1,
-    borderColor: COLORS.primary + '30',
+  optionButtonActive: {
     backgroundColor: COLORS.primary + '10',
-  },
-  quickFilterChipText: {
-    ...TEXT_STYLES.caption,
-    color: COLORS.primary,
-    fontSize: 9, // Reduced from 10
-    fontWeight: '500',
-  },
-  dropdownContainer: {
-    marginTop: SPACING.xs,
-  },
-  dropdownButton: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: SPACING.xs,
-    borderRadius: BORDER_RADIUS.sm,
-    borderWidth: 1,
-    borderColor: 'rgba(0, 0, 0, 0.1)',
-    backgroundColor: '#FFFFFF',
-  },
-  dropdownButtonActive: {
     borderColor: COLORS.primary,
-    backgroundColor: 'rgba(59, 130, 246, 0.05)',
   },
-  dropdownButtonText: {
-    ...TEXT_STYLES.body,
-    color: COLORS.text.secondary,
-    fontSize: 11, // Reduced from 12
-  },
-  dropdownButtonTextActive: {
-    color: COLORS.primary,
-    fontWeight: '500',
-  },
-  dateRangeContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.xs,
-  },
-  dateInput: {
-    flex: 1,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: SPACING.xs,
-    borderRadius: BORDER_RADIUS.sm,
-    borderWidth: 1,
-    borderColor: 'rgba(0, 0, 0, 0.1)',
-    backgroundColor: '#FFFFFF',
-  },
-  dateInputActive: {
-    borderColor: COLORS.primary,
-    backgroundColor: 'rgba(59, 130, 246, 0.05)',
-  },
-  dateInputText: {
-    ...TEXT_STYLES.body,
-    color: COLORS.text.secondary,
-    fontSize: 11, // Reduced from 12
-  },
-  dateInputTextActive: {
-    color: COLORS.primary,
-    fontWeight: '500',
-  },
-  dateRangeSeparator: {
-    ...TEXT_STYLES.body,
-    color: COLORS.text.secondary,
-    fontSize: 11, // Reduced from 12
-  },
-  filterSummary: {
-    marginTop: SPACING.sm,
-    padding: SPACING.xs,
-    backgroundColor: 'rgba(59, 130, 246, 0.05)',
-    borderRadius: BORDER_RADIUS.sm,
-  },
-  filterSummaryTitle: {
-    ...TEXT_STYLES.h4,
+  optionText: {
+    fontSize: 16,
     color: COLORS.text.primary,
-    marginBottom: SPACING.xs,
-    fontSize: 11, // Reduced from 12
+    fontWeight: '500',
   },
-  filterSummaryItems: {
-    gap: SPACING.xs,
+  optionTextActive: {
+    color: COLORS.primary,
+    fontWeight: '600',
   },
-  filterSummaryItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: SPACING.xs,
-  },
-  filterSummaryText: {
-    ...TEXT_STYLES.caption,
-    color: COLORS.text.secondary,
-    fontSize: 9, // Reduced from 10
-  },
-  modalFooter: {
-    flexDirection: 'row',
-    gap: SPACING.xs,
-    padding: SPACING.sm, // Reduced from md
+  resultsContainer: {
+    paddingVertical: 16,
     borderTopWidth: 1,
-    borderTopColor: 'rgba(0, 0, 0, 0.1)',
+    borderTopColor: COLORS.border.light,
+    marginTop: 16,
   },
-  modalButtonSecondary: {
-    flex: 1,
-    padding: SPACING.xs,
-    borderRadius: BORDER_RADIUS.sm,
-    borderWidth: 1,
-    borderColor: 'rgba(0, 0, 0, 0.1)',
-    alignItems: 'center',
-  },
-  modalButtonSecondaryText: {
-    ...TEXT_STYLES.button,
+  resultsText: {
+    fontSize: 14,
     color: COLORS.text.secondary,
-    fontSize: 11, // Reduced from 12
+    textAlign: 'center',
   },
-  modalButtonPrimary: {
-    flex: 2,
-    padding: SPACING.xs,
-    borderRadius: BORDER_RADIUS.sm,
-    backgroundColor: COLORS.primary,
-    alignItems: 'center',
-  },
-  modalButtonPrimaryText: {
-    ...TEXT_STYLES.button,
-    color: '#FFFFFF',
-    fontWeight: 'bold',
-    fontSize: 11, // Reduced from 12
-  },
-  warehouseOption: {
+  buttonContainer: {
     flexDirection: 'row',
-    alignItems: 'center',
-    padding: SPACING.xs, // Reduced from sm
-    borderRadius: BORDER_RADIUS.sm,
-    marginBottom: SPACING.xs,
+    gap: 12,
+    padding: 20,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.border.light,
   },
-  warehouseOptionActive: {
-    backgroundColor: COLORS.primary,
-  },
-  warehouseOptionIcon: {
-    width: 32, // Reduced from 36
-    height: 32, // Reduced from 36
-    borderRadius: 16, // Reduced from 18
-    backgroundColor: 'rgba(59, 130, 246, 0.1)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: SPACING.xs, // Reduced from sm
-  },
-  warehouseOptionContent: {
+  cancelButton: {
     flex: 1,
+    backgroundColor: COLORS.surface,
+    borderRadius: 12,
+    paddingVertical: 16,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: COLORS.border.medium,
   },
-  warehouseOptionTitle: {
-    ...TEXT_STYLES.body,
-    color: COLORS.text.primary,
-    fontWeight: '500',
-    fontSize: 12, // Reduced from 13
-  },
-  warehouseOptionTitleActive: {
-    color: '#FFFFFF',
-  },
-  warehouseOptionSubtitle: {
-    ...TEXT_STYLES.caption,
+  cancelButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
     color: COLORS.text.secondary,
-    marginTop: 2,
-    fontSize: 10, // Reduced from 11
   },
-  warehouseOptionSubtitleActive: {
-    color: '#FFFFFF',
-    opacity: 0.8,
+  applyButton: {
+    flex: 2,
+    backgroundColor: COLORS.primary,
+    borderRadius: 12,
+    paddingVertical: 16,
+    alignItems: 'center',
+  },
+  applyButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: COLORS.text.light,
   },
 });
 

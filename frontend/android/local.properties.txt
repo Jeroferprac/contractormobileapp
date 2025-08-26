@@ -1,1 +1,1 @@
-sdk.dir=C:\\Users\\lenova\\AppData\\Local\\Android\\Sdk
+sdk.dir=C:\\Users\\vimal\\AppData\\Local\\Android\\Sdk

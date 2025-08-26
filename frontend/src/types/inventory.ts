@@ -35,18 +35,40 @@ export interface Warehouse {
   email: string;
   is_active: boolean;
   created_at: string;
-  used?: number;
-  capacity?: number;
-  location?: string;
+  updated_at?: string;
+}
+
+export interface WarehouseCreate {
+  name: string;
+  code: string;
+  address: string;
+  contact_person: string;
+  phone: string;
+  email: string;
+  is_active?: boolean;
+}
+
+export interface WarehouseUpdate extends Partial<WarehouseCreate> {}
+
+export interface WarehouseOut extends Warehouse {}
+
+export interface WarehouseStats {
+  total_bins: number;
+  active_bins: number;
+  total_stock: number;
+  utilization_percentage: number;
+  low_stock_items: number;
+  out_of_stock_items: number;
+  total_value: number;
 }
 
 export interface Stock {
   id: string;
   product_id: string;
   warehouse_id: string;
-  quantity: number;
-  reserved_quantity: number;
-  available_quantity: number;
+  quantity: number | string;
+  reserved_quantity: number | string;
+  available_quantity: number | string;
   bin_location?: string;
   updated_at: string;
 }

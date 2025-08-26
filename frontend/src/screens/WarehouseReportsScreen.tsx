@@ -25,6 +25,7 @@ import ReportHeader from '../components/inventory/Warehouse/report/ReportHeader'
 import WarehouseReportCard from '../components/inventory/Warehouse/report/WarehouseReportCard';
 import StockReportCard from '../components/inventory/Warehouse/report/StockReportCard';
 import TransferReportCard from '../components/inventory/Warehouse/report/TransferReportCard';
+import AnalyticsCharts from '../components/inventory/Warehouse/report/AnalyticsCharts';
 import BackgroundPattern from '../components/ui/BackgroundPattern';
 import LoadingSkeleton from '../components/ui/LoadingSkeleton';
 import FilterChips from '../components/ui/FilterChips';
@@ -58,9 +59,7 @@ const WarehouseReportsScreen: React.FC<WarehouseReportsScreenProps> = ({ navigat
   const [pendingTransfers, setPendingTransfers] = useState(0);
   
   // Chart filter states
-  const [selectedTimeFilter, setSelectedTimeFilter] = useState(['7d']);
-  const [selectedChartType, setSelectedChartType] = useState(['line']);
-  const [selectedMetric, setSelectedMetric] = useState(['stock']);
+  const [selectedMetric, setSelectedMetric] = useState<string[]>(['stock']);
 
   // Export modal states
   const [showExportModal, setShowExportModal] = useState(false);
@@ -152,7 +151,7 @@ const WarehouseReportsScreen: React.FC<WarehouseReportsScreenProps> = ({ navigat
     { id: 'warehouses', label: 'Warehouses', icon: 'building' },
   ];
 
-  // Real chart data based on actual warehouse data
+  //chart data 
   const getChartData = () => {
     const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
     
@@ -928,6 +927,7 @@ const WarehouseReportsScreen: React.FC<WarehouseReportsScreenProps> = ({ navigat
                     <TransferReportCard
                       key={transfer.id}
                       transfer={transfer}
+                      warehouses={warehouses}
                       onPress={handleTransferPress}
                     />
                   ))}
@@ -944,84 +944,12 @@ const WarehouseReportsScreen: React.FC<WarehouseReportsScreenProps> = ({ navigat
           </View>
         )}
 
-        {activeTab === 'analytics' && (
-          <View>
-            <View style={styles.analyticsContainer}>
-              {/* KPI Cards */}
-              <View style={styles.kpiGrid}>
-                <View style={styles.kpiCard}>
-                  <Icon name="building" size={24} color={COLORS.primary} />
-                  <Text style={styles.kpiValue}>{totalWarehouses}</Text>
-                  <Text style={styles.kpiLabel}>Total Warehouses</Text>
-                  <Text style={styles.kpiSubtext}>Active: {activeWarehouses}/{totalWarehouses}</Text>
-                </View>
-
-                <View style={styles.kpiCard}>
-                  <Icon name="package" size={24} color={COLORS.status.success} />
-                  <Text style={styles.kpiValue}>{totalStockItems}</Text>
-                  <Text style={styles.kpiLabel}>Stock Items</Text>
-                  <Text style={styles.kpiSubtext}>Across all warehouses</Text>
-                </View>
-
-                <View style={styles.kpiCard}>
-                  <Icon name="truck" size={24} color={COLORS.status.warning} />
-                  <Text style={styles.kpiValue}>{totalTransfers}</Text>
-                  <Text style={styles.kpiLabel}>Total Transfers</Text>
-                  <Text style={styles.kpiSubtext}>Pending: {pendingTransfers}</Text>
-                </View>
-
-                <View style={styles.kpiCard}>
-                  <Icon name="trending-up" size={24} color={COLORS.primary} />
-                  <Text style={styles.kpiValue}>{warehouses.length}</Text>
-                  <Text style={styles.kpiLabel}>Active Locations</Text>
-                  <Text style={styles.kpiSubtext}>Operational warehouses</Text>
-                </View>
+                    {activeTab === 'analytics' && (
+              <View>
+                {/* Analytics Charts */}
+                <AnalyticsCharts navigation={navigation} />
               </View>
-
-              {/* Filter Section */}
-              <View style={styles.filterSection}>
-                <Text style={styles.filterTitle}>Time Period</Text>
-                <FilterChips
-                  filters={timeFilters}
-                  selectedFilters={selectedTimeFilter}
-                  onFilterChange={(filterId) => setSelectedTimeFilter([filterId])}
-                />
-
-                <Text style={styles.filterTitle}>Chart Type</Text>
-                <FilterChips
-                  filters={chartTypeFilters}
-                  selectedFilters={selectedChartType}
-                  onFilterChange={(filterId) => setSelectedChartType([filterId])}
-                />
-
-                <Text style={styles.filterTitle}>Metric</Text>
-                <FilterChips
-                  filters={metricFilters}
-                  selectedFilters={selectedMetric}
-                  onFilterChange={(filterId) => setSelectedMetric([filterId])}
-                />
-              </View>
-
-              {/* Chart Section */}
-              <View style={styles.chartSection}>
-                <Text style={styles.chartTitle}>
-                  {selectedMetric[0].charAt(0).toUpperCase() + selectedMetric[0].slice(1)} Analytics
-                </Text>
-
-                <View style={styles.chartContainer}>
-                  <LineChartWithGradient
-                    data={getChartData()}
-                    labels={getChartLabels()}
-                    color={COLORS.primary}
-                    showGrid={true}
-                    showPoints={true}
-                    showArea={true}
-                  />
-                </View>
-              </View>
-            </View>
-          </View>
-        )}
+            )}
                   </ScrollView>
 
                   {/* Bottom Tab Navigation */}
@@ -1281,48 +1209,7 @@ const styles = StyleSheet.create({
     paddingVertical: SPACING.md,
     paddingBottom: 120, // Add extra padding to prevent cards from being hidden behind tab navigation
   },
-  kpiGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-  },
-  kpiCard: {
-    width: '48%',
-    backgroundColor: COLORS.background,
-    borderRadius: BORDER_RADIUS.lg,
-    padding: SPACING.lg,
-    marginBottom: SPACING.md,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: COLORS.border.light,
-    shadowColor: COLORS.text.primary,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  kpiValue: {
-    fontSize: TYPOGRAPHY.sizes.xl,
-    fontWeight: '700',
-    color: COLORS.text.primary,
-    marginTop: SPACING.sm,
-    fontFamily: 'System',
-  },
-  kpiLabel: {
-    fontSize: TYPOGRAPHY.sizes.sm,
-    fontWeight: '600',
-    color: COLORS.text.primary,
-    marginTop: SPACING.xs,
-    textAlign: 'center',
-    fontFamily: 'System',
-  },
-  kpiSubtext: {
-    fontSize: TYPOGRAPHY.sizes.xs,
-    color: COLORS.text.secondary,
-    marginTop: SPACING.xs,
-    textAlign: 'center',
-    fontFamily: 'System',
-  },
+
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',

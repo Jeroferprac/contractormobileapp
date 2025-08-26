@@ -1,6 +1,7 @@
 apply plugin: "com.android.application"
 apply plugin: "org.jetbrains.kotlin.android"
 apply plugin: "com.facebook.react"
+apply plugin: 'com.google.gms.google-services'
 apply from: project(':react-native-config').projectDir.getPath() + "/dotenv.gradle"
 
 /**
@@ -32,13 +33,18 @@ task bundleJsAndAssets(type: Exec) {
 }
 
 android {
-    ndkVersion rootProject.ext.ndkVersion
+    // Disable NDK/CMake for faster development builds
+    // ndkVersion rootProject.ext.ndkVersion
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
 
-    namespace "com.frontend"
+    namespace "com.binyan"
+    
+    buildFeatures {
+        buildConfig = true
+    }
     defaultConfig {
-        applicationId "com.frontend"
+        applicationId "com.binyan"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
@@ -48,6 +54,18 @@ android {
         manifestPlaceholders = [
             appAuthRedirectScheme: "binyan"
         ]
+        
+        // Disable NDK for faster development builds
+        // ndk {
+        //     abiFilters 'arm64-v8a'
+        // }
+    }
+    
+    // Disable ABI splits for faster development builds
+    splits {
+        abi {
+            enable false
+        }
     }
     
     signingConfigs {
@@ -82,6 +100,25 @@ android {
     }
 }
 
+// Professional dependency conflict resolution
+configurations.all {
+    resolutionStrategy {
+        // Use compatible AndroidX versions that actually exist
+        force 'androidx.core:core:1.12.0'
+        force 'androidx.core:core-ktx:1.12.0'
+        force 'androidx.appcompat:appcompat:1.6.1'
+        force 'androidx.fragment:fragment:1.6.2'
+        force 'androidx.annotation:annotation:1.7.1'
+        
+        // Handle dependency conflicts
+        eachDependency { details ->
+            if (details.requested.group == 'androidx.core') {
+                details.useVersion '1.12.0'
+            }
+        }
+    }
+}
+
 dependencies {
     implementation("com.facebook.react:react-android")
 
@@ -90,9 +127,16 @@ dependencies {
     } else {
         implementation jscFlavor
     }
+    
+    // Firebase dependencies
+    implementation platform('com.google.firebase:firebase-bom:33.7.0')
+    implementation 'com.google.firebase:firebase-messaging'
+    implementation 'com.google.firebase:firebase-analytics'
 }
 
 // React Native 0.80+ autolinking handles vector icons automatically
-// No manual configuration needed
+// No manual configuration needed - removed to fix CMake conflicts
 
+// Vector Icons configuration for React Native 0.80+
 apply from: "../../node_modules/react-native-vector-icons/fonts.gradle"
+// fURY_cZwSF602CgpvIpnty:APA91bGnBMHD2BBsgt_aSDQA8XBjiIrGfmm260hpqxpASwUl2I55Zn1Xg0j_zRuvKBgEq06Bw8p3DG9u70u2VGWI0n826WsRW0lI61ERc9OaOyjxSAJyyo0

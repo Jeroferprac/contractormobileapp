@@ -15,13 +15,13 @@ import {
 import LinearGradient from 'react-native-linear-gradient';
 import FastImage from 'react-native-fast-image';
 import Icon from 'react-native-vector-icons/Feather';
-import { LineChart } from 'react-native-chart-kit';
 import { COLORS } from '../../constants/colors';
 import { SPACING, BORDER_RADIUS, SHADOWS } from '../../constants/spacing';
 import { TYPOGRAPHY } from '../../constants/typography';
 import { inventoryApiService } from '../../api/inventoryApi';
 import { Stock, Product, Warehouse } from '../../types/inventory';
-import StockForm from '../../components/inventory/Warehouse/StockForm';
+import AddStockModal from '../../components/inventory/Warehouse/LowStockInventory/AddStockModal';
+import FilterModal from '../../components/inventory/Warehouse/LowStockInventory/FilterModal';
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -39,7 +39,8 @@ const LowStockInventoryScreen = ({ navigation }) => {
   const [loading, setLoading] = useState(true);
   const [selectedItem, setSelectedItem] = useState<LowStockItem | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
-  const [stockFormVisible, setStockFormVisible] = useState(false);
+  const [addStockModalVisible, setAddStockModalVisible] = useState(false);
+  const [modalMode, setModalMode] = useState<'add' | 'edit'>('add');
   const [filterVisible, setFilterVisible] = useState(false);
   const [searchText, setSearchText] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
@@ -83,8 +84,8 @@ const LowStockInventoryScreen = ({ navigation }) => {
         const quantity = parseInt(stock.quantity.toString());
         
         let stockLevel: 'critical' | 'low' | 'medium' = 'medium';
-        if (quantity <= 10) stockLevel = 'critical';
-        else if (quantity <= 30) stockLevel = 'low';
+        if (quantity <= 30) stockLevel = 'critical';
+        else if (quantity <= 50) stockLevel = 'low';
 
         return {
           stock,
@@ -190,7 +191,8 @@ const LowStockInventoryScreen = ({ navigation }) => {
   };
 
   const handleAddStock = () => {
-    setStockFormVisible(true);
+    setModalMode('add');
+    setAddStockModalVisible(true);
   };
 
   const handleUpdateStock = async (stockId: string, newQuantity: number) => {
@@ -292,43 +294,24 @@ const LowStockInventoryScreen = ({ navigation }) => {
               </Text>
             </View>
             
-            {/* Professional Area Chart with Gradient Fill */}
+            {/* Simple Chart Area */}
             <View style={styles.chartContainer}>
-              <LineChart
-                data={chartData}
-                width={screenWidth - SPACING.lg * 4}
-                height={120}
-                chartConfig={{
-                  backgroundColor: 'transparent',
-                  backgroundGradientFrom: 'transparent',
-                  backgroundGradientTo: 'transparent',
-                  decimalPlaces: 0,
-                  color: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
-                  labelColor: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
-                  fillShadowGradient: '#FF6B35',
-                  fillShadowGradientOpacity: 0.3,
-                  style: {
-                    borderRadius: 16,
-                  },
-                  propsForDots: {
-                    r: '4',
-                    strokeWidth: '2',
-                    stroke: '#FFFFFF',
-                    fill: '#FFFFFF',
-                  },
-                }}
-                bezier
-                style={[styles.chart, { backgroundColor: 'transparent' }]}
-                withDots={true}
-                withShadow={false}
-                withInnerLines={false}
-                withOuterLines={false}
-                withVerticalLines={false}
-                withHorizontalLines={false}
-                withVerticalLabels={false}
-                withHorizontalLabels={false}
-                decorator={() => null}
-              />
+              <View style={styles.chartArea}>
+                <View style={styles.chartFill} />
+                <View style={styles.chartLine} />
+                {chartData.datasets[0].data.map((value, index) => (
+                  <View
+                    key={index}
+                    style={[
+                      styles.chartPoint,
+                      {
+                        left: `${(index / (chartData.datasets[0].data.length - 1)) * 100}%`,
+                        bottom: `${(value / 100) * 100}%`,
+                      }
+                    ]}
+                  />
+                ))}
+              </View>
             </View>
           </LinearGradient>
         </View>
@@ -563,8 +546,9 @@ const LowStockInventoryScreen = ({ navigation }) => {
               <TouchableOpacity 
                 style={[styles.modalAction, styles.addAction]}
                 onPress={() => {
+                  setModalMode('add');
                   setModalVisible(false);
-                  setStockFormVisible(true);
+                  setAddStockModalVisible(true);
                 }}
               >
                 <Icon name="plus" size={20} color="#34C759" />
@@ -574,8 +558,9 @@ const LowStockInventoryScreen = ({ navigation }) => {
               <TouchableOpacity 
                 style={[styles.modalAction, styles.editAction]}
                 onPress={() => {
+                  setModalMode('edit');
                   setModalVisible(false);
-                  setStockFormVisible(true);
+                  setAddStockModalVisible(true);
                 }}
               >
                 <Icon name="edit-2" size={20} color="#007AFF" />
@@ -599,53 +584,37 @@ const LowStockInventoryScreen = ({ navigation }) => {
         </View>
       </Modal>
 
-      {/* Stock Form Modal */}
-      <Modal
-        visible={stockFormVisible}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setStockFormVisible(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Stock Management</Text>
-              <TouchableOpacity onPress={() => setStockFormVisible(false)}>
-                <Icon name="x" size={24} color="#8E8E93" />
-              </TouchableOpacity>
-            </View>
-            
-            <View style={styles.formContainer}>
-              <Text style={styles.formLabel}>Quantity</Text>
-              <TextInput
-                style={styles.formInput}
-                placeholder="Enter quantity"
-                keyboardType="numeric"
-                value={selectedItem?.stock.quantity.toString() || ''}
-              />
-              
-              <Text style={styles.formLabel}>Notes</Text>
-              <TextInput
-                style={[styles.formInput, styles.textArea]}
-                placeholder="Add notes (optional)"
-                multiline
-                numberOfLines={3}
-              />
-              
-              <TouchableOpacity 
-                style={styles.saveButton}
-                onPress={() => {
-                  Alert.alert('Success', 'Stock updated successfully');
-                  setStockFormVisible(false);
-                  loadLowStockData();
-                }}
-              >
-                <Text style={styles.saveButtonText}>Save Changes</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
+      {/* Filter Modal Component */}
+      <FilterModal
+        visible={filterVisible}
+        filters={{
+          stockLevel: selectedStockLevel,
+          category: selectedCategory,
+          warehouse: selectedWarehouse,
+        }}
+        onClose={() => setFilterVisible(false)}
+        onApply={(filters) => {
+          setSelectedStockLevel(filters.stockLevel);
+          setSelectedCategory(filters.category);
+          setSelectedWarehouse(filters.warehouse);
+          setFilterVisible(false);
+        }}
+      />
+
+      {/* Add Stock Modal Component */}
+      <AddStockModal
+        visible={addStockModalVisible}
+        mode={modalMode}
+        selectedStock={selectedItem?.stock || null}
+        selectedProduct={selectedItem?.product || null}
+        selectedWarehouse={selectedItem?.warehouse || null}
+        onClose={() => setAddStockModalVisible(false)}
+        onSuccess={() => {
+          setAddStockModalVisible(false);
+          loadLowStockData();
+        }}
+      />
+
     </SafeAreaView>
   );
 };
@@ -676,7 +645,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingTop: SPACING.md,
+    paddingTop: SPACING.lg,
+    paddingHorizontal: SPACING.md,
   },
   backButton: {
     width: 44,
@@ -724,7 +694,8 @@ const styles = StyleSheet.create({
   },
   gradientCard: {
     borderRadius: BORDER_RADIUS.xl,
-    padding: SPACING.lg,
+    padding: SPACING.xl,
+    marginHorizontal: SPACING.sm,
     ...SHADOWS.lg,
   },
   cardHeader: {
@@ -773,15 +744,38 @@ const styles = StyleSheet.create({
     color: 'rgba(255, 255, 255, 0.9)',
   },
   chartContainer: {
-    height: 140,
+    height: 80,
     marginTop: SPACING.md,
-    alignItems: 'center',
-    backgroundColor: 'transparent',
+    position: 'relative',
   },
-  chart: {
-    marginVertical: SPACING.sm,
-    borderRadius: BORDER_RADIUS.md,
-    backgroundColor: 'transparent',
+  chartArea: {
+    flex: 1,
+    position: 'relative',
+  },
+  chartFill: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: '60%',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: BORDER_RADIUS.sm,
+  },
+  chartLine: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 2,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 1,
+  },
+  chartPoint: {
+    position: 'absolute',
+    width: 6,
+    height: 6,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 3,
   },
   sectionHeader: {
     marginBottom: SPACING.md,
@@ -1057,38 +1051,7 @@ const styles = StyleSheet.create({
   deleteActionText: {
     color: '#FF3B30',
   },
-  formContainer: {
-    gap: SPACING.md,
-  },
-  formLabel: {
-    fontSize: TYPOGRAPHY.sizes.md,
-    fontWeight: '500',
-    color: COLORS.text.primary,
-  },
-  formInput: {
-    borderWidth: 1,
-    borderColor: '#E5E5EA',
-    borderRadius: BORDER_RADIUS.md,
-    padding: SPACING.md,
-    fontSize: TYPOGRAPHY.sizes.md,
-    color: COLORS.text.primary,
-  },
-  textArea: {
-    height: 80,
-    textAlignVertical: 'top',
-  },
-  saveButton: {
-    backgroundColor: '#FF6B35',
-    padding: SPACING.md,
-    borderRadius: BORDER_RADIUS.md,
-    alignItems: 'center',
-    marginTop: SPACING.md,
-  },
-  saveButtonText: {
-    color: '#FFFFFF',
-    fontSize: TYPOGRAPHY.sizes.md,
-    fontWeight: '600',
-  },
+
 });
 
 export default LowStockInventoryScreen;

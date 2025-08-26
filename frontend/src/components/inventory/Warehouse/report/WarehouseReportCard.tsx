@@ -59,7 +59,7 @@ const WarehouseReportCard: React.FC<WarehouseReportCardProps> = ({
           <View style={styles.cardHeader}>
             <View style={styles.titleSection}>
               <View style={styles.iconContainer}>
-                <Icon name="building" size={20} color={COLORS.primary} />
+                <Icon name="home" size={20} color={COLORS.primary} />
               </View>
               <View style={styles.titleContainer}>
                 <Text style={styles.title}>{warehouse.name}</Text>
@@ -93,7 +93,7 @@ const WarehouseReportCard: React.FC<WarehouseReportCardProps> = ({
               <View style={styles.warehouseInfoItem}>
                 <Icon name="map-pin" size={16} color={COLORS.text.secondary} />
                 <Text style={styles.warehouseInfoLabel}>Location</Text>
-                <Text style={styles.warehouseInfoValue} numberOfLines={1}>
+                <Text style={styles.warehouseInfoValue} numberOfLines={2}>
                   {warehouse.address.split(',')[0]}
                 </Text>
               </View>
@@ -117,7 +117,7 @@ const WarehouseReportCard: React.FC<WarehouseReportCardProps> = ({
               <View style={styles.warehouseInfoItem}>
                 <Icon name="mail" size={16} color={COLORS.text.secondary} />
                 <Text style={styles.warehouseInfoLabel}>Email</Text>
-                <Text style={styles.warehouseInfoValue} numberOfLines={1}>
+                <Text style={styles.warehouseInfoValue} numberOfLines={2}>
                   {warehouse.email || 'No email'}
                 </Text>
               </View>
@@ -142,7 +142,7 @@ const WarehouseReportCard: React.FC<WarehouseReportCardProps> = ({
                   <Text style={styles.statValue}>
                     {new Date(warehouse.created_at).toLocaleDateString()}
                   </Text>
-                  <Text style={styles.statLabel}>Created</Text>
+                  <Text style={styles.statLabel}>Created Date</Text>
                 </View>
                 
                 <View style={styles.statItem}>
@@ -152,9 +152,9 @@ const WarehouseReportCard: React.FC<WarehouseReportCardProps> = ({
                 </View>
                 
                 <View style={styles.statItem}>
-                  <Icon name="map-pin" size={24} color={COLORS.text.secondary} />
-                  <Text style={styles.statValue}>{warehouse.code}</Text>
-                  <Text style={styles.statLabel}>Warehouse Code</Text>
+                  <Icon name="phone" size={24} color={COLORS.status.success} />
+                  <Text style={styles.statValue}>{warehouse.phone || 'N/A'}</Text>
+                  <Text style={styles.statLabel}>Phone Number</Text>
                 </View>
               </View>
 
@@ -172,9 +172,9 @@ const WarehouseReportCard: React.FC<WarehouseReportCardProps> = ({
                 </View>
                 
                 <View style={styles.detailItem}>
-                  <Icon name="phone" size={16} color={COLORS.text.secondary} />
-                  <Text style={styles.detailLabel}>Phone</Text>
-                  <Text style={styles.detailValue}>{warehouse.phone || 'N/A'}</Text>
+                  <Icon name="hash" size={16} color={COLORS.text.secondary} />
+                  <Text style={styles.detailLabel}>Warehouse Code</Text>
+                  <Text style={styles.detailValue}>{warehouse.code}</Text>
                 </View>
                 
                 <View style={styles.detailItem}>
@@ -308,11 +308,13 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     paddingVertical: SPACING.sm,
+    paddingHorizontal: SPACING.xs,
     backgroundColor: COLORS.surface,
     borderRadius: BORDER_RADIUS.md,
     marginHorizontal: SPACING.xs,
     borderWidth: 1,
     borderColor: COLORS.border.light,
+    minHeight: 80,
   },
   warehouseInfoLabel: {
     fontSize: TYPOGRAPHY.sizes.xs,
@@ -327,6 +329,8 @@ const styles = StyleSheet.create({
     color: COLORS.text.primary,
     marginTop: 4,
     textAlign: 'center',
+    flexWrap: 'wrap',
+    flexShrink: 1,
   },
   expandedContent: {
     padding: SPACING.lg,

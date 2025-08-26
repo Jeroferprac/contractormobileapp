@@ -105,25 +105,8 @@ const InventoryScreen: React.FC<InventoryScreenProps> = ({ navigation }) => {
       console.log('🔄 [InventoryScreen] Starting to load inventory data...');
       setLoading(true);
       
-      // Add fallback data in case API calls fail
-      const fallbackSummary: InventorySummary = {
-        total_products: 0,
-        low_stock_items: 0,
-        total_warehouses: 0,
-        total_inventory_value: 0,
-        out_of_stock_items: 0,
-        recent_transactions: 0
-      };
-      
-      const fallbackProducts: Product[] = [];
-      const fallbackTransactions: Transaction[] = [];
-      const fallbackWarehouses: Warehouse[] = [];
-      const fallbackSuppliers: Supplier[] = [];
-
-      const fallbackChartData: { value: number; label: string; dataPointText: string }[] = [];
-
-      try {
-              const [
+      // Add individual error handling for each API call
+      const [
         summaryRes,
         topSellingRes,
         transactionsRes,
@@ -131,61 +114,46 @@ const InventoryScreen: React.FC<InventoryScreenProps> = ({ navigation }) => {
         warehouseRes,
         monthlySalesRes,
       ] = await Promise.all([
-        inventoryApiService.getSummary().catch(() => ({ data: fallbackSummary })),
-        inventoryApiService.getSalesByProduct().catch(() => ({ data: fallbackProducts })),
-        inventoryApiService.getTransactions({ limit: 3 }).catch(() => ({ data: fallbackTransactions })),
-          inventoryApiService.getSuppliers().catch(() => ({ data: fallbackSuppliers })),
-        inventoryApiService.getWarehouses().catch(() => ({ data: fallbackWarehouses })),
-        inventoryApiService.getMonthlySalesSummary().catch(() => ({ data: fallbackChartData })),
+        inventoryApiService.getSummary().catch(() => ({ data: null })),
+        inventoryApiService.getSalesByProduct().catch(() => ({ data: [] })),
+        inventoryApiService.getTransactions({ limit: 3 }).catch(() => ({ data: [] })),
+        inventoryApiService.getWarehouses().catch(() => ({ data: [] })),
+        inventoryApiService.getMonthlySalesSummary().catch(() => ({ 
+          data: { 
+            total_sales: 0, 
+            total_revenue: 0, 
+            average_order_value: 0, 
+            top_selling_products: [], 
+            monthly_trends: [] 
+          } 
+        })),
       ]);
 
-        setSummary(summaryRes.data || fallbackSummary);
-        setProducts(topSellingRes.data || fallbackProducts);
-        setTransactions(transactionsRes.data || fallbackTransactions);
-        setSuppliers(suppliersRes.data || fallbackSuppliers);
+      setSummary(summaryRes.data);
+      setProducts(topSellingRes.data || []);
+      setTransactions(transactionsRes.data || []);
 
-        // Attach image URL to each warehouse
-        const warehouseData = warehouseRes.data || fallbackWarehouses;
-        const updatedWarehouses = warehouseData.slice(0, 10).map((wh, idx) => ({
-          ...wh,
-          imageUrl: `${UNSPLASH_IMAGES[idx % UNSPLASH_IMAGES.length]}&sig=${idx}`,
-        }));
-        setWarehouses(updatedWarehouses);
-
-        const monthlyData = monthlySalesRes.data || fallbackChartData;
-        const formattedChartData = Array.isArray(monthlyData) ? monthlyData.map((item: any) => {
-          // Safely handle month data with proper null checks
-          let monthLabel = 'Unknown';
-          if (item.month && typeof item.month === 'string' && item.month.includes('-')) {
-            const monthParts = item.month.split('-');
-            if (monthParts.length >= 2) {
-              monthLabel = `${getMonthName(parseInt(monthParts[1]))} ${monthParts[0]}`;
-            }
-          }
-          
-          return {
-          value: item.total_sales || item.sales || 0,
-            label: monthLabel,
-          dataPointText: `${item.total_sales || item.sales || 0} units`,
-          };
-        }) : [];
-
-        setChartData(formattedChartData);
-        console.log('✅ [InventoryScreen] Successfully loaded inventory data');
-      } catch (apiError) {
-        console.error('❌ [InventoryScreen] API Error:', apiError);
-        // Use fallback data if all API calls fail
-        setSummary(fallbackSummary);
-        setProducts(fallbackProducts);
-        setTransactions(fallbackTransactions);
-        setWarehouses(fallbackWarehouses);
-        setSuppliers(fallbackSuppliers);
-        setChartData(fallbackChartData);
-        console.log('🔄 [InventoryScreen] Using fallback data');
-      }
+      // Attach image URL to each warehouse
+      const updatedWarehouses = (warehouseRes.data || []).slice(0, 10).map((wh, idx) => ({
+        ...wh,
+        imageUrl: `${UNSPLASH_IMAGES[idx % UNSPLASH_IMAGES.length]}&sig=${idx}`,
+      }));
+      setWarehouses(updatedWarehouses);
+      
+      const formattedChartData = (monthlySalesRes.data?.monthly_trends || []).map((item) => ({
+        value: item.sales,
+        label: `${getMonthName(parseInt(item.month.split('-')[1]))} ${item.month.split('-')[0]}`,
+        dataPointText: `${item.sales} units`,
+      }));
+      setChartData(formattedChartData);
     } catch (error) {
-      console.error('❌ [InventoryScreen] Load inventory data error:', error);
-      // Don't show alert, just use fallback data
+      console.error('Error loading inventory data:', error);
+      // Don't show alert, just set empty data
+      setSummary(null);
+      setProducts([]);
+      setTransactions([]);
+      setWarehouses([]);
+      setChartData([]);
     } finally {
       setLoading(false);
       console.log('🏁 [InventoryScreen] Finished loading inventory data');
@@ -313,34 +281,19 @@ const InventoryScreen: React.FC<InventoryScreenProps> = ({ navigation }) => {
         </View>
 
         <View style={styles.section}>
-          <TopSellingList
-            products={getTopSellingProducts()}
-            onPressProduct={handleProductPress}
-            onViewAll={() => navigation.navigate('AllProducts')}
-          />
+          <TopSellingList />
         </View>
 
-        <SectionHeader
-          title="Suppliers"
-          onViewAllPress={() => navigation.navigate('Suppliers')}
-        />
-        <SupplierList
-          suppliers={getTopSuppliers()}
-          onPressSupplier={handleSupplierPress}
-          onViewAll={() => navigation.navigate('Suppliers')}
-          loading={loading}
-        />
-
-        <SectionHeader
-          title="Warehouses"
-          onViewAllPress={() => navigation.navigate('Warehouses')}
-        />
-        <WarehouseList 
-          warehouses={warehouses} 
-          loading={loading} 
-          onWarehousePress={(warehouse) => Alert.alert('Warehouse', `Selected: ${warehouse.name}`)}
-          onViewAll={() => navigation.navigate('Warehouses')}
-        />
+      <SectionHeader
+        title="Warehouses"
+        onViewAllPress={() => navigation.navigate('Warehouses')}
+      />
+      <WarehouseList 
+        warehouses={warehouses} 
+        loading={loading}
+        onWarehousePress={(warehouse) => Alert.alert('Warehouse', `Selected: ${warehouse.name}`)}
+        onViewAll={() => navigation.navigate('Warehouses')}
+      />
 
         <SectionHeader title="Recent Activity" />
         <View style={styles.activityContainer}>

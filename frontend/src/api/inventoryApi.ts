@@ -240,6 +240,10 @@ class InventoryApiService {
     return this.api.put(`${this.basePath}/warehouses/${id}`, warehouseData);
   }
 
+  async deleteWarehouse(id: string): Promise<AxiosResponse<void>> {
+    return this.api.delete(`${this.basePath}/warehouses/${id}`);
+  }
+
   // ===== STOCK ENDPOINTS =====
 
   async getWarehouseStocks(params?: {

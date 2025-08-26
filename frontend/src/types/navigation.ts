@@ -5,6 +5,7 @@ import { Supplier } from './inventory';
 export type MainTabParamList = {
   Home: undefined;
   Inventory: undefined;
+  AllWarehouses: undefined;
   Bookings: undefined;
 };
 

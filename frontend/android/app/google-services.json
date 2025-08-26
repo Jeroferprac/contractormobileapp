@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "279878562495",
+    "project_id": "binyan-a4580",
+    "storage_bucket": "binyan-a4580.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:279878562495:android:6747adb30b9e6f2c508c0a",
+        "android_client_info": {
+          "package_name": "com.binyan"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA-jMuUPHSYR2ugsYRt4iEr25OZ6venjEk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -136,7 +136,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
     paddingHorizontal: SPACING.sm,
     paddingVertical: SPACING.xs,
-    borderRadius: BORDER_RADIUS.full,
+    borderRadius: BORDER_RADIUS.xxl,
     alignSelf: 'flex-start',
     marginBottom: SPACING.xs,
   },
@@ -157,13 +157,13 @@ const styles = StyleSheet.create({
   chartBar: {
     height: 4,
     backgroundColor: 'rgba(255, 255, 255, 0.3)',
-    borderRadius: BORDER_RADIUS.full,
+    borderRadius: BORDER_RADIUS.xxl,
     marginBottom: SPACING.sm,
   },
   chartFill: {
     height: '100%',
     backgroundColor: '#FFFFFF',
-    borderRadius: BORDER_RADIUS.full,
+    borderRadius: BORDER_RADIUS.xxl,
   },
   chartDots: {
     flexDirection: 'row',

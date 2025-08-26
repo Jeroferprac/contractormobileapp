@@ -22,8 +22,11 @@ import  WarehouseScreen  from '../screens/WarehouseScreen/WarehouseScreen';
 import AllTransfersScreen from '../screens/AllTransfersScreen/AllTransfersScreen';
 import WarehouseReportsScreen from '../screens/WarehouseReportsScreen';
 import LowStockInventoryScreen from '../screens/LowStockInventoryScreen/LowStockInventoryScreen';
+import AllWarehouseScreen from '../screens/AllWarehouseScreen';
+import BinManagementScreen from '../screens/BinManagementScreen';
 import BarcodeScanner from '../components/ui/BarcodeScanner';
 import { ProfileScreen } from '../screens/ProfileScreen/ProfileScreen';
+
 import { useAuth } from '../context/AuthContext';
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -80,10 +83,10 @@ const MainTabNavigator = () => {
         }}
       />
       <Tab.Screen
-        name="Warehouse"
-        component={WarehouseScreen}
+        name="AllWarehouses"
+        component={AllWarehouseScreen}
         options={{
-          tabBarLabel: 'Warehouse',
+          tabBarLabel: 'Warehouses',
           tabBarIcon: ({ color, size }) => (
             <Icon name="warehouse" size={size} color={color} />
           ),
@@ -171,6 +174,7 @@ export const AppNavigator: React.FC = () => {
   }
 
   console.log('🎯 Rendering main navigation - isAuthenticated:', isAuthenticated);
+  
   return (
     <NavigationContainer key={isAuthenticated ? 'authenticated' : 'unauthenticated'}>
       <Stack.Navigator screenOptions={{ headerShown: false }}>
@@ -187,10 +191,13 @@ export const AppNavigator: React.FC = () => {
             <Stack.Screen name="AllProducts" component={AllProductsScreen} />
             <Stack.Screen name="Product" component={ProductScreen} />
             <Stack.Screen name="AddProduct" component={AddProductScreen} />
-             <Stack.Screen name="Warehouse" component={WarehouseScreen} />
-             <Stack.Screen name="AllTransfers" component={AllTransfersScreen} /> 
-             <Stack.Screen name="WarehouseReports" component={WarehouseReportsScreen} />
-             <Stack.Screen name="LowStockInventory" component={LowStockInventoryScreen} />
+            <Stack.Screen name="Warehouse" component={WarehouseScreen} />
+            <Stack.Screen name="AllTransfers" component={AllTransfersScreen} /> 
+            <Stack.Screen name="WarehouseReports" component={WarehouseReportsScreen} />
+            <Stack.Screen name="LowStockInventory" component={LowStockInventoryScreen} />
+            <Stack.Screen name="AllWarehouses" component={AllWarehouseScreen} />
+            <Stack.Screen name="BinManagement" component={BinManagementScreen} />
+
           </>
         )}
       </Stack.Navigator>

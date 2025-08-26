@@ -4,6 +4,7 @@ import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 export type MainTabParamList = {
   Home: undefined;
   Inventory: undefined;
+  AllWarehouses: undefined;
   Bookings: undefined;
   Profile: undefined;
 };
@@ -21,6 +22,8 @@ export type RootStackParamList = {
   LowStockInventory: undefined;
   Warehouse: undefined;
   WarehouseReports: undefined;
+  AllWarehouses: undefined;
+  BinManagement: undefined;
 };
 
 export type LoginScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Login'>;
@@ -31,3 +34,4 @@ export type InventoryScreenNavigationProp = NativeStackNavigationProp<RootStackP
 export type AllProductsScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'AllProducts'>;
 export type AllTransfersScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'AllTransfers'>;
 export type LowStockInventoryScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'LowStockInventory'>;
+export type AllWarehousesScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'AllWarehouses'>;

@@ -9,6 +9,7 @@ import {
   Booking,
   ApiError 
 } from '../types/api';
+import { Notification } from '../context/NotificationContext';
 import { getBaseURL } from '../utils/network';
 import { API_CONFIG } from '../config/env';
 import storageService from '../utils/storage';
@@ -208,6 +209,16 @@ class ApiService {
 
   async updateBooking(id: string, bookingData: Partial<Booking>): Promise<AxiosResponse<Booking>> {
     return this.api.put(`/bookings/${id}`, bookingData);
+  }
+
+  // ===== NOTIFICATION ENDPOINTS =====
+
+  async getNotifications(includeRead: boolean = false): Promise<AxiosResponse<Notification[]>> {
+    return this.api.get(`/notifications/?include_read=${includeRead}`);
+  }
+
+  async markNotificationAsRead(notificationId: string, isRead: boolean = true): Promise<AxiosResponse<Notification>> {
+    return this.api.put(`/notifications/${notificationId}`, { is_read: isRead });
   }
 }
 

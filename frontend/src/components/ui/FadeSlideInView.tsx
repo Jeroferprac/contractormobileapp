@@ -1,11 +1,5 @@
-import React, { useEffect } from 'react';
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withTiming,
-  withDelay,
-} from 'react-native-reanimated';
-import { ViewStyle } from 'react-native';
+import React from 'react';
+import { View, ViewStyle } from 'react-native';
 
 interface FadeSlideInViewProps {
   delay?: number;
@@ -14,20 +8,8 @@ interface FadeSlideInViewProps {
 }
 
 const FadeSlideInView: React.FC<FadeSlideInViewProps> = ({ delay = 0, children, style }) => {
-  const opacity = useSharedValue(0);
-  const translateY = useSharedValue(20);
-
-  useEffect(() => {
-    opacity.value = withDelay(delay, withTiming(1, { duration: 400 }));
-    translateY.value = withDelay(delay, withTiming(0, { duration: 400 }));
-  }, [delay]);
-
-  const animatedStyle = useAnimatedStyle(() => ({
-    opacity: opacity.value,
-    transform: [{ translateY: translateY.value }],
-  }));
-
-  return <Animated.View style={[style, animatedStyle]}>{children}</Animated.View>;
+  // Simple replacement - just return the children with style
+  return <View style={style}>{children}</View>;
 };
 
 export default FadeSlideInView;

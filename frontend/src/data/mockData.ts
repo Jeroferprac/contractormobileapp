@@ -1,5 +1,6 @@
 // Mock data for the contractor mobile app
 import { User, Post, ActivityItem, SavedItem, AboutUser, AffiliateCompany } from '../types/profile';
+import { Product, Transaction, Warehouse, InventorySummary } from '../types/inventory';
 
 export interface Service {
   id: string;
@@ -21,7 +22,7 @@ export interface Project {
 export interface Professional {
   id: string;
   name: string;
-  type: 'contractor' | 'consultant' | 'supplier' | 'freelancer' | 'workshop';
+  type: 'contractor' | 'consultant' | 'freelancer' | 'workshop';
   logo: string;
   backgroundImage?: string;
   rating: number;
@@ -61,6 +62,21 @@ export interface BeforeAfterProject {
   teamSize: number;
   beforeImage: string;
   afterImage: string;
+}
+
+export interface PriceList {
+  id: string;
+  name: string;
+  description: string;
+  currency: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+  total_items: number;
+  total_value: number;
+  category: string;
+  icon: string;
+  color: string;
 }
 
 // Services
@@ -178,39 +194,9 @@ export const mockProfessionals: Professional[] = [
     tag: 'Consultants',
   },
   
-  // Suppliers
-  {
-    id: '4',
-    name: 'Bay Area Building Supply',
-    type: 'supplier',
-    logo: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face',
-    backgroundImage: 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=400&h=200&fit=crop',
-    rating: 4.9,
-    reviews: 100,
-    location: 'Francisco, CA',
-    category: 'Designing',
-    skills: ['Building Materials', 'Space Planning'],
-    verified: true,
-    tag: 'Suppliers',
-  },
-  {
-    id: '5',
-    name: 'مدار madar',
-    type: 'supplier',
-    logo: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face',
-    backgroundImage: 'https://images.unsplash.com/photo-1560435650-7470a0c9063a?w=400&h=200&fit=crop',
-    rating: 4.9,
-    reviews: 100,
-    location: 'Dubai, UAE',
-    category: 'Materials',
-    skills: ['Supplies', 'Equipment'],
-    verified: true,
-    tag: 'Suppliers',
-  },
-  
   // Freelancers
   {
-    id: '6',
+    id: '4',
     name: 'Ahmed Al Mahmood',
     type: 'freelancer',
     logo: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face',
@@ -224,7 +210,7 @@ export const mockProfessionals: Professional[] = [
     tag: 'Freelancers',
   },
   {
-    id: '7',
+    id: '5',
     name: 'Ahmed-Al',
     type: 'freelancer',
     logo: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face',
@@ -240,7 +226,7 @@ export const mockProfessionals: Professional[] = [
   
   // Workshops
   {
-    id: '8',
+    id: '6',
     name: 'Master Woodworks',
     type: 'workshop',
     logo: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face',
@@ -461,16 +447,6 @@ export const mockSavedItems: SavedItem[] = [
   },
   {
     id: '2',
-    title: 'Premium Hardwood Flooring Supplier',
-    image: 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=200&h=150&fit=crop',
-    type: 'supplier',
-    description: 'Oak and walnut flooring options for residential projects',
-    location: 'Oakland, CA',
-    rating: 4.9,
-    savedDate: '2024-01-08',
-  },
-  {
-    id: '3',
     title: 'Smart Home Technology Integration',
     image: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=200&h=150&fit=crop',
     type: 'technology',
@@ -480,17 +456,17 @@ export const mockSavedItems: SavedItem[] = [
     savedDate: '2024-01-05',
   },
   {
-    id: '4',
+    id: '3',
     title: 'Luxury Bathroom Fixtures',
     image: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=200&h=150&fit=crop',
-    type: 'supplier',
+    type: 'inspiration',
     description: 'High-end faucets, showers, and accessories',
     location: 'Los Angeles, CA',
     rating: 4.6,
     savedDate: '2023-12-28',
   },
   {
-    id: '5',
+    id: '4',
     title: 'Sustainable Building Materials Guide',
     image: 'https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=200&h=150&fit=crop',
     type: 'inspiration',
@@ -500,7 +476,7 @@ export const mockSavedItems: SavedItem[] = [
     savedDate: '2023-12-25',
   },
   {
-    id: '6',
+    id: '5',
     title: 'Commercial Office Renovation Project',
     image: 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=200&h=150&fit=crop',
     type: 'project',
@@ -568,4 +544,313 @@ export const mockAffiliateCompanies: AffiliateCompany[] = [
     projects: 1,
     rating: 4.5,
   },
-]; 
+];
+
+// ===== INVENTORY MOCK DATA =====
+
+// Mock Products
+export const mockProducts: Product[] = [
+  {
+    id: '1',
+    name: 'Premium Oak Hardwood Flooring',
+    sku: 'OAK-HW-001',
+    barcode: '1234567890123',
+    category_name: 'Flooring',
+    brand: 'Premium Woods',
+    unit: 'sq ft',
+    current_stock: 2500,
+    min_stock_level: 500,
+    reorder_point: 750,
+    max_stock_level: 5000,
+    cost_price: 8.50,
+    selling_price: 12.99,
+    description: 'High-quality oak hardwood flooring, perfect for residential and commercial projects',
+    weight: '2.5 lbs/sq ft',
+    dimensions: '3/4" x 3-1/4" x 72"',
+    is_active: true,
+    track_serial: false,
+    track_batch: true,
+    is_composite: false,
+    created_at: '2023-01-15T10:30:00Z',
+    updated_at: '2024-01-10T14:20:00Z',
+  },
+  {
+    id: '2',
+    name: 'Eco-Friendly Bamboo Panels',
+    sku: 'BAMBOO-PAN-002',
+    barcode: '1234567890124',
+    category_name: 'Paneling',
+    brand: 'Green Materials',
+    unit: 'panel',
+    current_stock: 150,
+    min_stock_level: 25,
+    reorder_point: 50,
+    max_stock_level: 300,
+    cost_price: 45.00,
+    selling_price: 69.99,
+    description: 'Sustainable bamboo panels for interior wall covering',
+    weight: '15 lbs',
+    dimensions: '4\' x 8\' x 1/2"',
+    is_active: true,
+    track_serial: false,
+    track_batch: true,
+    is_composite: false,
+    created_at: '2023-02-20T09:15:00Z',
+    updated_at: '2024-01-12T11:45:00Z',
+  },
+  {
+    id: '3',
+    name: 'Luxury Chrome Faucet Set',
+    sku: 'CHROME-FAU-003',
+    barcode: '1234567890125',
+    category_name: 'Plumbing',
+    brand: 'Luxury Fixtures',
+    unit: 'set',
+    current_stock: 75,
+    min_stock_level: 10,
+    reorder_point: 20,
+    max_stock_level: 150,
+    cost_price: 120.00,
+    selling_price: 199.99,
+    description: 'Premium chrome finish faucet set with matching handles',
+    weight: '8.5 lbs',
+    dimensions: '12" x 6" x 4"',
+    is_active: true,
+    track_serial: true,
+    track_batch: false,
+    is_composite: false,
+    created_at: '2023-03-10T16:45:00Z',
+    updated_at: '2024-01-08T13:30:00Z',
+  },
+  {
+    id: '4',
+    name: 'Smart LED Light Bulbs',
+    sku: 'LED-SMART-004',
+    barcode: '1234567890126',
+    category_name: 'Lighting',
+    brand: 'Smart Home Tech',
+    unit: 'bulb',
+    current_stock: 500,
+    min_stock_level: 100,
+    reorder_point: 200,
+    max_stock_level: 1000,
+    cost_price: 15.00,
+    selling_price: 24.99,
+    description: 'WiFi-enabled smart LED bulbs with color control',
+    weight: '0.5 lbs',
+    dimensions: '4.5" x 2.5"',
+    is_active: true,
+    track_serial: false,
+    track_batch: true,
+    is_composite: false,
+    created_at: '2023-04-05T12:20:00Z',
+    updated_at: '2024-01-15T10:15:00Z',
+  },
+  {
+    id: '5',
+    name: 'Custom Walnut Cabinet Doors',
+    sku: 'WALNUT-CAB-005',
+    barcode: '1234567890127',
+    category_name: 'Cabinetry',
+    brand: 'Custom Woodworks',
+    unit: 'door',
+    current_stock: 45,
+    min_stock_level: 5,
+    reorder_point: 10,
+    max_stock_level: 100,
+    cost_price: 85.00,
+    selling_price: 149.99,
+    description: 'Handcrafted walnut cabinet doors with premium finish',
+    weight: '12 lbs',
+    dimensions: '24" x 30" x 1"',
+    is_active: true,
+    track_serial: false,
+    track_batch: true,
+    is_composite: false,
+    created_at: '2023-05-12T08:30:00Z',
+    updated_at: '2024-01-05T15:45:00Z',
+  },
+];
+
+// Mock Transactions
+export const mockTransactions: Transaction[] = [
+  {
+    id: '1',
+    product_id: '1',
+    transaction_type: 'in',
+    quantity: 1000,
+    reference_type: 'purchase_order',
+    reference_id: 'PO-001',
+    notes: 'Initial stock order',
+    created_at: '2024-01-15T10:30:00Z',
+  },
+  {
+    id: '2',
+    product_id: '2',
+    transaction_type: 'out',
+    quantity: 25,
+    reference_type: 'sale',
+    reference_id: 'SALE-001',
+    notes: 'Customer order for eco-friendly project',
+    created_at: '2024-01-14T14:20:00Z',
+  },
+  {
+    id: '3',
+    product_id: '3',
+    transaction_type: 'in',
+    quantity: 50,
+    reference_type: 'purchase_order',
+    reference_id: 'PO-002',
+    notes: 'Restocking luxury fixtures',
+    created_at: '2024-01-13T09:15:00Z',
+  },
+  {
+    id: '4',
+    product_id: '4',
+    transaction_type: 'out',
+    quantity: 100,
+    reference_type: 'sale',
+    reference_id: 'SALE-002',
+    notes: 'Smart home installation project',
+    created_at: '2024-01-12T16:45:00Z',
+  },
+  {
+    id: '5',
+    product_id: '5',
+    transaction_type: 'adjustment',
+    quantity: -5,
+    reference_type: 'damage',
+    reference_id: 'DAMAGE-001',
+    notes: 'Damaged during shipping',
+    created_at: '2024-01-11T11:30:00Z',
+  },
+];
+
+// Mock Warehouses
+export const mockWarehouses: Warehouse[] = [
+  {
+    id: '1',
+    name: 'Main Distribution Center',
+    code: 'MDC-001',
+    address: '123 Industrial Blvd, San Francisco, CA 94102',
+    contact_person: 'John Smith',
+    phone: '+1 (555) 123-4567',
+    email: 'warehouse@company.com',
+    is_active: true,
+    created_at: '2023-01-15T10:30:00Z',
+  },
+  {
+    id: '2',
+    name: 'East Bay Storage Facility',
+    code: 'EBS-002',
+    address: '456 Green Street, Oakland, CA 94601',
+    contact_person: 'Sarah Johnson',
+    phone: '+1 (555) 234-5678',
+    email: 'eastbay@company.com',
+    is_active: true,
+    created_at: '2023-02-20T09:15:00Z',
+  },
+  {
+    id: '3',
+    name: 'Southern California Hub',
+    code: 'SCH-003',
+    address: '789 Design District, Los Angeles, CA 90210',
+    contact_person: 'Michael Chen',
+    phone: '+1 (555) 345-6789',
+    email: 'socal@company.com',
+    is_active: true,
+    created_at: '2023-03-10T16:45:00Z',
+  },
+];
+
+// Mock Inventory Summary
+export const mockInventorySummary: InventorySummary = {
+  total_products: 156,
+  total_warehouses: 3,
+  low_stock_items: 12,
+  out_of_stock_items: 3,
+  total_inventory_value: 1250000,
+  recent_transactions: 45,
+  chartData: [
+    { label: 'Jan 2024', value: 125000, dataPointText: '€125K' },
+    { label: 'Feb 2024', value: 138000, dataPointText: '€138K' },
+    { label: 'Mar 2024', value: 142000, dataPointText: '€142K' },
+    { label: 'Apr 2024', value: 135000, dataPointText: '€135K' },
+    { label: 'May 2024', value: 148000, dataPointText: '€148K' },
+    { label: 'Jun 2024', value: 155000, dataPointText: '€155K' },
+  ],
+};
+
+// Mock Price Lists
+export const mockPriceLists: PriceList[] = [
+  {
+    id: '1',
+    name: 'Standard Pricing',
+    description: 'Default pricing for all products and services',
+    currency: 'USD',
+    is_active: true,
+    created_at: '2024-01-15T10:30:00Z',
+    updated_at: '2024-01-20T14:20:00Z',
+    total_items: 156,
+    total_value: 1250000,
+    category: 'General',
+    icon: 'tag',
+    color: '#3B82F6',
+  },
+  {
+    id: '2',
+    name: 'Premium Services',
+    description: 'High-end pricing for luxury and premium services',
+    currency: 'USD',
+    is_active: true,
+    created_at: '2024-01-10T09:15:00Z',
+    updated_at: '2024-01-18T16:45:00Z',
+    total_items: 89,
+    total_value: 850000,
+    category: 'Premium',
+    icon: 'star',
+    color: '#F59E0B',
+  },
+  {
+    id: '3',
+    name: 'Contractor Rates',
+    description: 'Specialized pricing for contractor services',
+    currency: 'USD',
+    is_active: true,
+    created_at: '2024-01-05T11:30:00Z',
+    updated_at: '2024-01-15T12:00:00Z',
+    total_items: 67,
+    total_value: 420000,
+    category: 'Contractor',
+    icon: 'tool',
+    color: '#10B981',
+  },
+  {
+    id: '4',
+    name: 'Wholesale Pricing',
+    description: 'Bulk pricing for large orders and wholesale customers',
+    currency: 'USD',
+    is_active: true,
+    created_at: '2024-01-12T13:45:00Z',
+    updated_at: '2024-01-19T10:30:00Z',
+    total_items: 234,
+    total_value: 2100000,
+    category: 'Wholesale',
+    icon: 'package',
+    color: '#8B5CF6',
+  },
+  {
+    id: '5',
+    name: 'Seasonal Offers',
+    description: 'Limited-time pricing for seasonal promotions',
+    currency: 'USD',
+    is_active: false,
+    created_at: '2024-01-01T08:00:00Z',
+    updated_at: '2024-01-31T23:59:00Z',
+    total_items: 45,
+    total_value: 180000,
+    category: 'Seasonal',
+    icon: 'calendar',
+    color: '#EF4444',
+  },
+];

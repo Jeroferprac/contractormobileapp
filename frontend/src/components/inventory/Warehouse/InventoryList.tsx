@@ -24,9 +24,10 @@ interface InventoryItem {
 // Helper function to convert API Stock to UI InventoryItem
 const mapStockToInventoryItem = (stock: Stock, products: Map<string, Product>): InventoryItem => {
   const product = products.get(stock.product_id);
-  const stockCount = parseInt(stock.quantity as string) || 0;
+  const stockCount = typeof stock.quantity === 'string' ? parseInt(stock.quantity) : stock.quantity || 0;
   // Determine if stock is low (less than 20% of typical stock level or less than 10 units)
-  const lowStock = stockCount < 10 || (product?.reorder_point && stockCount <= product.reorder_point);
+  const reorderPoint = product?.reorder_point ? (typeof product.reorder_point === 'string' ? parseInt(product.reorder_point) : product.reorder_point) : 0;
+  const lowStock = stockCount < 10 || (reorderPoint > 0 && stockCount <= reorderPoint);
   
   return {
     id: stock.id,
@@ -35,7 +36,7 @@ const mapStockToInventoryItem = (stock: Stock, products: Map<string, Product>): 
     name: product?.name || 'Unknown Product',
     stockCount,
     image: 'https://via.placeholder.com/100',
-    lowStock,
+    lowStock: lowStock || false,
     category: product?.category_name || undefined
   };
 };

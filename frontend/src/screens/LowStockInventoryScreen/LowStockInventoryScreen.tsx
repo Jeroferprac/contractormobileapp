@@ -870,8 +870,8 @@ const styles = StyleSheet.create({
   filterChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.sm,
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: SPACING.xs,
     borderRadius: BORDER_RADIUS.round,
     backgroundColor: '#F1F3F4',
     marginRight: SPACING.sm,

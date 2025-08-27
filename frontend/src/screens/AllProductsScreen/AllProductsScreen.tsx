@@ -10,7 +10,6 @@ import {
   Alert,
   Modal,
   TextInput,
-  ImageBackground,
   Dimensions,
   Platform,
 } from 'react-native';
@@ -239,7 +238,14 @@ const AllProductsScreen: React.FC<AllProductsScreenProps> = ({ navigation }) => 
                   
                   <View style={styles.foodDetails}>
                     <Text style={styles.foodPrice}>
-                      ${parseFloat(product.selling_price.toString()).toFixed(2)}
+                      ${(() => {
+                        try {
+                          const price = parseFloat(product.selling_price.toString());
+                          return isNaN(price) ? '0.00' : price.toFixed(2);
+                        } catch (error) {
+                          return '0.00';
+                        }
+                      })()}
                     </Text>
                   </View>
                 </View>

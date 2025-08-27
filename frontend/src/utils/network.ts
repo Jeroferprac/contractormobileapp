@@ -9,9 +9,9 @@ interface NetworkConfig {
 }
 
 const NETWORK_CONFIG: NetworkConfig = {
-  androidEmulator: '192.168.1.5',
+  androidEmulator: '192.168.1.4',
   iosSimulator: 'localhost',
-  physicalDevice: '192.168.1.5',
+  physicalDevice: '192.168.1.4',
   development: 'localhost',
 };
 

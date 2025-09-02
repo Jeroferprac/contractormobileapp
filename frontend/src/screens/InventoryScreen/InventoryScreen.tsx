@@ -21,10 +21,6 @@ import {
   BarcodeScanner,
   FadeSlideInView,
   LoadingSkeleton,
-  StatsCardSkeleton,
-  ChartSkeleton,
-  ProductCardSkeleton,
-  ListItemSkeleton,
 } from '../../components/ui';
 
 import {
@@ -197,9 +193,7 @@ const InventoryScreen: React.FC<InventoryScreenProps> = ({ navigation }) => {
       </SafeAreaView>
     );
   }
-
   if (loading) {
-    // Skeleton loading UI
     return (
       <SafeAreaView style={styles.container}>
         <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
@@ -220,29 +214,55 @@ const InventoryScreen: React.FC<InventoryScreenProps> = ({ navigation }) => {
         </LinearGradient>
 
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 80 }}>
-          <View style={styles.section}><StatsCardSkeleton /></View>
-          <View style={styles.section}><ChartSkeleton /></View>
-
-          <SectionHeader title="Top Selling Products" />
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.productsScrollContainer}>
-            {[...Array(4)].map((_, i) => <ProductCardSkeleton key={i} />)}
-          </ScrollView>
-
-          <SectionHeader title="Warehouses" />
-          <View style={styles.warehousesContainer}>
-            {[...Array(3)].map((_, i) => (
-              <LoadingSkeleton
-                key={i}
-                height={130}
-                borderRadius={BORDER_RADIUS.lg}
-                style={{ marginBottom: SPACING.sm }}
-              />
-            ))}
+          {/* Stats Cards Skeleton */}
+          <View style={styles.section}>
+            <View style={styles.statsSkeletonContainer}>
+              {[...Array(4)].map((_, i) => (
+                <View key={i} style={styles.statsSkeletonCard}>
+                  <LoadingSkeleton width="100%" height={120} borderRadius={BORDER_RADIUS.lg} />
+                </View>
+              ))}
+            </View>
           </View>
 
+          {/* Chart Skeleton */}
+          <View style={styles.section}>
+            <LoadingSkeleton width="100%" height={200} borderRadius={BORDER_RADIUS.lg} />
+          </View>
+
+          {/* Top Selling Products Skeleton */}
+          <SectionHeader title="Top Selling Products" />
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.productsScrollContainer}>
+            {[...Array(4)].map((_, i) => (
+              <View key={i} style={styles.productSkeletonCard}>
+                <LoadingSkeleton width={140} height={160} borderRadius={BORDER_RADIUS.lg} />
+              </View>
+            ))}
+          </ScrollView>
+
+          {/* Warehouses Skeleton */}
+          <SectionHeader title="Warehouses" />
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.warehousesScrollContainer}>
+            {[...Array(3)].map((_, i) => (
+              <View key={i} style={styles.warehouseSkeletonCard}>
+                <LoadingSkeleton width={280} height={200} borderRadius={BORDER_RADIUS.lg} />
+              </View>
+            ))}
+          </ScrollView>
+
+          {/* Recent Activity Skeleton */}
           <SectionHeader title="Recent Activity" />
           <View style={styles.activityContainer}>
-            {[...Array(3)].map((_, i) => <ListItemSkeleton key={i} />)}
+            {[...Array(3)].map((_, i) => (
+              <View key={i} style={styles.activitySkeletonItem}>
+                <LoadingSkeleton width={40} height={40} borderRadius={20} />
+                <View style={styles.activitySkeletonContent}>
+                  <LoadingSkeleton width="70%" height={16} />
+                  <LoadingSkeleton width="40%" height={12} style={{ marginTop: SPACING.xs }} />
+                </View>
+                <LoadingSkeleton width={60} height={16} />
+              </View>
+            ))}
           </View>
         </ScrollView>
       </SafeAreaView>
@@ -286,13 +306,22 @@ const InventoryScreen: React.FC<InventoryScreenProps> = ({ navigation }) => {
 
       <SectionHeader
         title="Warehouses"
-        onViewAllPress={() => navigation.navigate('Warehouses')}
+        onViewAllPress={() => {
+          console.log('🏢 [InventoryScreen] Pushing to AllWarehouses via SectionHeader View All');
+          navigation.push('AllWarehouses');
+        }}
       />
       <WarehouseList 
         warehouses={warehouses} 
         loading={loading}
-        onWarehousePress={(warehouse) => Alert.alert('Warehouse', `Selected: ${warehouse.name}`)}
-        onViewAll={() => navigation.navigate('Warehouses')}
+        onWarehousePress={(warehouse) => {
+          console.log('🏢 [InventoryScreen] Pushing to AllWarehouses with warehouse:', warehouse.name);
+          navigation.push('AllWarehouses', { selectedWarehouse: warehouse });
+        }}
+        onViewAll={() => {
+          console.log('🏢 [InventoryScreen] Pushing to AllWarehouses via View All');
+          navigation.push('AllWarehouses');
+        }}
       />
 
         <SectionHeader title="Recent Activity" />
@@ -361,36 +390,36 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.lg,
     paddingVertical: SPACING.sm,
   },
-  errorHeader: {
+  // Skeleton Styles
+  statsSkeletonContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+  },
+  statsSkeletonCard: {
+    width: '48%',
+    marginBottom: SPACING.sm,
+  },
+  productSkeletonCard: {
+    marginRight: SPACING.md,
+  },
+  warehousesScrollContainer: {
     paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.md,
+    paddingVertical: SPACING.sm,
   },
-  errorTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: COLORS.text.light,
+  warehouseSkeletonCard: {
+    marginRight: SPACING.md,
   },
-  errorContainer: {
-    flex: 1,
-    justifyContent: 'center',
+  activitySkeletonItem: {
+    flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: SPACING.lg,
-  },
-  errorText: {
-    fontSize: 18,
-    color: COLORS.text.secondary,
-    marginBottom: SPACING.lg,
-    textAlign: 'center',
-  },
-  retryButton: {
-    backgroundColor: COLORS.primary,
-    paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.md,
+    padding: SPACING.md,
+    backgroundColor: COLORS.card,
     borderRadius: BORDER_RADIUS.md,
+    marginBottom: SPACING.sm,
   },
-  retryButtonText: {
-    color: COLORS.text.light,
-    fontSize: 16,
-    fontWeight: '600',
+  activitySkeletonContent: {
+    flex: 1,
+    marginLeft: SPACING.md,
   },
 });

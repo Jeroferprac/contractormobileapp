@@ -437,6 +437,7 @@ const styles = StyleSheet.create({
   notificationTime: {
     fontSize: TYPOGRAPHY.sizes.xs,
     color: COLORS.text.tertiary,
+    marginLeft: SPACING.xs,
   },
   unreadDot: {
     width: 8,
@@ -472,6 +473,29 @@ const styles = StyleSheet.create({
   loadingText: {
     fontSize: TYPOGRAPHY.sizes.sm,
     color: COLORS.text.secondary,
+  },
+  timestampContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  categoryBadge: {
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: SPACING.xs,
+    borderRadius: BORDER_RADIUS.round,
+  },
+  categoryBadgeText: {
+    fontSize: TYPOGRAPHY.sizes.xs,
+    fontWeight: '500',
+    textTransform: 'capitalize',
+  },
+  actionButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: COLORS.surface,
+    ...SHADOWS.sm,
   },
 });
 

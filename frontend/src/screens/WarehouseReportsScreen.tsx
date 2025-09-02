@@ -800,7 +800,16 @@ const WarehouseReportsScreen: React.FC<WarehouseReportsScreenProps> = ({ navigat
                       <View style={styles.header}>
                         <TouchableOpacity 
                           style={styles.backButton} 
-                          onPress={() => navigation.goBack()}
+                          onPress={() => {
+                            console.log('🔙 Back button pressed in WarehouseReportsScreen');
+                            if (navigation?.canGoBack()) {
+                              console.log('✅ Can go back, navigating to previous screen');
+                              navigation.goBack();
+                            } else {
+                              console.log('⚠️ Cannot go back, navigating to Home');
+                              navigation?.navigate('Home');
+                            }
+                          }}
                           activeOpacity={0.7}
                         >
                           <Icon name="arrow-left" size={24} color={COLORS.text.light} />

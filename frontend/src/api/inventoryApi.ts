@@ -7,10 +7,25 @@ import {
   ProductSupplier,
   Transfer,
   Sale,
+  SaleDetails,
+  SaleItem,
+  Customer,
+  CreateSaleRequest,
+  UpdateSaleRequest,
+  SaleFilters,
+  OverdueSaleFilters,
+  Invoice,
+  SalesResponse,
+  SaleResponse,
+  InvoiceResponse,
+  OverdueSalesResponse,
   PurchaseOrder,
   Category,
   InventorySummary,
   SalesSummary,
+  GroupedSalesSummary,
+  TopCustomer,
+  MonthlySalesSummary,
   StockAdjustment,
   Transaction,
   CreateProductRequest,
@@ -18,7 +33,6 @@ import {
   CreateStockRequest,
   UpdateStockRequest,
   CreateTransferRequest,
-  CreateSaleRequest,
   StockAdjustmentRequest,
   // InventoryResponse,
   PaginatedResponse,
@@ -211,6 +225,28 @@ class InventoryApiService {
     return this.api.get(`${this.basePath}/products/${id}/stock`);
   }
 
+  // ===== CUSTOMERS ENDPOINTS =====
+
+  async getCustomers(): Promise<AxiosResponse<Customer[]>> {
+    return this.api.get('/customers/');
+  }
+
+  async getCustomerById(id: string): Promise<AxiosResponse<Customer>> {
+    return this.api.get(`/customers/${id}`);
+  }
+
+  async createCustomer(customerData: Partial<Customer>): Promise<AxiosResponse<Customer>> {
+    return this.api.post('/customers', customerData);
+  }
+
+  async updateCustomer(id: string, customerData: Partial<Customer>): Promise<AxiosResponse<Customer>> {
+    return this.api.put(`/customers/${id}`, customerData);
+  }
+
+  async deleteCustomer(id: string): Promise<AxiosResponse<void>> {
+    return this.api.delete(`/customers/${id}`);
+  }
+
   // ===== WAREHOUSES ENDPOINTS =====
 
   async getWarehouses(): Promise<AxiosResponse<Warehouse[]>> {
@@ -272,6 +308,19 @@ class InventoryApiService {
 
   async deleteStock(stockId: string): Promise<AxiosResponse<void>> {
     return this.api.delete(`${this.basePath}/warehouse-stocks/${stockId}`);
+  }
+
+  async getStockByProduct(productId: string): Promise<AxiosResponse<Stock>> {
+    return this.api.get(`${this.basePath}/stock/product/${productId}`);
+  }
+
+  async addStock(stockData: {
+    product_id: string;
+    warehouse_id: string;
+    quantity: number;
+    bin_location?: string;
+  }): Promise<AxiosResponse<Stock>> {
+    return this.api.post(`${this.basePath}/stock`, stockData);
   }
 
   // ===== TRANSACTIONS ENDPOINTS =====
@@ -439,33 +488,65 @@ class InventoryApiService {
 
   // ===== SALES ENDPOINTS =====
 
-  async getSales(params?: {
-    page?: number;
-    limit?: number;
-    warehouse_id?: string;
-    customer_id?: string;
-    status?: string;
-    date_from?: string;
-    date_to?: string;
-  }): Promise<AxiosResponse<PaginatedResponse<Sale>>> {
+  async getSales(params?: SaleFilters): Promise<AxiosResponse<SalesResponse>> {
     return this.api.get(`${this.basePath}/sales`, { params });
   }
 
-  async createSale(saleData: CreateSaleRequest): Promise<AxiosResponse<Sale>> {
-    return this.api.post(`${this.basePath}/sales`, saleData);
-  }
-
-  async getSaleById(id: string): Promise<AxiosResponse<Sale>> {
+  async getSaleById(id: string): Promise<AxiosResponse<SaleResponse>> {
     return this.api.get(`${this.basePath}/sales/${id}`);
   }
 
-  async updateSale(id: string, saleData: Partial<Sale>): Promise<AxiosResponse<Sale>> {
+  async createSale(saleData: CreateSaleRequest): Promise<AxiosResponse<SaleResponse>> {
+    return this.api.post(`${this.basePath}/sales`, saleData);
+  }
+
+  async updateSale(id: string, saleData: UpdateSaleRequest): Promise<AxiosResponse<SaleResponse>> {
     return this.api.put(`${this.basePath}/sales/${id}`, saleData);
   }
 
-  async getSalesSummary(): Promise<AxiosResponse<SalesSummary>> {
-    return this.api.get(`${this.basePath}/sales/summary`);
+  async getSalesSummary(params?: {
+    start_date?: string;
+    end_date?: string;
+  }): Promise<AxiosResponse<SalesSummary>> {
+    return this.api.get(`${this.basePath}/sales/summary`, { params });
   }
+
+  async getSalesSummaryGrouped(params?: {
+    group_by?: 'daily' | 'weekly' | 'monthly';
+    start_date?: string;
+    end_date?: string;
+  }): Promise<AxiosResponse<GroupedSalesSummary[]>> {
+    return this.api.get(`${this.basePath}/sales/summary/grouped`, { params });
+  }
+
+  async getMonthlySalesSummary(params?: {
+    year?: number;
+  }): Promise<AxiosResponse<MonthlySalesSummary[]>> {
+    return this.api.get(`${this.basePath}/sales/summary/monthly`, { params });
+  }
+
+  async getTopCustomers(params?: {
+    start_date?: string;
+    end_date?: string;
+    warehouse_id?: string;
+  }): Promise<AxiosResponse<TopCustomer[]>> {
+    return this.api.get(`${this.basePath}/sales/summary/top-customers`, { params });
+  }
+
+  async getOverdueSales(params?: OverdueSaleFilters): Promise<AxiosResponse<OverdueSalesResponse>> {
+    return this.api.get(`${this.basePath}/sales/overdue`, { params });
+  }
+
+  async confirmSale(id: string): Promise<AxiosResponse<SaleResponse>> {
+    return this.api.post(`${this.basePath}/sales/${id}/confirm`);
+  }
+
+  async shipSale(id: string): Promise<AxiosResponse<SaleResponse>> {
+    return this.api.post(`${this.basePath}/sales/${id}/ship`);
+  }
+
+  async getSaleInvoice(id: string): Promise<AxiosResponse<InvoiceResponse>> {
+    return this.api.get(`${this.basePath}/sales/${id}/invoice`);
 
   async getMonthlySalesSummary(): Promise<AxiosResponse<SalesSummary>> {
     try {
@@ -929,6 +1010,26 @@ class InventoryApiService {
     return this.api.get(`${this.basePath}/sales/details/by-period`, {
       params: { date_from: dateFrom, date_to: dateTo }
     });
+  }
+
+  async getAllSales(params?: SaleFilters): Promise<AxiosResponse<SalesResponse>> {
+    return this.api.get(`${this.basePath}/sales/all`, { params });
+  }
+
+  async getSaleDetails(id: string): Promise<AxiosResponse<SaleDetails>> {
+    return this.api.get(`${this.basePath}/sales/${id}/details`);
+  }
+
+  async getSaleItems(id: string): Promise<AxiosResponse<SaleItem[]>> {
+    return this.api.get(`${this.basePath}/sales/${id}/items`);
+  }
+
+  async getSaleInvoiceById(id: string): Promise<AxiosResponse<InvoiceResponse>> {
+    return this.api.get(`${this.basePath}/sales/${id}/invoice`);
+  }
+
+  async getOverdueSalesByCustomer(params?: OverdueSaleFilters): Promise<AxiosResponse<OverdueSalesResponse>> {
+    return this.api.get(`${this.basePath}/sales/overdue/by-customer`, { params });
   }
 }
 

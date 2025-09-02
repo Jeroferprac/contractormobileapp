@@ -422,7 +422,7 @@ const styles = StyleSheet.create({
   
   // Contact Section
   contactSection: {
-    marginBottom: 20,
+    marginBottom: 1,
   },
   sectionTitle: {
     fontSize: 16,

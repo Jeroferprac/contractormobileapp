@@ -8,11 +8,14 @@ import {
   StatusBar,
   TouchableOpacity,
   Platform,
+  Dimensions,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Feather';
 import { COLORS } from '../../constants/colors';
 import { SPACING, BORDER_RADIUS, SHADOWS } from '../../constants/spacing';
 import { TYPOGRAPHY } from '../../constants/typography';
+
+const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
 interface BinManagementScreenProps {
   navigation?: any;
@@ -52,7 +55,6 @@ const BinManagementScreen: React.FC<BinManagementScreenProps> = ({ navigation })
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
       
       {/* Header */}
-      <View style={styles.headerContainer}>
         <View style={styles.header}>
           <TouchableOpacity 
             style={styles.backButton}
@@ -66,7 +68,6 @@ const BinManagementScreen: React.FC<BinManagementScreenProps> = ({ navigation })
           <TouchableOpacity style={styles.addButton}>
             <Icon name="plus" size={24} color="#FFFFFF" />
           </TouchableOpacity>
-        </View>
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
@@ -170,17 +171,15 @@ const getStatusColor = (status: string) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
-  },
-  headerContainer: {
-    paddingTop: Platform.OS === 'ios' ? 0 : 24,
+    backgroundColor: COLORS.background,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.md,
+    paddingTop: Platform.OS === 'ios' ? 0 : 24,
+    paddingBottom: SPACING.md,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.border.light,
   },
@@ -207,126 +206,348 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     ...SHADOWS.sm,
   },
+  tabContainer: {
+    flexDirection: 'row',
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.md,
+    backgroundColor: COLORS.surface,
+    marginHorizontal: SPACING.lg,
+    marginTop: SPACING.md,
+    borderRadius: BORDER_RADIUS.lg,
+    ...SHADOWS.sm,
+  },
+  tab: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: SPACING.sm,
+    paddingHorizontal: SPACING.md,
+    borderRadius: BORDER_RADIUS.md,
+  },
+  activeTab: {
+    backgroundColor: COLORS.primary,
+  },
+  tabText: {
+    fontSize: TYPOGRAPHY.sizes.sm,
+    fontWeight: '500',
+    color: COLORS.text.secondary,
+    marginLeft: SPACING.xs,
+  },
+  activeTabText: {
+    color: COLORS.text.light,
+  },
   content: {
     flex: 1,
     paddingHorizontal: SPACING.lg,
   },
-  warehouseInfo: {
-    paddingVertical: SPACING.lg,
+  warehouseView: {
+    flex: 1,
+  },
+  mapSection: {
+    backgroundColor: COLORS.surface,
+    borderRadius: BORDER_RADIUS.lg,
+    padding: SPACING.lg,
+    marginBottom: SPACING.lg,
+    ...SHADOWS.sm,
+  },
+  mapHeader: {
+    flexDirection: 'row',
     alignItems: 'center',
+    marginBottom: SPACING.md,
+  },
+  mapTitle: {
+    fontSize: TYPOGRAPHY.sizes.lg,
+    fontWeight: '600',
+    color: COLORS.text.primary,
+    marginLeft: SPACING.sm,
+  },
+  mapContainer: {
+    backgroundColor: COLORS.background,
+    borderRadius: BORDER_RADIUS.md,
+    padding: SPACING.md,
+  },
+  mapGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+  },
+  mapBin: {
+    width: 30,
+    height: 30,
+    margin: 1,
+    borderRadius: BORDER_RADIUS.sm,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  mapBinText: {
+    fontSize: TYPOGRAPHY.sizes.xs,
+    fontWeight: '600',
+  },
+  warehouseCardsSection: {
+    flex: 1,
+  },
+  sectionTitle: {
+    fontSize: TYPOGRAPHY.sizes.lg,
+    fontWeight: '600',
+    color: COLORS.text.primary,
+    marginBottom: SPACING.md,
+  },
+  warehouseCardsContainer: {
+    paddingRight: SPACING.lg,
+  },
+  warehouseCard: {
+    width: 280,
+    backgroundColor: COLORS.surface,
+    borderRadius: BORDER_RADIUS.lg,
+    padding: SPACING.lg,
+    marginRight: SPACING.md,
+    ...SHADOWS.sm,
+  },
+  selectedWarehouseCard: {
+    borderWidth: 2,
+    borderColor: COLORS.primary,
+  },
+  warehouseCardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: SPACING.sm,
   },
   warehouseName: {
+    fontSize: TYPOGRAPHY.sizes.md,
+    fontWeight: '600',
+    color: COLORS.text.primary,
+    marginLeft: SPACING.sm,
+  },
+  warehouseLocation: {
+    fontSize: TYPOGRAPHY.sizes.sm,
+    color: COLORS.text.secondary,
+    marginBottom: SPACING.md,
+  },
+  warehouseStats: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  warehouseStat: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  warehouseStatValue: {
+    fontSize: TYPOGRAPHY.sizes.lg,
+    fontWeight: '700',
+    color: COLORS.primary,
+  },
+  warehouseStatLabel: {
+    fontSize: TYPOGRAPHY.sizes.xs,
+    color: COLORS.text.secondary,
+    marginTop: SPACING.xs,
+  },
+  warehouseStatDivider: {
+    width: 1,
+    height: 30,
+    backgroundColor: COLORS.border.light,
+    marginHorizontal: SPACING.sm,
+  },
+  binManagementView: {
+    flex: 1,
+  },
+  binHeader: {
+    marginBottom: SPACING.lg,
+  },
+  binTitle: {
     fontSize: TYPOGRAPHY.sizes.xl,
     fontWeight: '700',
     color: COLORS.text.primary,
     marginBottom: SPACING.xs,
   },
-  warehouseStats: {
+  binSubtitle: {
     fontSize: TYPOGRAPHY.sizes.sm,
     color: COLORS.text.secondary,
   },
-  card: {
+  binCardsContainer: {
+    paddingRight: SPACING.lg,
+  },
+  binCard: {
+    width: 280,
     backgroundColor: COLORS.surface,
     borderRadius: BORDER_RADIUS.lg,
     padding: SPACING.lg,
-    marginBottom: SPACING.lg,
-    borderWidth: 1,
-    borderColor: COLORS.border.light,
+    marginRight: SPACING.md,
     ...SHADOWS.sm,
   },
-  cardHeader: {
+  binCardHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: SPACING.md,
+    justifyContent: 'space-between',
+    marginBottom: SPACING.sm,
   },
-  cardTitle: {
-    fontSize: TYPOGRAPHY.sizes.lg,
-    fontWeight: '600',
-    color: COLORS.text.primary,
-    marginLeft: SPACING.sm,
-    flex: 1,
-  },
-  cardDescription: {
-    fontSize: TYPOGRAPHY.sizes.sm,
-    color: COLORS.text.secondary,
-    marginBottom: SPACING.md,
-  },
-  cardStats: {
+  binCodeContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
-    paddingTop: SPACING.md,
-    borderTopWidth: 1,
-    borderTopColor: COLORS.border.light,
-  },
-  statItem: {
     alignItems: 'center',
   },
-  statValue: {
+  binCode: {
     fontSize: TYPOGRAPHY.sizes.lg,
     fontWeight: '700',
     color: COLORS.text.primary,
+    marginRight: SPACING.sm,
   },
-  statLabel: {
-    fontSize: TYPOGRAPHY.sizes.xs,
-    color: COLORS.text.tertiary,
-    marginTop: 2,
-  },
-  binList: {
-    gap: SPACING.sm,
-  },
-  binItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: SPACING.sm,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border.light,
-  },
-  binInfo: {
-    flex: 1,
-  },
-  binCode: {
-    fontSize: TYPOGRAPHY.sizes.md,
-    fontWeight: '600',
-    color: COLORS.text.primary,
+  statusIndicator: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
   },
   binLocation: {
     fontSize: TYPOGRAPHY.sizes.sm,
     color: COLORS.text.secondary,
+    marginBottom: SPACING.md,
   },
-  binStatus: {
+  binStats: {
     flexDirection: 'row',
     alignItems: 'center',
+    marginBottom: SPACING.md,
   },
-  statusDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    marginRight: SPACING.xs,
+  binStat: {
+    flex: 1,
+    alignItems: 'center',
   },
-  binStock: {
+  binStatValue: {
+    fontSize: TYPOGRAPHY.sizes.md,
+    fontWeight: '600',
+    color: COLORS.text.primary,
+  },
+  binStatLabel: {
+    fontSize: TYPOGRAPHY.sizes.xs,
+    color: COLORS.text.secondary,
+    marginTop: SPACING.xs,
+  },
+  binStatDivider: {
+    width: 1,
+    height: 20,
+    backgroundColor: COLORS.border.light,
+    marginHorizontal: SPACING.sm,
+  },
+  productPreview: {
+    paddingTop: SPACING.sm,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.border.light,
+  },
+  productPreviewText: {
     fontSize: TYPOGRAPHY.sizes.sm,
     color: COLORS.text.secondary,
   },
-  moreText: {
-    fontSize: TYPOGRAPHY.sizes.sm,
-    color: COLORS.primary,
-    textAlign: 'center',
-    marginTop: SPACING.sm,
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
-  quickActions: {
+  modalBackdrop: {
+    flex: 1,
+  },
+  modalContent: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    width: screenWidth * 0.85,
+    height: screenHeight,
+    backgroundColor: COLORS.background,
+    ...SHADOWS.lg,
+  },
+  binDetailContent: {
+    flex: 1,
+    padding: SPACING.lg,
+    paddingTop: Platform.OS === 'ios' ? 60 : 40,
+  },
+  binDetailHeader: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
-    paddingVertical: SPACING.lg,
-  },
-  actionButton: {
     alignItems: 'center',
-    padding: SPACING.md,
+    justifyContent: 'space-between',
+    marginBottom: SPACING.lg,
   },
-  actionText: {
+  binDetailTitle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  binDetailCode: {
+    fontSize: TYPOGRAPHY.sizes.xl,
+    fontWeight: '700',
+    color: COLORS.text.primary,
+    marginRight: SPACING.sm,
+  },
+  binDetailStatus: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+  },
+  binDetailLocation: {
+    fontSize: TYPOGRAPHY.sizes.md,
+    color: COLORS.text.secondary,
+    marginBottom: SPACING.lg,
+  },
+  binDetailStats: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.surface,
+    borderRadius: BORDER_RADIUS.lg,
+    padding: SPACING.lg,
+    marginBottom: SPACING.lg,
+  },
+  binDetailStat: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  binDetailStatValue: {
+    fontSize: TYPOGRAPHY.sizes.lg,
+    fontWeight: '700',
+    color: COLORS.primary,
+  },
+  binDetailStatLabel: {
     fontSize: TYPOGRAPHY.sizes.sm,
     color: COLORS.text.secondary,
     marginTop: SPACING.xs,
+  },
+  binDetailStatDivider: {
+    width: 1,
+    height: 40,
+    backgroundColor: COLORS.border.light,
+    marginHorizontal: SPACING.sm,
+  },
+  binDetailProducts: {
+    flex: 1,
+  },
+  binDetailProductsTitle: {
+    fontSize: TYPOGRAPHY.sizes.lg,
+    fontWeight: '600',
+    color: COLORS.text.primary,
+    marginBottom: SPACING.md,
+  },
+  binDetailProduct: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.surface,
+    borderRadius: BORDER_RADIUS.md,
+    padding: SPACING.md,
+    marginBottom: SPACING.sm,
+  },
+  binDetailProductImage: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: COLORS.background,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: SPACING.sm,
+  },
+  binDetailProductInfo: {
+    flex: 1,
+  },
+  binDetailProductName: {
+    fontSize: TYPOGRAPHY.sizes.md,
+    fontWeight: '500',
+    color: COLORS.text.primary,
+    marginBottom: SPACING.xs,
+  },
+  binDetailProductQuantity: {
+    fontSize: TYPOGRAPHY.sizes.sm,
+    color: COLORS.text.secondary,
   },
 });
 

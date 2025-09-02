@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/Feather';
 import { COLORS } from '../../constants/colors';
 import { SPACING } from '../../constants/spacing';
@@ -29,31 +30,36 @@ const BottomNavigation: React.FC<BottomNavigationProps> = ({
   onTabPress,
 }) => {
   return (
-    <View style={styles.container}>
-      {tabs.map((tab) => {
-        const isActive = activeTab === tab.id;
-        return (
-                      <TouchableOpacity
-              key={tab.id}
-              style={styles.tab}
-              onPress={() => onTabPress(tab.id)}
-            >
-            <Icon
-              name={tab.icon as any}
-              size={20}
-              color={isActive ? COLORS.primary : COLORS.text.secondary}
-            />
-            <Text style={[styles.tabLabel, isActive && styles.activeTabLabel]}>
-              {tab.label}
-            </Text>
-          </TouchableOpacity>
-        );
-      })}
-    </View>
+    <SafeAreaView style={styles.safeArea} edges={['bottom']}>
+      <View style={styles.container}>
+        {tabs.map((tab) => {
+          const isActive = activeTab === tab.id;
+          return (
+                        <TouchableOpacity
+                key={tab.id}
+                style={styles.tab}
+                onPress={() => onTabPress(tab.id)}
+              >
+              <Icon
+                name={tab.icon as any}
+                size={20}
+                color={isActive ? COLORS.primary : COLORS.text.secondary}
+              />
+              <Text style={[styles.tabLabel, isActive && styles.activeTabLabel]}>
+                {tab.label}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
+      </View>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
+  safeArea: {
+    backgroundColor: COLORS.card,
+  },
   container: {
     flexDirection: 'row',
     backgroundColor: COLORS.card,

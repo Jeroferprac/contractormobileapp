@@ -13,7 +13,7 @@ import {
   Animated,
   TextInput,
 } from 'react-native';
-import { FlatList } from 'react-native-gesture-handler';
+
 import LinearGradient from 'react-native-linear-gradient';
 import Icon from 'react-native-vector-icons/Feather';
 import { BarChart } from 'react-native-gifted-charts';
@@ -235,7 +235,14 @@ const AllTransfersScreen: React.FC<AllTransfersScreenProps> = ({ navigation }) =
   }, [contentAnimation]);
 
   const handleBackPress = useCallback(() => {
-    navigation.navigate('MainTabs', { screen: 'Inventory' });
+    console.log('🔙 Back button pressed in AllTransfersScreen');
+    if (navigation?.canGoBack()) {
+      console.log('✅ Can go back, navigating to previous screen');
+      navigation.goBack();
+    } else {
+      console.log('⚠️ Cannot go back, navigating to Inventory dashboard');
+      navigation.navigate('MainTabs', { screen: 'Inventory' });
+    }
   }, [navigation]);
 
   const toggleSearch = useCallback(() => {
@@ -459,17 +466,7 @@ const AllTransfersScreen: React.FC<AllTransfersScreenProps> = ({ navigation }) =
 
   const handleApplyFilters = useCallback(() => {
     setShowFilterModal(false);
-    const activeFilters: string[] = [];
-    
-    if (filterStatus !== 'all') activeFilters.push(`Status: ${filterStatus}`);
-    if (selectedWarehouse !== 'all') activeFilters.push(`Warehouse: ${getWarehouseName(selectedWarehouse)}`);
-    if (dateRange.start && dateRange.end) activeFilters.push(`Date Range: ${dateRange.start} to ${dateRange.end}`);
-    
-    if (activeFilters.length > 0) {
-      Alert.alert('Filters Applied', `Active filters: ${activeFilters.join(', ')}\n\nFound ${filteredTransfers.length} transfers`);
-    } else {
-      Alert.alert('Filters Applied', `Showing all ${filteredTransfers.length} transfers`);
-    }
+    // Filters applied silently without alert
   }, [filterStatus, selectedWarehouse, dateRange, filteredTransfers.length, warehouses]);
 
   const handleClearFilters = useCallback(() => {
@@ -477,7 +474,7 @@ const AllTransfersScreen: React.FC<AllTransfersScreenProps> = ({ navigation }) =
     setSelectedWarehouse('all');
     setDateRange({ start: '', end: '' });
     setShowFilterModal(false);
-    Alert.alert('Filters Cleared', 'All filters have been reset');
+    // Filters cleared silently without alert
   }, []);
 
   // Get active filter count for UI indication
@@ -699,7 +696,9 @@ const AllTransfersScreen: React.FC<AllTransfersScreenProps> = ({ navigation }) =
       </View>
 
       {loading ? (
-        <LoadingSkeleton />
+        <View style={styles.loadingContainer}>
+          <Text style={styles.loadingText}>Loading transfers...</Text>
+        </View>
       ) : filteredTransfers.length === 0 ? (
         <View style={styles.emptyState}>
           <Icon name="inbox" size={48} color={COLORS.text.secondary} />
@@ -709,11 +708,14 @@ const AllTransfersScreen: React.FC<AllTransfersScreenProps> = ({ navigation }) =
           </Text>
         </View>
       ) : (
-        <FlatList
-          data={filteredTransfers}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) => (
+        <ScrollView 
+          style={styles.transfersScrollView}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.transfersList}
+        >
+          {filteredTransfers.map((item) => (
             <TransferCard
+              key={item.id}
               transfer={item}
               onPress={handleTransferPress}
               getWarehouseName={getWarehouseName}
@@ -722,10 +724,8 @@ const AllTransfersScreen: React.FC<AllTransfersScreenProps> = ({ navigation }) =
               formatDate={formatDate}
               getTransferTotal={getTransferTotal}
             />
-          )}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.transfersList}
-        />
+          ))}
+        </ScrollView>
       )}
     </>
   );
@@ -735,7 +735,11 @@ const AllTransfersScreen: React.FC<AllTransfersScreenProps> = ({ navigation }) =
       <SafeAreaView style={styles.container}>
         <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
         {renderHeader()}
-        <LoadingSkeleton />
+        <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+          {renderCard1()}
+          {renderCard2()}
+          {renderCard3()}
+        </ScrollView>
       </SafeAreaView>
     );
   }
@@ -747,11 +751,16 @@ const AllTransfersScreen: React.FC<AllTransfersScreenProps> = ({ navigation }) =
       {renderHeader()}
       {showSearch && renderSearchBar()}
       
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+      {/* Fixed Top Content */}
+      <View style={styles.fixedContent}>
         {renderCard1()}
         {renderCard2()}
+      </View>
+      
+      {/* Scrollable Transfer History Only */}
+      <View style={styles.transferHistoryContainer}>
         {renderCard3()}
-      </ScrollView>
+      </View>
 
       {/* Modals */}
       <FilterModal
@@ -760,7 +769,7 @@ const AllTransfersScreen: React.FC<AllTransfersScreenProps> = ({ navigation }) =
         onApply={handleApplyFilters}
         onClear={handleClearFilters}
         filterStatus={filterStatus}
-        setFilterStatus={setFilterStatus}
+        setFilterStatus={(status: string) => setFilterStatus(status as TransferStatus | 'all')}
         selectedWarehouse={selectedWarehouse}
         setSelectedWarehouse={setSelectedWarehouse}
         dateRange={dateRange}
@@ -1080,6 +1089,27 @@ const styles = StyleSheet.create({
   transfersList: {
     paddingBottom: SPACING.xl,
     paddingHorizontal: SPACING.lg, // Add outer space around transfer cards
+  },
+  transfersScrollView: {
+    flex: 1, // Take remaining space
+  },
+  
+  // Fixed Content Styles
+  fixedContent: {
+    // Fixed content at top
+  },
+  transferHistoryContainer: {
+    flex: 1, // Take remaining space for scrollable area
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: SPACING.xl,
+  },
+  loadingText: {
+    fontSize: TYPOGRAPHY.sizes.md,
+    color: COLORS.text.secondary,
   },
   
   transactionCard: {

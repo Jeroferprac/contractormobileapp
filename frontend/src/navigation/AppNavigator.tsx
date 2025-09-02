@@ -26,6 +26,10 @@ import BinManagementScreen from '../screens/BinManagementScreen';
 import BarcodeScanner from '../components/ui/BarcodeScanner';
 import { ProfileScreen } from '../screens/ProfileScreen/ProfileScreen';
 import ProfileEditScreen from '../screens/ProfileEditScreen';
+import SalesScreen from '../screens/SalesScreen/SalesScreen';
+import AllSalesScreen from '../screens/SalesScreen/AllSalesScreen';
+import SalesDetailsScreen from '../screens/SalesScreen/SalesDetailsScreen';
+import CreateSaleScreen from '../screens/SalesScreen/CreateSaleScreen';
 import SuppliersScreen from '../screens/SuppliersScreen';
 import SupplierFormScreen from '../screens/SupplierFormScreen';
 import SupplierDetailsScreen from '../screens/SupplierDetailsScreen';
@@ -202,6 +206,10 @@ export const AppNavigator: React.FC = () => {
             <Stack.Screen name="AllTransfers" component={AllTransfersScreen} /> 
             <Stack.Screen name="WarehouseReports" component={WarehouseReportsScreen} />
             <Stack.Screen name="LowStockInventory" component={LowStockInventoryScreen} />
+            <Stack.Screen name="Sales" component={SalesScreen} />
+            <Stack.Screen name="AllSales" component={AllSalesScreen} />
+            <Stack.Screen name="SalesDetails" component={SalesDetailsScreen} />
+            <Stack.Screen name="CreateSale" component={CreateSaleScreen} />
             <Stack.Screen name="AllWarehouses" component={AllWarehouseScreen} />
             <Stack.Screen name="BinManagement" component={BinManagementScreen} />
             <Stack.Screen name="ProfileEdit" component={ProfileEditScreen} />

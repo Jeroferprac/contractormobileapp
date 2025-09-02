@@ -5,4 +5,4 @@ export { default as StockLevelCard } from './StockLevelCard';
 export { default as DetailsCard } from './DetailsCard';
 export { default as BinManagementTab } from './BinManagementTab';
 export { default as BinListView } from './BinListView';
-export { default as BinMapView } from './BinMapView';
+export { default as GoogleMapView } from './GoogleMapView';

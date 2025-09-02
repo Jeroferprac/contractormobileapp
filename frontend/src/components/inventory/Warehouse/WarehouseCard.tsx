@@ -6,10 +6,22 @@ import {
   TouchableOpacity,
   Platform,
   Animated,
+  Dimensions,
 } from "react-native";
-import LinearGradient from "react-native-linear-gradient";
-import Icon from "react-native-vector-icons/Feather";
+import FastImage from 'react-native-fast-image';
+import Icon from 'react-native-vector-icons/MaterialIcons';
 import { Warehouse } from "../../../types/inventory";
+
+const { width: screenWidth } = Dimensions.get('window');
+
+// Fallback images for different warehouse types
+const WAREHOUSE_IMAGES = [
+  'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=400&h=300&fit=crop',
+  'https://images.unsplash.com/photo-1553413077-190dd305871c?w=400&h=300&fit=crop',
+  'https://images.unsplash.com/photo-1566576912321-d58ddd7a6088?w=400&h=300&fit=crop',
+  'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=300&fit=crop',
+  'https://images.unsplash.com/photo-1587293852726-70cdb56c2866?w=400&h=300&fit=crop'
+];
 
 interface WarehouseCardProps {
   warehouse: Warehouse & {
@@ -29,18 +41,28 @@ const WarehouseCard: React.FC<WarehouseCardProps> = ({
   const scaleAnim = useRef(new Animated.Value(1)).current;
 
   const handlePressIn = () => {
-    Animated.spring(scaleAnim, {
+    Animated.timing(scaleAnim, {
       toValue: 0.97,
+      duration: 150,
       useNativeDriver: true,
     }).start();
   };
 
   const handlePressOut = () => {
-    Animated.spring(scaleAnim, {
+    Animated.timing(scaleAnim, {
       toValue: 1,
+      duration: 150,
       useNativeDriver: true,
     }).start();
   };
+
+  // Get warehouse image - use random Unsplash image based on warehouse ID
+  const getWarehouseImage = (warehouse: Warehouse) => {
+    const imageIndex = parseInt(warehouse.id) % WAREHOUSE_IMAGES.length;
+    return WAREHOUSE_IMAGES[imageIndex];
+  };
+
+  const imageUri = getWarehouseImage(warehouse);
 
   return (
     <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
@@ -49,163 +71,143 @@ const WarehouseCard: React.FC<WarehouseCardProps> = ({
         onPress={() => onPress?.(warehouse)}
         onPressIn={handlePressIn}
         onPressOut={handlePressOut}
+        style={styles.cardContainer}
       >
-        {/* True Gradient Background */}
-        <LinearGradient
-          colors={["#FF8C42", "#FF6B00", "#FF4500"]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.container}
-        >
-          {/* Header */}
-          <View style={styles.header}>
-            <View style={styles.iconBox}>
-              <Icon name="home" size={22} color="#fff" />
+        {/* Header Image with Margin - Like AllSalesScreen */}
+        <View style={styles.imageContainer}>
+          <FastImage
+            source={{ uri: imageUri }}
+            style={styles.warehouseImage}
+            resizeMode={FastImage.resizeMode.cover}
+          />
+          
+          {/* Status Badge Overlay - Top Right */}
+          <View style={styles.statusBadge}>
+            <Icon 
+              name="home" 
+              size={14} 
+              color="#FFFFFF" 
+            />
+            <Text style={styles.statusBadgeText}>Active</Text>
             </View>
-            <Text style={styles.title} numberOfLines={1}>
-              {warehouse.name}
+
+          {/* Warehouse Name Overlay - Bottom Center (Like SalesDetailsScreen hero) */}
+          <View style={styles.warehouseNameOverlay}>
+            <Text style={styles.warehouseNameText}>{warehouse.name}</Text>
+            <Text style={styles.warehouseSubText}>
+              {warehouse.activeItems || 0} Active • {warehouse.totalItems || 0} Items
             </Text>
-            <TouchableOpacity style={styles.iconBoxSmall}>
-              <Icon name="more-horizontal" size={20} color="#fff" />
-            </TouchableOpacity>
+          </View>
           </View>
 
-          {/* Stats */}
-          <View style={styles.statsRow}>
-            <View>
-              <View style={styles.statItem}>
-                <View style={styles.iconBoxSmall}>
-                  <Icon name="eye" size={16} color="#fff" />
-                </View>
-                <Text style={styles.statText}>
-                  {warehouse.activeItems || 0} Active
+        {/* Content Area - White Background */}
+        <View style={styles.cardBody}>
+          {/* Warehouse Details */}
+          <View style={styles.warehouseDetails}>
+            <Icon name="location-on" size={16} color="#666" style={styles.detailsIcon} />
+            <Text style={styles.detailsText}>
+              {warehouse.address ? warehouse.address.split(',')[0] : 'Warehouse Location'}
                 </Text>
               </View>
-              <View style={styles.statItem}>
-                <View style={styles.iconBoxSmall}>
-                  <Icon name="list" size={16} color="#fff" />
-                </View>
-                <Text style={styles.statText}>
-                  {warehouse.totalItems || 0} Items
-                </Text>
-              </View>
-            </View>
 
-            <View style={{ alignItems: "flex-end" }}>
-              <Text style={styles.subLabel}>Utilization</Text>
-              <Text style={styles.utilizationValue}>
-                {warehouse.utilization || 80}%
-              </Text>
-              <View style={styles.progressTrack}>
-                <LinearGradient
-                  colors={["#FFD580", "#FFB347"]}
-                  style={[
-                    styles.progressFill,
-                    {
-                      width: `${warehouse.utilization || 80}%`,
-                    },
-                  ]}
-                />
-              </View>
-            </View>
+          
           </View>
-
-          {/* Footer */}
-          <View style={styles.footer}>
-            {["home", "shopping-bag", "globe"].map((icon, i) => (
-              <TouchableOpacity key={i} style={styles.iconBoxSmall}>
-                <Icon name={icon} size={18} color="#fff" />
-              </TouchableOpacity>
-            ))}
-          </View>
-        </LinearGradient>
       </TouchableOpacity>
     </Animated.View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    width: 300,
-    height: 220,
-    borderRadius: 20,
-    padding: 20,
-    justifyContent: "space-between",
-    shadowColor: "#FF6B00",
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.4,
-    shadowRadius: 16,
-    elevation: 8,
+  cardContainer: {
+    width: 310,
+    height: 240,
+    borderRadius: 16,
+    marginRight: 18,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 0.2,
+    borderColor: '#E0E0E0',
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4, // Android shadow
   },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
+  imageContainer: {
+    height: 180,
+    position: 'relative',
+    margin: 8,
+    borderRadius: 12,
+    overflow: 'hidden',
   },
-  iconBox: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: "rgba(255,255,255,0.15)",
-    justifyContent: "center",
-    alignItems: "center",
-    marginRight: 10,
+  warehouseImage: {
+    width: '100%',
+    height: '100%',
   },
-  iconBoxSmall: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: "rgba(255,255,255,0.15)",
-    justifyContent: "center",
-    alignItems: "center",
-    marginHorizontal: 4,
+  statusBadge: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
   },
-  title: {
-    flex: 1,
-    fontSize: 20,
-    fontWeight: "700",
-    color: "#fff",
-  },
-  statsRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
-  },
-  statItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 8,
-  },
-  statText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "500",
-    marginLeft: 8,
-  },
-  subLabel: {
-    color: "rgba(255,255,255,0.8)",
+  statusBadgeText: {
+    color: '#FFFFFF',
     fontSize: 12,
+    fontWeight: '600',
+    marginLeft: 4,
   },
-  utilizationValue: {
-    fontSize: 20,
-    fontWeight: "700",
-    color: "#fff",
+  warehouseNameOverlay: {
+    position: 'absolute',
+    bottom: 12,
+    left: 12,
+    right: 12,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    alignItems: 'center',
   },
-  progressTrack: {
-    height: 6,
-    width: 100,
-    backgroundColor: "rgba(255,255,255,0.2)",
-    borderRadius: 3,
-    marginTop: 4,
-    overflow: "hidden",
+  warehouseNameText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: 'bold',
+    textAlign: 'center',
   },
-  progressFill: {
-    height: "100%",
-    borderRadius: 3,
+  warehouseSubText: {
+    color: 'rgba(255,255,255,0.8)',
+    fontSize: 12,
+    textAlign: 'center',
+    marginTop: 2,
   },
-  footer: {
-    flexDirection: "row",
-    justifyContent: "space-around",
+  cardBody: {
+    flex: 1,
+    padding: 8,
+    backgroundColor: '#FFFFFF',
+    justifyContent: 'center',
   },
+  warehouseDetails: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  detailsIcon: {
+    marginRight: 6,
+  },
+  detailsText: {
+    fontSize: 18,
+    color: '#666',
+    fontWeight: '700',  
+    
+  },
+
 });
 
 export default WarehouseCard;

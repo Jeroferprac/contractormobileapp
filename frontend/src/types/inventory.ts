@@ -142,22 +142,28 @@ export interface TransferItem {
 export type SaleStatus = 'pending' | 'completed' | 'cancelled';
 export type PaymentStatus = 'pending' | 'partial' | 'paid';
 
-export interface Sale {
+// ===== CUSTOMER TYPES =====
+
+export interface Customer {
   id: string;
-  customer_id?: string;
-  warehouse_id: string;
-  sale_date: string;
-  total_amount: number;
-  tax_amount: number;
-  discount_amount: number;
-  status: SaleStatus;
-  payment_status: PaymentStatus;
-  notes?: string;
+  name: string;
+  contact_person: string;
+  email: string;
+  phone: string;
+  address: string;
+  city: string;
+  state: string;
+  zip_code: string;
+  country: string;
+  tax_id: string;
+  payment_terms: number;
+  credit_limit: string;
+  price_list_id: string;
+  is_active: boolean;
   created_at: string;
-  updated_at: string;
-  warehouse?: Warehouse;
-  items: SaleItem[];
 }
+
+// ===== SALE TYPES =====
 
 export interface SaleItem {
   id: string;
@@ -165,8 +171,40 @@ export interface SaleItem {
   product_id: string;
   quantity: number;
   unit_price: number;
+  discount: number;
+  tax: number;
   total_price: number;
   product?: Product;
+}
+
+export interface Sale {
+  id: string;
+  sale_number: string;
+  customer_id: string;
+  sale_date: string;
+  due_date: string;
+  subtotal: string;
+  tax_amount: string;
+  discount_amount: string;
+  total_amount: string;
+  paid_amount: string;
+  status: string;
+  payment_status: string;
+  shipping_address: string;
+  created_by: string;
+  shipped_at?: string;
+  customer?: Customer;
+  customer_name: string;
+  overdue_days: number;
+  items?: SaleItem[];
+  notes?: string;
+  warehouse_id?: string;
+}
+
+export interface SaleDetails extends Sale {
+  customer?: Customer;
+  items?: SaleItem[];
+  warehouse?: Warehouse;
 }
 
 export type PurchaseOrderStatus = 'pending' | 'ordered' | 'received' | 'cancelled';
@@ -224,9 +262,27 @@ export interface InventorySummary {
 export interface SalesSummary {
   total_sales: number;
   total_revenue: number;
-  average_order_value: number;
-  top_selling_products: Product[];
-  monthly_trends: MonthlyTrend[];
+  latest_sale?: string;
+}
+
+export interface GroupedSalesSummary {
+  label: string;
+  total_sales: number;
+  total_revenue: number;
+}
+
+export interface TopCustomer {
+  customer_id: string;
+  customer_name: string;
+  total_sales: number;
+  percentage_of_total_sales: number;
+}
+
+export interface MonthlySalesSummary {
+  year: number;
+  month: number;
+  total_sales: number;
+  total_revenue: number;
 }
 
 export interface MonthlyTrend {
@@ -251,6 +307,102 @@ export interface StockAdjustment {
   warehouse?: Warehouse;
 }
 
+// ===== SALE REQUEST TYPES =====
+
+export interface CreateSaleRequest {
+  sale_number: string; // Required field
+  customer_id: string;
+  warehouse_id: string;
+  price_list_id?: string;
+  sale_date: string;
+  due_date: string;
+  subtotal: number;
+  tax_amount: number;
+  discount_amount: number;
+  total_amount: number;
+  paid_amount: number;
+  status: string;
+  payment_status: 'unpaid' | 'partial' | 'paid'; // Fixed enum values
+  shipping_address: string;
+  notes?: string;
+  created_by: string;
+  items: {
+    product_id: string;
+    quantity: number;
+    unit_price: number;
+    discount: number;
+    tax: number;
+    total_price: number;
+  }[];
+}
+
+export interface UpdateSaleRequest {
+  sale_number?: string;
+  sale_date?: string;
+  total_amount?: number;
+  status?: string;
+  notes?: string;
+  customer_id?: string;
+  warehouse_id?: string;
+  subtotal?: number;
+  tax_amount?: number;
+  discount_amount?: number;
+  paid_amount?: number;
+  due_date?: string;
+  shipping_address?: string;
+  created_by?: string;
+  items?: {
+    product_id: string;
+    quantity: number;
+    unit_price: number;
+    discount: number;
+    tax: number;
+    total_price: number;
+  }[];
+}
+
+// ===== SALE FILTER TYPES =====
+
+export interface SaleFilters {
+  customer_id?: string;
+  warehouse_id?: string;
+  status?: string;
+  payment_status?: string;
+  start_date?: string;
+  end_date?: string;
+  search?: string;
+  page?: number;
+  limit?: number;
+}
+
+export interface OverdueSaleFilters {
+  customer_id?: string;
+  warehouse_id?: string;
+  from_date?: string;
+  to_date?: string;
+}
+
+// ===== INVOICE TYPES =====
+
+export interface Invoice {
+  sale_id: string;
+  sale_number: string;
+  invoice_number: string;
+  customer: Customer;
+  items: SaleItem[];
+  subtotal: number;
+  tax_amount: number;
+  discount_amount: number;
+  total_amount: number;
+  sale_date: string;
+  due_date: string;
+  status: string;
+  payment_status: string;
+  shipping_address: string;
+  notes?: string;
+  created_at: string;
+}
+
 // ===== API REQUEST TYPES =====
 
 export interface CreateProductRequest extends Omit<Product, 'id' | 'created_at' | 'updated_at'> {}
@@ -266,7 +418,14 @@ export interface CreateStockRequest {
   bin_location?: string;
 }
 
-export interface UpdateStockRequest extends Partial<CreateStockRequest> {}
+export interface UpdateStockRequest {
+  product_id?: string;
+  warehouse_id?: string;
+  quantity?: number;
+  reserved_quantity?: number;
+  available_quantity?: number;
+  bin_location?: string;
+}
 
 export interface CreateTransferRequest {
   transfer_number?: string;
@@ -280,20 +439,6 @@ export interface CreateTransferRequest {
     product_id: string;
     quantity: number;
   }[];
-}
-
-export interface CreateSaleRequest {
-  customer_id?: string;
-  warehouse_id: string;
-  sale_date: string;
-  items: {
-    product_id: string;
-    quantity: number;
-    unit_price: number;
-  }[];
-  tax_amount?: number;
-  discount_amount?: number;
-  notes?: string;
 }
 
 export interface StockAdjustmentRequest {
@@ -319,4 +464,25 @@ export interface PaginatedResponse<T> {
   page: number;
   limit: number;
   total_pages: number;
+}
+
+export interface SalesResponse extends Array<Sale> {
+  // Backend returns array directly, not wrapped in data object
+}
+
+export interface SaleResponse extends SaleDetails {
+  // Backend returns SaleOut directly, not wrapped in data object
+}
+
+export interface InvoiceResponse {
+  data: Invoice;
+  message: string;
+  status: number;
+}
+
+export interface OverdueSalesResponse {
+  data: Sale[];
+  total: number;
+  message: string;
+  status: number;
 }

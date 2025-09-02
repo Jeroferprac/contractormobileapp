@@ -10,7 +10,6 @@ import {
   Alert,
   Modal,
   TextInput,
-  ImageBackground,
   Dimensions,
   Platform,
 } from 'react-native';
@@ -22,19 +21,98 @@ import { SPACING, BORDER_RADIUS, SHADOWS } from '../../constants/spacing';
 import { AllProductsScreenNavigationProp } from '../../types/navigation';
 import { Product, Stock } from '../../types/inventory';
 import inventoryApiService from '../../api/inventoryApi';
+import LoadingSkeleton from '../../components/ui/LoadingSkeleton';
 
 interface AllProductsScreenProps {
   navigation: AllProductsScreenNavigationProp;
 }
+
+// Product Card Skeleton Component
+const ProductCardSkeleton: React.FC = () => {
+  return (
+    <View style={styles.productCard}>
+      <View style={styles.cardContent}>
+        {/* Image Container Skeleton with exact overlays */}
+        <View style={styles.imageContainer}>
+          <LoadingSkeleton 
+            width="100%" 
+            height={130} 
+            borderRadius={16}
+          />
+          
+
+          {/* Price Overlay Skeleton positioned exactly like real overlay - WHITE/GREY */}
+          <View style={[styles.priceOverlay, { position: 'absolute', bottom: SPACING.sm, right: SPACING.sm }]}>
+            <LoadingSkeleton 
+              width={60} 
+              height={24} 
+              borderRadius={12} 
+            />
+          </View>
+        </View>
+
+        {/* Content Area Skeleton */}
+        <View style={styles.cardBody}>
+          <LoadingSkeleton 
+            width="85%" 
+            height={16} 
+            style={styles.titleSkeleton}
+          />
+        </View>
+      </View>
+    </View>
+  );
+};
+
+// Filter Tabs Skeleton Component
+const FilterTabsSkeleton: React.FC = () => {
+  return (
+    <View style={styles.categoryContainer}>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.categoryScroll}
+      >
+        {[1, 2, 3, 4, 5, 6].map((item, index) => (
+          <View key={`filter-skeleton-${index}`} style={styles.categoryTab}>
+            <LoadingSkeleton 
+              width={80} 
+              height={32} 
+              borderRadius={20}
+            />
+          </View>
+        ))}
+      </ScrollView>
+    </View>
+  );
+};
+
+// Search Bar Skeleton Component
+const SearchBarSkeleton: React.FC = () => {
+  return (
+    <View style={styles.searchContainer}>
+      <LoadingSkeleton 
+        width="100%" 
+        height={48} 
+        borderRadius={12}
+      />
+    </View>
+  );
+};
 
 const AllProductsScreen: React.FC<AllProductsScreenProps> = ({ navigation }) => {
   const [products, setProducts] = useState<Product[]>([]);
   const [stocks, setStocks] = useState<Stock[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchText, setSearchText] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [showBarcodeScanner, setShowBarcodeScanner] = useState(false);
   const [showFilterModal, setShowFilterModal] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const [selectedSortBy, setSelectedSortBy] = useState('name-a-z');
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [selectedBrand, setSelectedBrand] = useState('all');
+  const [selectedPriceRange, setSelectedPriceRange] = useState('all');
+  const [selectedStockStatus, setSelectedStockStatus] = useState('all');
 
   const categories = [
     { id: 'all', label: 'All Products', icon: 'package' },
@@ -42,36 +120,82 @@ const AllProductsScreen: React.FC<AllProductsScreenProps> = ({ navigation }) => 
     { id: 'laptop', label: 'Laptops', icon: 'monitor' },
     { id: 'accessory', label: 'Accessories', icon: 'headphones' },
     { id: 'cement', label: 'Construction', icon: 'tool' },
-    { id: 'tools', label: 'Tools', icon: 'wrench' },
+    { id: 'tools', label: 'Tools', icon: 'settings' },
   ];
 
-  const filterOptions = [
-    { id: 'price-low', label: 'Price: Low to High', icon: 'arrow-up' },
-    { id: 'price-high', label: 'Price: High to Low', icon: 'arrow-down' },
+  // Dynamic filter options from API data
+  const sortOptions = [
     { id: 'name-a-z', label: 'Name: A to Z', icon: 'sort-asc' },
     { id: 'name-z-a', label: 'Name: Z to A', icon: 'sort-desc' },
+    { id: 'price-low', label: 'Price: Low to High', icon: 'arrow-up' },
+    { id: 'price-high', label: 'Price: High to Low', icon: 'arrow-down' },
     { id: 'stock-high', label: 'Stock: High to Low', icon: 'trending-up' },
     { id: 'stock-low', label: 'Stock: Low to High', icon: 'trending-down' },
     { id: 'newest', label: 'Newest First', icon: 'clock' },
     { id: 'oldest', label: 'Oldest First', icon: 'calendar' },
   ];
 
+  // Get unique brands from products
+  const brandOptions = [
+    { id: 'all', label: 'All Brands', icon: 'tag' },
+    ...Array.from(new Set(products.map(p => p.brand).filter(Boolean))).map(brand => ({
+      id: brand,
+      label: brand,
+      icon: 'tag'
+    }))
+  ];
+
+  // Price range options
+  const priceRangeOptions = [
+    { id: 'all', label: 'All Prices', icon: 'dollar-sign' },
+    { id: '0-1000', label: 'Under $1,000', icon: 'dollar-sign' },
+    { id: '1000-5000', label: '$1,000 - $5,000', icon: 'dollar-sign' },
+    { id: '5000-10000', label: '$5,000 - $10,000', icon: 'dollar-sign' },
+    { id: '10000+', label: 'Over $10,000', icon: 'dollar-sign' },
+  ];
+
+  // Stock status options
+  const stockStatusOptions = [
+    { id: 'all', label: 'All Stock', icon: 'package' },
+    { id: 'in-stock', label: 'In Stock', icon: 'check-circle' },
+    { id: 'low-stock', label: 'Low Stock', icon: 'alert-triangle' },
+    { id: 'out-of-stock', label: 'Out of Stock', icon: 'x-circle' },
+  ];
+
   useEffect(() => {
     loadProducts();
   }, []);
 
-  const loadProducts = async () => {
+  // Reload products when screen comes into focus
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', () => {
+      loadProducts(true);
+    });
+
+    return unsubscribe;
+  }, [navigation]);
+
+  const loadProducts = async (isRefresh = false) => {
     try {
-      setLoading(true);
+      if (isRefresh) {
+        setRefreshing(true);
+      } else {
+        setLoading(true);
+      }
+      
       const productsResponse = await inventoryApiService.getProducts();
       const stocksResponse = await inventoryApiService.getStocks();
       
-      setProducts(productsResponse.data);
-      setStocks(stocksResponse.data);
+      setProducts(productsResponse.data || []);
+      setStocks(stocksResponse.data || []);
     } catch (error) {
+      console.error('Error loading products:', error);
       Alert.alert('Error', 'Failed to load products');
+      setProducts([]);
+      setStocks([]);
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   };
 
@@ -138,8 +262,25 @@ const AllProductsScreen: React.FC<AllProductsScreenProps> = ({ navigation }) => 
     setShowFilterModal(true);
   };
 
+  const handleFilterReset = () => {
+    setSelectedSortBy('name-a-z');
+    setSelectedCategory('all');
+    setSelectedBrand('all');
+    setSelectedPriceRange('all');
+    setSelectedStockStatus('all');
+  };
+
+  const handleFilterApply = () => {
+    setShowFilterModal(false);
+    // Apply filters logic will be handled in filteredProducts
+  };
+
   const handleProductAction = (product: Product) => {
     navigation.navigate('Product', { product });
+  };
+
+  const onRefresh = () => {
+    loadProducts(true);
   };
 
   const filteredProducts = products.filter(product => {
@@ -147,8 +288,203 @@ const AllProductsScreen: React.FC<AllProductsScreenProps> = ({ navigation }) => 
                          product.brand?.toLowerCase().includes(searchText.toLowerCase());
     const matchesCategory = selectedCategory === 'all' || 
                            product.category_name.toLowerCase().includes(selectedCategory);
-    return matchesSearch && matchesCategory;
+    const matchesBrand = selectedBrand === 'all' || product.brand === selectedBrand;
+    
+    // Price range filter
+    const productPrice = parseFloat(product.selling_price.toString());
+    let matchesPriceRange = true;
+    if (selectedPriceRange !== 'all') {
+      switch (selectedPriceRange) {
+        case '0-1000':
+          matchesPriceRange = productPrice < 1000;
+          break;
+        case '1000-5000':
+          matchesPriceRange = productPrice >= 1000 && productPrice < 5000;
+          break;
+        case '5000-10000':
+          matchesPriceRange = productPrice >= 5000 && productPrice < 10000;
+          break;
+        case '10000+':
+          matchesPriceRange = productPrice >= 10000;
+          break;
+      }
+    }
+    
+    // Stock status filter
+    const stock = stocks.find(s => s.product_id === product.id);
+    const stockQuantity = stock?.quantity || 0;
+    let matchesStockStatus = true;
+    if (selectedStockStatus !== 'all') {
+      switch (selectedStockStatus) {
+        case 'in-stock':
+          matchesStockStatus = stockQuantity > 10;
+          break;
+        case 'low-stock':
+          matchesStockStatus = stockQuantity > 0 && stockQuantity <= 10;
+          break;
+        case 'out-of-stock':
+          matchesStockStatus = stockQuantity === 0;
+          break;
+      }
+    }
+    
+    return matchesSearch && matchesCategory && matchesBrand && matchesPriceRange && matchesStockStatus;
+  }).sort((a, b) => {
+    // Apply sorting
+    switch (selectedSortBy) {
+      case 'name-a-z':
+        return a.name.localeCompare(b.name);
+      case 'name-z-a':
+        return b.name.localeCompare(a.name);
+      case 'price-low':
+        return parseFloat(a.selling_price.toString()) - parseFloat(b.selling_price.toString());
+      case 'price-high':
+        return parseFloat(b.selling_price.toString()) - parseFloat(a.selling_price.toString());
+      case 'stock-high':
+        const stockA = stocks.find(s => s.product_id === a.id)?.quantity || 0;
+        const stockB = stocks.find(s => s.product_id === b.id)?.quantity || 0;
+        return stockB - stockA;
+      case 'stock-low':
+        const stockA2 = stocks.find(s => s.product_id === a.id)?.quantity || 0;
+        const stockB2 = stocks.find(s => s.product_id === b.id)?.quantity || 0;
+        return stockA2 - stockB2;
+      case 'newest':
+        return new Date(b.created_at || '').getTime() - new Date(a.created_at || '').getTime();
+      case 'oldest':
+        return new Date(a.created_at || '').getTime() - new Date(b.created_at || '').getTime();
+      default:
+        return 0;
+    }
   });
+
+  const renderProductCard = ({ item: product }: { item: Product }) => {
+    const stock = stocks.find(s => s.product_id === product.id);
+    const stockQuantity = stock?.quantity || 0;
+
+    return (
+      <TouchableOpacity 
+        style={styles.productCard} 
+        onPress={() => handleProductAction(product)}
+        activeOpacity={0.9}
+      >
+        <View style={styles.cardContent}>
+          {/* Image Container with Margin - Like AllSalesScreen */}
+          <View style={styles.imageContainer}>
+            <FastImage
+              source={{ uri: getProductImage(product) }}
+              style={styles.productImage}
+              resizeMode={FastImage.resizeMode.cover}
+            />
+            
+            {/* Stock Badge Overlay - Top Left */}
+            <View style={styles.stockBadge}>
+              <Icon name="box" size={12} color={COLORS.text.light} />
+              <Text style={styles.stockBadgeText}>{Math.round(parseFloat(stockQuantity.toString()))}</Text>
+            </View>
+
+            {/* Price Overlay - Bottom Right */}
+            <View style={styles.priceOverlay}>
+              <Text style={styles.priceOverlayText}>
+                ${Math.round(parseFloat(product.selling_price.toString()))}
+              </Text>
+            </View>
+          </View>
+
+          {/* Content Area - White Background */}
+          <View style={styles.cardBody}>
+            {/* Product Details with Icon - Single Line */}
+            <View style={styles.productDetails}>
+              <Icon name="package" size={14} color={COLORS.primary} />
+              <Text style={styles.productDetailsText} numberOfLines={1}>
+                {product.name}
+              </Text>
+            </View>
+          </View>
+        </View>
+      </TouchableOpacity>
+    );
+  };
+
+  const renderCategoryTab = (category: { id: string; label: string; icon: string }) => (
+    <TouchableOpacity
+      key={category.id}
+      style={[
+        styles.categoryTab,
+        selectedCategory === category.id && styles.activeCategoryTab,
+      ]}
+      onPress={() => setSelectedCategory(category.id)}
+    >
+      <Icon 
+        name={category.icon} 
+        size={16} 
+        color={selectedCategory === category.id ? COLORS.text.light : COLORS.text.secondary} 
+      />
+      <Text
+        style={[
+          styles.categoryText,
+          selectedCategory === category.id && styles.activeCategoryText,
+        ]}
+      >
+        {category.label}
+      </Text>
+    </TouchableOpacity>
+  );
+
+  // Loading State
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <StatusBar barStyle="light-content" backgroundColor={COLORS.primary} />
+        
+        {/* Header Background */}
+        <View style={styles.headerBackground} />
+        
+        {/* Header - No skeleton, show actual header */}
+        <View style={styles.header}>
+          <TouchableOpacity 
+            style={styles.backButton} 
+            onPress={() => navigation.goBack()}
+          >
+            <Icon name="arrow-left" size={24} color={COLORS.text.light} />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>ALL PRODUCTS</Text>
+          <View style={styles.headerSpacer} />
+        </View>
+
+        {/* Search Bar - Show actual search bar during loading */}
+        <View style={styles.searchContainer}>
+          <View style={styles.searchBar}>
+            <Icon name="search" size={20} color={COLORS.text.secondary} />
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Search products..."
+              placeholderTextColor={COLORS.text.secondary}
+              value=""
+              editable={false}
+            />
+            <TouchableOpacity style={styles.voiceButton}>
+              <Icon name="mic" size={20} color={COLORS.text.secondary} />
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.filterButton}>
+              <Icon name="sliders" size={20} color={COLORS.text.light} />
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* Filter Tabs Skeleton */}
+        <FilterTabsSkeleton />
+
+        {/* Products Grid Skeleton */}
+        <ScrollView contentContainerStyle={styles.productsList}>
+          <View style={styles.productsGrid}>
+            {[1, 2, 3, 4, 5, 6].map((item, index) => (
+              <ProductCardSkeleton key={`product-skeleton-${index}`} />
+            ))}
+          </View>
+        </ScrollView>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -172,12 +508,12 @@ const AllProductsScreen: React.FC<AllProductsScreenProps> = ({ navigation }) => 
           <Icon name="search" size={20} color={COLORS.text.secondary} />
           <TextInput
             style={styles.searchInput}
-            placeholder="Search BUO"
-            placeholderTextColor="#999"
+            placeholder="Search products..."
+            placeholderTextColor={COLORS.text.secondary}
             value={searchText}
             onChangeText={setSearchText}
           />
-          <TouchableOpacity onPress={handleBarcodeScan} style={styles.iconButton}>
+          <TouchableOpacity onPress={handleBarcodeScan} style={styles.voiceButton}>
             <Icon name="mic" size={20} color={COLORS.text.secondary} />
           </TouchableOpacity>
           <TouchableOpacity onPress={handleFilterPress} style={styles.filterButton}>
@@ -186,68 +522,58 @@ const AllProductsScreen: React.FC<AllProductsScreenProps> = ({ navigation }) => 
         </View>
       </View>
 
+
+
+      {/* Category Tabs */}
+      <View style={styles.categoryContainer}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.categoryScroll}
+        >
+          {categories.map(renderCategoryTab)}
+        </ScrollView>
+      </View>
+
       {/* Products List */}
-      <ScrollView
-        contentContainerStyle={styles.productsList}
-        showsVerticalScrollIndicator={false}
-      >
-        {filteredProducts.length === 0 ? (
-          <View style={styles.emptyContainer}>
-            <Icon name="package" size={48} color={COLORS.text.secondary} />
-            <Text style={styles.emptyText}>No products found</Text>
-          </View>
+      <View style={styles.productsSection}>
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>Products</Text>
+          <Text style={styles.productsCount}>
+            {selectedCategory === 'all' ? `${products.length} Products` : `${filteredProducts.length} ${categories.find(c => c.id === selectedCategory)?.label}`}
+          </Text>
+        </View>
+
+        {filteredProducts.length > 0 ? (
+          <ScrollView 
+            contentContainerStyle={styles.productsList}
+            showsVerticalScrollIndicator={false}
+          >
+            <View style={styles.productsGrid}>
+              {filteredProducts.map((product) => 
+                renderProductCard({ item: product, key: product.id })
+              )}
+            </View>
+          </ScrollView>
         ) : (
-          <View style={styles.productsGrid}>
-            {filteredProducts.map((product) => (
-              <TouchableOpacity key={product.id} style={styles.foodCard} onPress={() => handleProductAction(product)}>
-                <View style={styles.foodImageContainer}>
-                  <FastImage
-                    source={{ uri: getProductImage(product) }}
-                    style={styles.foodImage}
-                    resizeMode={FastImage.resizeMode.cover}
-                  />
-                  
-                  {/* Stock Badge */}
-                  <View style={styles.stockBadge}>
-                    <Icon name="box" size={12} color={COLORS.text.light} />
-                    <Text style={styles.stockBadgeText}>{stocks.find(s => s.product_id === product.id)?.quantity || 0}</Text>
-                  </View>
-                  
-                  {/* Image Gradient Overlay */}
-                  <LinearGradient
-                    colors={['transparent', 'rgba(0,0,0,0.7)']}
-                    style={styles.imageGradient}
-                  />
-                  
-                  {/* Favorite Icon */}
-                  <TouchableOpacity style={styles.favoriteButton}>
-                    <Icon 
-                      name={Math.random() > 0.5 ? "heart" : "heart"} 
-                      size={16} 
-                      color={Math.random() > 0.5 ? "#FF6B35" : "#FFF"} 
-                    />
-                  </TouchableOpacity>
-                </View>
-                
-                <View style={styles.foodInfo}>
-                  <View style={styles.nameContainer}>
-                    <Icon name="shopping-bag" size={16} color={COLORS.primary} style={styles.nameIcon} />
-                    <Text style={styles.foodName} numberOfLines={2}>
-                      {product.name}
-                    </Text>
-                  </View>
-                  
-                  <View style={styles.foodDetails}>
-                    <Text style={styles.foodPrice}>
-                      ${parseFloat(product.selling_price.toString()).toFixed(2)}
-                    </Text>
-                  </View>
-                </View>
-              </TouchableOpacity>
-            ))}
-          </View>
+          !loading && (
+            <View style={styles.emptyState}>
+              <Icon name="package" size={64} color={COLORS.text.secondary} />
+              <Text style={styles.emptyTitle}>
+                {searchText || selectedCategory !== 'all' ? 'No Products Found' : 'No Products Available'}
+              </Text>
+              <Text style={styles.emptySubtitle}>
+                {searchText 
+                  ? 'Try adjusting your search terms'
+                  : selectedCategory !== 'all'
+                  ? `No products found in ${categories.find(c => c.id === selectedCategory)?.label}`
+                  : 'No products data available. Please check your connection or try again later.'
+                }
+              </Text>
+            </View>
+          )
         )}
-      </ScrollView>
+      </View>
       
       {/* Add Product Floating Button */}
       <TouchableOpacity 
@@ -257,7 +583,7 @@ const AllProductsScreen: React.FC<AllProductsScreenProps> = ({ navigation }) => 
         <Icon name="plus" size={24} color={COLORS.text.light} />
       </TouchableOpacity>
       
-      {/* Filter Modal */}
+      {/* Professional Premium Filter Modal */}
       <Modal
         visible={showFilterModal}
         animationType="slide"
@@ -265,25 +591,171 @@ const AllProductsScreen: React.FC<AllProductsScreenProps> = ({ navigation }) => 
         onRequestClose={() => setShowFilterModal(false)}
       >
         <SafeAreaView style={styles.modalContainer}>
+          {/* Header */}
           <View style={styles.modalHeader}>
-            <TouchableOpacity onPress={() => setShowFilterModal(false)}>
+            <TouchableOpacity onPress={() => setShowFilterModal(false)} style={styles.modalCloseButton}>
               <Icon name="x" size={24} color={COLORS.text.primary} />
             </TouchableOpacity>
-            <Text style={styles.modalTitle}>Filter Products</Text>
-            <TouchableOpacity>
-              <Text style={styles.resetButton}>Reset</Text>
+            <Text style={styles.modalTitle}>Filter & Sort Products</Text>
+            <TouchableOpacity onPress={handleFilterReset} style={styles.resetButton}>
+              <Text style={styles.resetButtonText}>Reset</Text>
             </TouchableOpacity>
           </View>
           
-          <ScrollView style={styles.filterOptions}>
-            {filterOptions.map((option) => (
-              <TouchableOpacity key={option.id} style={styles.filterOption}>
-                <Icon name={option.icon} size={20} color={COLORS.text.secondary} />
-                <Text style={styles.filterOptionText}>{option.label}</Text>
-                <Icon name="check" size={20} color={COLORS.primary} />
-              </TouchableOpacity>
-            ))}
+          <ScrollView style={styles.filterContent} showsVerticalScrollIndicator={false}>
+            {/* Sort By Section */}
+            <View style={styles.filterSection}>
+              <Text style={styles.filterSectionTitle}>Sort By</Text>
+              <View style={styles.filterOptionsGrid}>
+                {sortOptions.map((option) => (
+                  <TouchableOpacity 
+                    key={option.id} 
+                    style={[
+                      styles.filterOptionCard,
+                      selectedSortBy === option.id && styles.filterOptionCardSelected
+                    ]}
+                    onPress={() => setSelectedSortBy(option.id)}
+                  >
+                    <Icon 
+                      name={option.icon} 
+                      size={18} 
+                      color={selectedSortBy === option.id ? COLORS.text.light : COLORS.text.secondary} 
+                    />
+                    <Text style={[
+                      styles.filterOptionText,
+                      selectedSortBy === option.id && styles.filterOptionTextSelected
+                    ]}>
+                      {option.label}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+
+            {/* Category Section */}
+            <View style={styles.filterSection}>
+              <Text style={styles.filterSectionTitle}>Category</Text>
+              <View style={styles.filterOptionsGrid}>
+                {categories.map((category) => (
+                  <TouchableOpacity 
+                    key={category.id} 
+                    style={[
+                      styles.filterOptionCard,
+                      selectedCategory === category.id && styles.filterOptionCardSelected
+                    ]}
+                    onPress={() => setSelectedCategory(category.id)}
+                  >
+                    <Icon 
+                      name={category.icon} 
+                      size={18} 
+                      color={selectedCategory === category.id ? COLORS.text.light : COLORS.text.secondary} 
+                    />
+                    <Text style={[
+                      styles.filterOptionText,
+                      selectedCategory === category.id && styles.filterOptionTextSelected
+                    ]}>
+                      {category.label}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+
+            {/* Brand Section */}
+            <View style={styles.filterSection}>
+              <Text style={styles.filterSectionTitle}>Brand</Text>
+              <View style={styles.filterOptionsGrid}>
+                {brandOptions.slice(0, 6).map((brand) => (
+                  <TouchableOpacity 
+                    key={brand.id} 
+                    style={[
+                      styles.filterOptionCard,
+                      selectedBrand === brand.id && styles.filterOptionCardSelected
+                    ]}
+                    onPress={() => setSelectedBrand(brand.id)}
+                  >
+                    <Icon 
+                      name={brand.icon} 
+                      size={18} 
+                      color={selectedBrand === brand.id ? COLORS.text.light : COLORS.text.secondary} 
+                    />
+                    <Text style={[
+                      styles.filterOptionText,
+                      selectedBrand === brand.id && styles.filterOptionTextSelected
+                    ]}>
+                      {brand.label}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+
+            {/* Price Range Section */}
+            <View style={styles.filterSection}>
+              <Text style={styles.filterSectionTitle}>Price Range</Text>
+              <View style={styles.filterOptionsGrid}>
+                {priceRangeOptions.map((priceRange) => (
+                  <TouchableOpacity 
+                    key={priceRange.id} 
+                    style={[
+                      styles.filterOptionCard,
+                      selectedPriceRange === priceRange.id && styles.filterOptionCardSelected
+                    ]}
+                    onPress={() => setSelectedPriceRange(priceRange.id)}
+                  >
+                    <Icon 
+                      name={priceRange.icon} 
+                      size={18} 
+                      color={selectedPriceRange === priceRange.id ? COLORS.text.light : COLORS.text.secondary} 
+                    />
+                    <Text style={[
+                      styles.filterOptionText,
+                      selectedPriceRange === priceRange.id && styles.filterOptionTextSelected
+                    ]}>
+                      {priceRange.label}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+
+            {/* Stock Status Section */}
+            <View style={styles.filterSection}>
+              <Text style={styles.filterSectionTitle}>Stock Status</Text>
+              <View style={styles.filterOptionsGrid}>
+                {stockStatusOptions.map((stockStatus) => (
+                  <TouchableOpacity 
+                    key={stockStatus.id} 
+                    style={[
+                      styles.filterOptionCard,
+                      selectedStockStatus === stockStatus.id && styles.filterOptionCardSelected
+                    ]}
+                    onPress={() => setSelectedStockStatus(stockStatus.id)}
+                  >
+                    <Icon 
+                      name={stockStatus.icon} 
+                      size={18} 
+                      color={selectedStockStatus === stockStatus.id ? COLORS.text.light : COLORS.text.secondary} 
+                    />
+                    <Text style={[
+                      styles.filterOptionText,
+                      selectedStockStatus === stockStatus.id && styles.filterOptionTextSelected
+                    ]}>
+                      {stockStatus.label}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
           </ScrollView>
+
+          {/* Apply Button */}
+          <View style={styles.modalFooter}>
+            <TouchableOpacity style={styles.applyButton} onPress={handleFilterApply}>
+              <Text style={styles.applyButtonText}>Apply Filters</Text>
+              <Icon name="check" size={20} color={COLORS.text.light} />
+            </TouchableOpacity>
+          </View>
         </SafeAreaView>
       </Modal>
     </SafeAreaView>
@@ -304,7 +776,7 @@ const styles = StyleSheet.create({
     top: 0,
     left: 0,
     right: 0,
-    height: 160, // Further reduced height for better camera overflow
+    height: 160,
     backgroundColor: COLORS.primary,
     borderBottomLeftRadius: BORDER_RADIUS.lg,
     borderBottomRightRadius: BORDER_RADIUS.lg,
@@ -329,7 +801,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 25,
     fontWeight: '700',
-    textTransform:"uppercase",
+    textTransform: "uppercase",
     color: COLORS.text.light,
   },
   headerSpacer: {
@@ -337,24 +809,15 @@ const styles = StyleSheet.create({
   },
   searchContainer: {
     paddingHorizontal: SPACING.lg,
-    marginTop: SPACING.xs, // Adjusted to overlap with header background
-    zIndex: 10,
-    paddingBottom:SPACING.xs
+    paddingBottom: SPACING.md,
   },
   searchBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor:COLORS.background,
-    borderRadius: BORDER_RADIUS.lg,
+    backgroundColor: COLORS.surface,
+    borderRadius: 12,
     paddingHorizontal: SPACING.md,
-    paddingVertical: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
-    height: 50,
-    marginTop: 0,
+    paddingVertical: SPACING.sm,
   },
   searchInput: {
     flex: 1,
@@ -363,6 +826,10 @@ const styles = StyleSheet.create({
     color: COLORS.text.primary,
   },
   iconButton: {
+    padding: SPACING.xs,
+    marginLeft: SPACING.sm,
+  },
+  voiceButton: {
     padding: SPACING.xs,
     marginLeft: SPACING.sm,
   },
@@ -376,135 +843,173 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  categoryContainer: {
+    paddingTop: SPACING.sm,
+    paddingBottom: SPACING.lg,
+  },
+  categoryScroll: {
+    paddingHorizontal: SPACING.lg,
+  },
+  categoryTab: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
+    borderRadius: 20,
+    backgroundColor: '#F3F4F6',
+    marginRight: SPACING.sm,
+    gap: SPACING.xs,
+  },
+  activeCategoryTab: {
+    backgroundColor: COLORS.primary,
+  },
+  categoryText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: COLORS.text.secondary,
+  },
+  activeCategoryText: {
+    color: COLORS.text.light,
+  },
+  productsSection: {
+    flex: 1,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: SPACING.lg,
+    paddingBottom: SPACING.md,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: COLORS.text.primary,
+  },
+  productsCount: {
+    fontSize: 14,
+    color: COLORS.text.secondary,
+  },
   productsList: {
-    padding: SPACING.lg,
-    paddingBottom: 100, // Space for bottom navigation
+    paddingHorizontal: SPACING.lg,
+    paddingBottom: 100,
+  },
+  productsRow: {
+    justifyContent: 'space-between',
   },
   productsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
   },
-  foodCard: {
+  productCard: {
     width: cardWidth,
-    backgroundColor: COLORS.surface,
-    borderRadius: BORDER_RADIUS.xl,
+    backgroundColor: COLORS.card,
+    borderRadius: 20,
     marginBottom: SPACING.lg,
-    overflow: 'hidden',
-    shadowColor: '#000',
+    shadowColor: COLORS.text.primary,
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 5,
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 6,
+    overflow: 'hidden',
   },
-  foodImageContainer: {
-    height: cardWidth,
+  cardContent: {
+    flex: 1,
+  },
+  imageContainer: {
     position: 'relative',
+    height: 130,
+    marginHorizontal: SPACING.sm,
+    marginTop: SPACING.sm,
+    borderRadius: 16,
+    overflow: 'hidden',
   },
-  foodImage: {
+  productImage: {
     width: '100%',
     height: '100%',
-    borderTopLeftRadius: BORDER_RADIUS.xl,
-    borderTopRightRadius: BORDER_RADIUS.xl,
-    borderBottomLeftRadius: BORDER_RADIUS.md,
-    borderBottomRightRadius: BORDER_RADIUS.md,
+    borderRadius: 16,
   },
   stockBadge: {
     position: 'absolute',
     top: SPACING.sm,
     left: SPACING.sm,
     backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    borderRadius: BORDER_RADIUS.round,
+    borderRadius: 12,
     paddingHorizontal: SPACING.sm,
     paddingVertical: SPACING.xs,
     flexDirection: 'row',
     alignItems: 'center',
-    zIndex: 10,
+    gap: 4,
   },
   stockBadgeText: {
     fontSize: 12,
     fontWeight: '700',
     color: COLORS.text.light,
-    marginLeft: 4,
   },
-  imageGradient: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    bottom: 0,
-    height: '40%',
-    borderBottomLeftRadius: BORDER_RADIUS.md,
-    borderBottomRightRadius: BORDER_RADIUS.md,
-  },
-  favoriteButton: {
+  priceOverlay: {
     position: 'absolute',
     bottom: SPACING.sm,
     right: SPACING.sm,
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-    borderRadius: 20,
-    padding: SPACING.sm,
-    width: 32,
-    height: 32,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  stockIndicator: {
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    borderRadius: 12,
     paddingHorizontal: SPACING.sm,
-    paddingVertical: 2,
-    borderRadius: 4,
+    paddingVertical: SPACING.xs,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
   },
-  stockText: {
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  foodInfo: {
-    padding: SPACING.md,
-    paddingTop: SPACING.xs,
-    paddingBottom: SPACING.sm,
-  },
-  nameContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: SPACING.xs,
-    height: 40,
-  },
-  nameIcon: {
-    marginRight: SPACING.xs,
-  },
-  foodName: {
-    fontSize: 16,
-    fontWeight: '800',
-    color: COLORS.text.primary,
-    marginBottom: 0,
-    flex: 1,
-    letterSpacing: 0.3,
-  },
-  foodDetails: {
-    flexDirection: 'row',
-    justifyContent: 'flex-start',
-    alignItems: 'center',
-    marginTop: 2,
-  },
-  foodPrice: {
-    fontSize: 18,
-    fontWeight: '800',
+  priceOverlayText: {
+    fontSize: 14,
+    fontWeight: '700',
     color: COLORS.primary,
-    letterSpacing: 0.5,
   },
-  emptyContainer: {
-    alignItems: 'center',
+  cardBody: {
+    padding: SPACING.sm,
+    backgroundColor: 'transparent',
+    marginHorizontal: SPACING.sm,
+    borderRadius: 20,
+    marginTop: -SPACING.xs,
+    zIndex: 5,
+    minHeight: 50,
     justifyContent: 'center',
-    padding: SPACING.xl,
+    alignItems: 'center',
   },
-  emptyText: {
-    fontSize: 16,
-    color: COLORS.text.secondary,
+  productDetails: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+  },
+  productDetailsText: {
+    marginLeft: SPACING.xs,
+    fontSize: 14,
+    fontWeight: '600',
+    color: COLORS.text.primary,
+    flex: 1,
+  },
+  emptyState: {
+    alignItems: 'center',
+    paddingVertical: SPACING.xl * 2,
+  },
+  emptyTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: COLORS.text.primary,
     marginTop: SPACING.md,
+    marginBottom: SPACING.sm,
+  },
+  emptySubtitle: {
+    fontSize: 14,
+    color: COLORS.text.secondary,
+    textAlign: 'center',
+    paddingHorizontal: SPACING.lg,
   },
   addButton: {
     position: 'absolute',
     right: SPACING.lg,
-    bottom: 80, // Above bottom navigation
+    bottom: 80,
     width: 56,
     height: 56,
     borderRadius: 28,
@@ -520,42 +1025,125 @@ const styles = StyleSheet.create({
   },
   modalContainer: {
     flex: 1,
-    padding: SPACING.lg,
     backgroundColor: COLORS.background,
   },
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: SPACING.sm,
-  },
-  modalTitle: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: COLORS.text.primary,
-  },
-  resetButton: {
-    fontSize: 16,
-    color: COLORS.primary,
-    marginRight: SPACING.sm,
-  },
-  filterOptions: { 
-    paddingVertical: SPACING.sm 
-  },
-  filterOption: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: SPACING.sm,
-    paddingHorizontal: SPACING.sm,
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.md,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.border.light,
+    backgroundColor: COLORS.surface,
+  },
+  modalCloseButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: COLORS.border.light,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: COLORS.text.primary,
+    flex: 1,
+    textAlign: 'center',
+  },
+  resetButton: {
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
+    backgroundColor: COLORS.border.light,
+    borderRadius: BORDER_RADIUS.md,
+  },
+  resetButtonText: {
+    fontSize: 14,
+    color: COLORS.text.secondary,
+    fontWeight: '600',
+  },
+  filterContent: {
+    flex: 1,
+    paddingHorizontal: SPACING.lg,
+  },
+  filterSection: {
+    marginVertical: SPACING.lg,
+  },
+  filterSectionTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: COLORS.text.primary,
+    marginBottom: SPACING.md,
+  },
+  filterOptionsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: SPACING.sm,
+  },
+  filterOptionCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
+    backgroundColor: COLORS.surface,
+    borderRadius: BORDER_RADIUS.lg,
+    borderWidth: 1,
+    borderColor: COLORS.border.light,
+    marginBottom: SPACING.sm,
+    minWidth: '45%',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  filterOptionCardSelected: {
+    backgroundColor: COLORS.primary,
+    borderColor: COLORS.primary,
   },
   filterOptionText: {
-    flex: 1,
-    fontSize: 16,
+    fontSize: 14,
     color: COLORS.text.primary,
     marginLeft: SPACING.sm,
+    fontWeight: '500',
+  },
+  filterOptionTextSelected: {
+    color: COLORS.text.light,
+    fontWeight: '600',
+  },
+  modalFooter: {
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.lg,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.border.light,
+    backgroundColor: COLORS.surface,
+  },
+  applyButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: COLORS.primary,
+    paddingVertical: SPACING.md,
+    borderRadius: BORDER_RADIUS.lg,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  applyButtonText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: COLORS.text.light,
+    marginRight: SPACING.sm,
+  },
+  // Skeleton Styles
+  titleSkeleton: {
+    marginBottom: SPACING.sm,
+  },
+  detailsSkeleton: {
+    marginBottom: SPACING.md,
   },
 });
 

@@ -13,12 +13,14 @@ import {
   Alert,
   FlatList,
   Modal,
+  ScrollView,
 } from 'react-native';
 
 import Icon from 'react-native-vector-icons/Feather';
 import { COLORS } from '../../constants/colors';
 import { SPACING, BORDER_RADIUS, SHADOWS } from '../../constants/spacing';
 import { TYPOGRAPHY } from '../../constants/typography';
+
 import { Warehouse, WarehouseStats, Stock } from '../../types/inventory';
 import inventoryApiService from '../../api/inventoryApi';
 import stockNotificationService from '../../utils/stockNotifications';
@@ -27,6 +29,7 @@ import stockNotificationService from '../../utils/stockNotifications';
 import HeaderSection from '../../components/inventory/Warehouse/AllWarehouse/HeaderSection';
 import WarehouseCard from '../../components/inventory/Warehouse/AllWarehouse/WarehouseCard';
 import WarehouseDetails from '../../components/inventory/Warehouse/AllWarehouse/DetailsCard';
+import BinManagementTab from '../../components/inventory/Warehouse/AllWarehouse/BinManagementTab';
 import FilterModal from '../../components/ui/FilterModal';
 
 // Import warehouse forms
@@ -61,16 +64,22 @@ interface WarehouseWithDetails extends Warehouse {
 
 interface AllWarehouseScreenProps {
   navigation?: any;
+  route?: {
+    params?: {
+      selectedWarehouse?: WarehouseWithDetails;
+    };
+  };
 }
 
-const AllWarehouseScreen: React.FC<AllWarehouseScreenProps> = ({ navigation }) => {
+const AllWarehouseScreen: React.FC<AllWarehouseScreenProps> = ({ navigation, route }) => {
   const [warehouses, setWarehouses] = useState<WarehouseWithDetails[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [searchText, setSearchText] = useState('');
-    const [selectedWarehouse, setSelectedWarehouse] = useState<WarehouseWithDetails | null>(null);
+  const [selectedWarehouse, setSelectedWarehouse] = useState<WarehouseWithDetails | null>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'warehouse' | 'binmanagement'>('warehouse');
 
   // Form state management
   const [showWarehouseForm, setShowWarehouseForm] = useState(false);
@@ -162,7 +171,23 @@ const AllWarehouseScreen: React.FC<AllWarehouseScreenProps> = ({ navigation }) =
       );
       
       setWarehouses(enhancedWarehouses);
-      if (enhancedWarehouses.length > 0) {
+      
+      // Handle selected warehouse from route params
+      if (route?.params?.selectedWarehouse) {
+        const selectedWarehouseFromRoute = route.params.selectedWarehouse;
+        console.log('🎯 Received selected warehouse from route:', selectedWarehouseFromRoute.name);
+        const foundWarehouse = enhancedWarehouses.find(w => w.id === selectedWarehouseFromRoute.id);
+        if (foundWarehouse) {
+          console.log('✅ Found warehouse in list, setting as selected:', foundWarehouse.name);
+          setSelectedWarehouse(foundWarehouse);
+          const warehouseIndex = enhancedWarehouses.findIndex(w => w.id === foundWarehouse.id);
+          setCurrentIndex(warehouseIndex);
+        } else {
+          console.log('⚠️ Warehouse not found in list, using first warehouse');
+          setSelectedWarehouse(enhancedWarehouses[0]);
+        }
+      } else if (enhancedWarehouses.length > 0) {
+        console.log('📋 No selected warehouse from route, using first warehouse');
         setSelectedWarehouse(enhancedWarehouses[0]);
       }
       setLoading(false);
@@ -204,7 +229,7 @@ const AllWarehouseScreen: React.FC<AllWarehouseScreenProps> = ({ navigation }) =
     const checkScrollPosition = () => {
       // Simulate scroll position detection
       // Since we can't get scroll events, we'll use a different approach
-      const currentScrollX = scrollX._value;
+      const currentScrollX = scrollX.value;
       detectCenterCard(currentScrollX);
     };
 
@@ -214,7 +239,7 @@ const AllWarehouseScreen: React.FC<AllWarehouseScreenProps> = ({ navigation }) =
     return () => {
       clearInterval(intervalId);
     };
-  }, [currentIndex, filteredWarehouses]);
+  }, [currentIndex]);
 
   // Card dimensions for snap-to-center functionality
   const CARD_WIDTH = screenWidth * 0.8;
@@ -275,7 +300,15 @@ const AllWarehouseScreen: React.FC<AllWarehouseScreenProps> = ({ navigation }) =
   };
 
   const handleBackPress = () => {
-    navigation?.goBack();
+    console.log('🔙 Back button pressed in AllWarehouseScreen');
+    if (navigation?.canGoBack()) {
+      console.log('✅ Can go back, navigating to previous screen');
+      navigation.goBack();
+    } else {
+      console.log('⚠️ Cannot go back, navigating to Home');
+      // Fallback to home if no previous screen
+      navigation?.navigate('Home');
+    }
   };
 
   // Form action handlers
@@ -331,16 +364,20 @@ const AllWarehouseScreen: React.FC<AllWarehouseScreenProps> = ({ navigation }) =
 
   const handleStockFormSubmit = async (stockData: any) => {
     try {
+      console.log('Submitting stock data:', stockData);
+      
       if (selectedStockForAction) {
         // Update existing stock
-        await inventoryApiService.updateStock(selectedStockForAction.id, stockData);
+        const response = await inventoryApiService.updateStock(selectedStockForAction.id, stockData);
+        console.log('Stock updated successfully:', response.data);
         Alert.alert('Success', 'Stock updated successfully!');
         
         // Trigger stock notification check after update
         await triggerStockNotificationCheck(stockData);
       } else {
         // Create new stock
-        await inventoryApiService.createStock(stockData);
+        const response = await inventoryApiService.createStock(stockData);
+        console.log('Stock created successfully:', response.data);
         Alert.alert('Success', 'Stock created successfully!');
         
         // Trigger stock notification check after creation
@@ -350,7 +387,30 @@ const AllWarehouseScreen: React.FC<AllWarehouseScreenProps> = ({ navigation }) =
       setSelectedStockForAction(null);
       fetchWarehouses(); // Refresh the list
     } catch (error: any) {
-      Alert.alert('Error', error.response?.data?.detail || 'Failed to save stock');
+      console.error('Stock form error:', error);
+      
+      // Enhanced error handling
+      let errorMessage = 'Failed to save stock. Please try again.';
+      
+      if (error.response) {
+        // Server responded with error
+        const errorData = error.response.data;
+        if (errorData.detail) {
+          errorMessage = errorData.detail;
+        } else if (errorData.message) {
+          errorMessage = errorData.message;
+        } else if (typeof errorData === 'string') {
+          errorMessage = errorData;
+        }
+      } else if (error.request) {
+        // Network error
+        errorMessage = 'Network error. Please check your connection and try again.';
+      } else if (error.message) {
+        // Other error
+        errorMessage = error.message;
+      }
+      
+      Alert.alert('Error', errorMessage);
     }
   };
 
@@ -540,16 +600,13 @@ const AllWarehouseScreen: React.FC<AllWarehouseScreenProps> = ({ navigation }) =
   const totalBins = warehouses.reduce((sum, w) => sum + (w.binCount || 0), 0);
   const activeBins = warehouses.reduce((sum, w) => sum + (w.activeBins || 0), 0);
 
+  // Simple loading state - no skeleton, just show content immediately
   if (loading) {
     return (
       <SafeAreaView style={styles.container}>
-        <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+        <StatusBar barStyle="dark-content" backgroundColor="transparent" translucent />
         <View style={styles.loadingContainer}>
-          <View style={styles.loadingCard}>
-            <View style={styles.loadingSkeleton} />
-            <View style={styles.loadingSkeleton} />
-            <View style={styles.loadingSkeleton} />
-          </View>
+          <Text style={styles.loadingText}>Loading warehouses...</Text>
         </View>
       </SafeAreaView>
     );
@@ -557,7 +614,7 @@ const AllWarehouseScreen: React.FC<AllWarehouseScreenProps> = ({ navigation }) =
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+      <StatusBar barStyle="dark-content" backgroundColor="transparent" translucent />
       
       {/* Header Card */}
       <View style={styles.headerContainer}>
@@ -589,7 +646,7 @@ const AllWarehouseScreen: React.FC<AllWarehouseScreenProps> = ({ navigation }) =
           <TextInput
             style={styles.searchInput}
             placeholder="Search warehouses..."
-              placeholderTextColor={COLORS.text.secondary}
+            placeholderTextColor={COLORS.text.secondary}
             value={searchText}
             onChangeText={setSearchText}
           />
@@ -617,43 +674,88 @@ const AllWarehouseScreen: React.FC<AllWarehouseScreenProps> = ({ navigation }) =
         )}
       </View>
 
-      {/* Horizontal Warehouse Cards */}
-      <Animated.View style={[styles.cardsContainer, { opacity: fadeAnim }]}>
-        <FlatList
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.cardsScrollContainer}
-          data={filteredWarehouses}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item, index }) => (
-            <View style={styles.cardWrapper}>
-              <WarehouseCard
-                warehouse={item}
-                index={index}
-                scrollX={scrollX}
-                onEdit={handleEditWarehouse}
+      {/* Content based on active tab */}
+      {activeTab === 'warehouse' ? (
+        <>
+          {/* Horizontal Warehouse Cards */}
+          <Animated.View style={[styles.cardsContainer, { opacity: fadeAnim }]}>
+            <FlatList
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.cardsScrollContainer}
+              data={filteredWarehouses}
+              keyExtractor={(item) => item.id}
+              renderItem={({ item, index }) => (
+                <View style={styles.cardWrapper}>
+                  <WarehouseCard
+                    warehouse={item}
+                    index={index}
+                    scrollX={scrollX}
+                    onEdit={handleEditWarehouse}
+                />
+              </View>
+              )}
+              onScroll={(event) => {
+                const offsetX = event.nativeEvent.contentOffset.x;
+                scrollX.setValue(offsetX);
+                detectCenterCard(offsetX);
+              }}
+              scrollEventThrottle={16}
             />
-          </View>
-          )}
-          onScroll={(event) => {
-            const offsetX = event.nativeEvent.contentOffset.x;
-            scrollX.setValue(offsetX);
-            detectCenterCard(offsetX);
-          }}
-          scrollEventThrottle={16}
-        />
-      </Animated.View>
+          </Animated.View>
 
-      {/* Warehouse Details */}
-      <View style={styles.bottomCardsContainer}>
-        {selectedWarehouse && (
-          <WarehouseDetails 
-            key={selectedWarehouse.id} 
-            warehouse={selectedWarehouse}
-              onEdit={handleEditWarehouse}
-              onAddStock={handleAddStock}
+          {/* Warehouse Details */}
+          <View style={styles.bottomCardsContainer}>
+            {selectedWarehouse && (
+              <WarehouseDetails 
+                key={selectedWarehouse.id} 
+                warehouse={selectedWarehouse}
+                  onEdit={handleEditWarehouse}
+                  onAddStock={handleAddStock}
+              />
+            )}
+          </View>
+        </>
+      ) : (
+        /* Bin Management Tab Content */
+        <View style={styles.binManagementContainer}>
+          <BinManagementTab
+            totalBins={selectedWarehouse?.binCount || 96}
+            activeBins={selectedWarehouse?.activeBins || 72}
+            warehouseId={selectedWarehouse?.id}
           />
-        )}
+        </View>
+      )}
+
+      {/* Bottom Tab Navigation */}
+      <View style={styles.bottomTabContainer}>
+        <TouchableOpacity
+          style={[styles.bottomTab, activeTab === 'warehouse' && styles.activeBottomTab]}
+          onPress={() => setActiveTab('warehouse')}
+        >
+          <Icon 
+            name="home" 
+            size={16} 
+            color={activeTab === 'warehouse' ? COLORS.text.light : COLORS.text.secondary} 
+          />
+          <Text style={[styles.bottomTabText, activeTab === 'warehouse' && styles.activeBottomTabText]}>
+            Warehouse
+          </Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity
+          style={[styles.bottomTab, activeTab === 'binmanagement' && styles.activeBottomTab]}
+          onPress={() => setActiveTab('binmanagement')}
+        >
+          <Icon 
+            name="grid" 
+            size={16} 
+            color={activeTab === 'binmanagement' ? COLORS.text.light : COLORS.text.secondary} 
+          />
+          <Text style={[styles.bottomTabText, activeTab === 'binmanagement' && styles.activeBottomTabText]}>
+            Bin Management
+          </Text>
+        </TouchableOpacity>
       </View>
 
       {/* Warehouse Form Modal */}
@@ -774,9 +876,10 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     fontSize: TYPOGRAPHY.sizes.md,
-    color: '#000000',
+    color: COLORS.text.primary,
     marginLeft: SPACING.sm,
     marginRight: SPACING.sm,
+    paddingVertical: 0,
   },
   filterContainer: {
     flexDirection: 'row',
@@ -831,7 +934,7 @@ const styles = StyleSheet.create({
   bottomCardsContainer: {
     flex: 1,
     paddingHorizontal: SPACING.lg,
-    paddingBottom: SPACING.lg,
+    paddingBottom: 80, // Add space for the bottom navigation
   },
   binContentContainer: {
     flex: 1,
@@ -927,7 +1030,6 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.surface,
     borderRadius: BORDER_RADIUS.lg,
     padding: SPACING.lg,
-    marginBottom: SPACING.md,
     borderWidth: 1,
     borderColor: COLORS.border.light,
     ...SHADOWS.sm,
@@ -1020,6 +1122,76 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.lg,
     paddingVertical: SPACING.md,
   },
+  tabContainer: {
+    flexDirection: 'row',
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.md,
+    backgroundColor: COLORS.surface,
+    marginHorizontal: SPACING.lg,
+    marginTop: SPACING.md,
+    borderRadius: BORDER_RADIUS.lg,
+    ...SHADOWS.sm,
+  },
+  tab: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: SPACING.sm,
+    paddingHorizontal: SPACING.md,
+    borderRadius: BORDER_RADIUS.md,
+  },
+  activeTab: {
+    backgroundColor: COLORS.primary,
+  },
+  tabText: {
+    fontSize: TYPOGRAPHY.sizes.sm,
+    fontWeight: '500',
+    color: COLORS.text.secondary,
+    marginLeft: SPACING.xs,
+  },
+  activeTabText: {
+    color: COLORS.text.light,
+  },
+  binManagementContainer: {
+    flex: 1,
+    paddingHorizontal: SPACING.lg,
+    paddingBottom: 80, // Add space for the bottom navigation
+  },
+  bottomTabContainer: {
+    flexDirection: 'row',
+    backgroundColor: '#1A1A1A',
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: SPACING.xs,
+    borderRadius: BORDER_RADIUS.xl,
+    marginBottom: SPACING.md,
+    marginHorizontal: SPACING.lg,
+    position: 'absolute',
+    bottom: SPACING.md,
+    left: SPACING.lg,
+    right: SPACING.lg,
+  },
+  bottomTab: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: SPACING.xs,
+    paddingHorizontal: SPACING.xs,
+    borderRadius: BORDER_RADIUS.lg,
+  },
+  activeBottomTab: {
+    backgroundColor: COLORS.primary,
+  },
+  bottomTabText: {
+    fontSize: TYPOGRAPHY.sizes.xs,
+    color: '#FFFFFF',
+    marginTop: SPACING.xs,
+    fontWeight: '500',
+    flexShrink: 0,
+  },
+  activeBottomTabText: {
+    color: COLORS.text.light,
+    fontWeight: '600',
+  },
   headerTop: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1056,6 +1228,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+
 });
 
 export default AllWarehouseScreen;

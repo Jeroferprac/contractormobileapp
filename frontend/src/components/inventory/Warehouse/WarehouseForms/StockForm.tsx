@@ -216,8 +216,6 @@ const StockForm: React.FC<StockFormProps> = ({
         value={formData[field as keyof typeof formData]}
         onChangeText={(value) => updateField(field, value)}
         keyboardType={keyboardType}
-        multiline={multiline}
-        numberOfLines={multiline ? 2 : 1}
       />
       {errors[field] && <Text style={styles.errorText}>{errors[field]}</Text>}
     </View>

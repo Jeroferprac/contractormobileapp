@@ -60,7 +60,7 @@ const WarehouseCard: React.FC<WarehouseCardProps> = ({ warehouse, onPress, isLoa
       Animated.timing(animatedScale, {
         toValue: 1.03,
         duration: 150,
-        useNativeDriver: true,
+        useNativeDriver: false,
       }),
       Animated.timing(animatedShadowOpacity, {
         toValue: 0.4,
@@ -76,7 +76,7 @@ const WarehouseCard: React.FC<WarehouseCardProps> = ({ warehouse, onPress, isLoa
       Animated.timing(animatedScale, {
         toValue: 1,
         duration: 150,
-        useNativeDriver: true,
+        useNativeDriver: false,
       }),
       Animated.timing(animatedShadowOpacity, {
         toValue: 0.15,

@@ -19,6 +19,7 @@ import { SPACING, BORDER_RADIUS, SHADOWS } from '../../../../constants/spacing';
 import { TYPOGRAPHY } from '../../../../constants/typography';
 import { inventoryApiService } from '../../../../api/inventoryApi';
 import { InventorySummary, Transfer, Stock, Warehouse } from '../../../../types/inventory';
+import LoadingSkeleton from '../../../../components/ui/LoadingSkeleton';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
@@ -50,24 +51,24 @@ const StatsCard: React.FC<StatsCardProps> = ({ title, value, subtitle, icon, pro
 
   useEffect(() => {
     if (!isLoading) {
-      Animated.parallel([
-        Animated.timing(animatedValue, {
-          toValue: progress,
-          duration: 2000,
-          useNativeDriver: false,
+      // Run animations separately to avoid useNativeDriver conflicts
+      Animated.timing(animatedValue, {
+        toValue: progress,
+        duration: 2000,
+        useNativeDriver: false,
+      }).start();
+
+      Animated.sequence([
+        Animated.timing(scaleValue, {
+          toValue: 1.05,
+          duration: 200,
+          useNativeDriver: true,
         }),
-        Animated.sequence([
-          Animated.timing(scaleValue, {
-            toValue: 1.05,
-            duration: 200,
-            useNativeDriver: true,
-          }),
-          Animated.timing(scaleValue, {
-            toValue: 1,
-            duration: 200,
-            useNativeDriver: true,
-          }),
-        ]),
+        Animated.timing(scaleValue, {
+          toValue: 1,
+          duration: 200,
+          useNativeDriver: true,
+        }),
       ]).start();
     }
   }, [progress, isLoading]);
@@ -365,14 +366,39 @@ const AnalyticsCharts: React.FC<AnalyticsChartsProps> = ({ navigation }) => {
     return (
       <SafeAreaView style={styles.container}>
         <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
-        <View style={styles.loadingContainer}>
-          <View style={styles.loadingCard}>
-            <View style={styles.loadingSkeleton} />
-            <View style={styles.loadingSkeleton} />
-            <View style={styles.loadingSkeleton} />
-            <View style={styles.loadingSkeleton} />
+        
+        <ScrollView 
+          style={styles.scrollView} 
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.scrollContent}
+        >
+          {/* Stats Cards Skeleton */}
+          <View style={styles.statsContainer}>
+            {[...Array(4)].map((_, i) => (
+              <View key={i} style={styles.statsCard}>
+                <LoadingSkeleton width="100%" height={120} borderRadius={BORDER_RADIUS.lg} />
+              </View>
+            ))}
           </View>
-        </View>
+
+          {/* Chart Skeleton */}
+          <View style={styles.chartContainer}>
+            <View style={styles.chartHeader}>
+              <LoadingSkeleton width={120} height={20} borderRadius={BORDER_RADIUS.sm} />
+              <LoadingSkeleton width={80} height={32} borderRadius={BORDER_RADIUS.md} />
+            </View>
+            <LoadingSkeleton width="100%" height={200} borderRadius={BORDER_RADIUS.lg} />
+          </View>
+
+          {/* Additional Chart Skeleton */}
+          <View style={styles.chartContainer}>
+            <View style={styles.chartHeader}>
+              <LoadingSkeleton width={120} height={20} borderRadius={BORDER_RADIUS.sm} />
+              <LoadingSkeleton width={80} height={32} borderRadius={BORDER_RADIUS.md} />
+            </View>
+            <LoadingSkeleton width="100%" height={200} borderRadius={BORDER_RADIUS.lg} />
+          </View>
+        </ScrollView>
       </SafeAreaView>
     );
   }
@@ -714,22 +740,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.lg,
     paddingBottom: SPACING.xl,
   },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: SPACING.lg,
-  },
-  loadingCard: {
-    width: '100%',
-    maxWidth: 400,
-  },
-  loadingSkeleton: {
-    height: 80,
-    backgroundColor: '#F3F4F6',
-    borderRadius: BORDER_RADIUS.lg,
-    marginBottom: SPACING.md,
-  },
+  // Skeleton Styles
   statsContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',

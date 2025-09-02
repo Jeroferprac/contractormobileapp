@@ -26,13 +26,14 @@ import {
   ServiceGrid,
   ProfessionalCard,
   ProjectCard,
+  PriceListCard,
 } from '../../components/home';
 
 // Layout Components
 import { SectionHeader } from '../../components/layout';
 
 // Mock Data
-import { mockServices, mockProjects, mockProfessionals, mockDiscounts, mockFilters, mockBeforeAfterProject, mockReviews } from '../../data/mockData';
+import { mockServices, mockProjects, mockProfessionals, mockDiscounts, mockFilters, mockBeforeAfterProject, mockReviews, mockPriceLists } from '../../data/mockData';
 
 interface HomeScreenProps {
   navigation: HomeScreenNavigationProp;
@@ -68,6 +69,11 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
     console.log('Professional pressed:', professional.name);
   };
 
+  const handlePriceListPress = (priceList: any) => {
+    console.log('Price List pressed:', priceList.name);
+    navigation.navigate('PriceLists');
+  };
+
   const handleLogout = async () => {
     console.log('Logout button pressed');
     Alert.alert(
@@ -96,7 +102,6 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
   const mockProfessionalsSafe = mockProfessionals || [];
   const contractors = mockProfessionalsSafe.filter(p => p.type === 'contractor');
   const consultants = mockProfessionalsSafe.filter(p => p.type === 'consultant');
-  const suppliers = mockProfessionalsSafe.filter(p => p.type === 'supplier');
   const freelancers = mockProfessionals.filter(p => p.type === 'freelancer');
   const workshops = mockProfessionals.filter(p => p.type === 'workshop');
 
@@ -139,6 +144,10 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
             filters={activeFilters}
             selectedFilters={selectedFilters}
             onFilterChange={handleFilterChange}
+
+            onRemoveFilter={handleRemoveFilter}
+            style={styles.filterChips}
+
           />
         )}
 
@@ -305,26 +314,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
             </View>
           </View>
 
-          {/* Suppliers */}
-          <View style={styles.professionalSection}>
-            <SectionHeader
-              title="Suppliers"
-              subtitle="Quality building materials and equipments"
-              onViewAllPress={() => console.log('View all suppliers')}
-            />
-            <View
-              style={[styles.horizontalScrollContent, { width: '100%' }]}
-            >
-              {suppliers.map((professional) => (
-                <ProfessionalCard
-                  key={professional.id}
-                  professional={professional}
-                  onPress={() => handleProfessionalPress(professional)}
-                  style={styles.professionalCard}
-                />
-              ))}
-            </View>
-          </View>
+          
 
           {/* Freelancers */}
           <View style={styles.professionalSection}>
@@ -368,6 +358,25 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
             </View>
           </View>
         </View>
+
+        {/* Price Lists Section */}
+        <View style={styles.section}>
+          <SectionHeader
+            title="Price Lists"
+            subtitle="Manage and view your pricing strategies for different customer segments."
+            onViewAllPress={() => navigation.navigate('PriceLists')}
+          />
+          <View style={styles.horizontalScrollContent}>
+            {mockPriceLists.map((priceList) => (
+              <PriceListCard
+                key={priceList.id}
+                priceList={priceList}
+                onPress={() => handlePriceListPress(priceList)}
+                style={styles.priceListCard}
+              />
+            ))}
+          </View>
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -401,6 +410,9 @@ const styles = StyleSheet.create({
     marginRight: SPACING.md,
   },
   professionalCard: {
+    marginRight: SPACING.md,
+  },
+  priceListCard: {
     marginRight: SPACING.md,
   },
   professionalSection: {

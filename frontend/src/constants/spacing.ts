@@ -15,7 +15,8 @@ export const BORDER_RADIUS = {
   lg: 16,
   xl: 20,
   xxl: 24,
-  round: 50
+  round: 50,
+  full: 9999
 };
 
 export const SHADOWS = {
@@ -39,6 +40,20 @@ export const SHADOWS = {
     shadowOpacity: 0.15,
     shadowRadius: 8,
     elevation: 5,
+  },
+  small: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  medium: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   }
 };
 

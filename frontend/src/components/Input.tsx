@@ -26,6 +26,7 @@ export interface InputProps extends TextInputProps {
   inputStyle?: TextStyle;
   labelStyle?: TextStyle;
   errorStyle?: TextStyle;
+  maxLength?: number;
 }
 
 export const Input: React.FC<InputProps> = ({
@@ -40,6 +41,7 @@ export const Input: React.FC<InputProps> = ({
   inputStyle,
   autoCapitalize = 'none',
   autoCorrect = false,
+  ...restProps
 }) => {
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
 
@@ -61,6 +63,7 @@ export const Input: React.FC<InputProps> = ({
           keyboardType={keyboardType}
           autoCapitalize={autoCapitalize}
           autoCorrect={autoCorrect}
+          {...restProps}
         />
         {secureTextEntry && (
           <TouchableOpacity

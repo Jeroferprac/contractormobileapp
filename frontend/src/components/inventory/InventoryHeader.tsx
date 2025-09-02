@@ -53,6 +53,7 @@ const InventoryHeader: React.FC<InventoryHeaderProps> = ({
             <Icon name="camera" size={20} color={COLORS.text.light} />
           </TouchableOpacity>
         )} */}
+
         <TouchableOpacity 
           onPress={onSettingsPress} 
           style={styles.iconButton}

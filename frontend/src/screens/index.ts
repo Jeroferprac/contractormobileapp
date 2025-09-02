@@ -9,6 +9,7 @@ export { AffiliateRegistrationScreen } from './AffiliateRegistrationScreen';
 export { default as AllTransfersScreen } from './AllTransfersScreen/AllTransfersScreen';
 export { default as LowStockInventoryScreen } from './LowStockInventoryScreen/LowStockInventoryScreen';
 export { default as WarehouseReportsScreen } from './WarehouseReportsScreen';
-export { default as AllWarehouseScreen } from './AllWarehouseScreen';
-export { default as BinManagementScreen } from './BinManagementScreen'; 
+export { default as PurchaseOrdersScreen } from './PurchaseOrdersScreen';
+export { default as PurchaseOrderDetailsScreen } from './PurchaseOrderDetails';
+export { default as PurchaseOrderFormScreen } from './PurchaseOrderForm'; 
 

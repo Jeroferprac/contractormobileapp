@@ -1,5 +1,6 @@
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
+import { Supplier } from './inventory';
 
 export type MainTabParamList = {
   Home: undefined;
@@ -21,8 +22,16 @@ export type RootStackParamList = {
   LowStockInventory: undefined;
   Warehouse: undefined;
   WarehouseReports: undefined;
-  AllWarehouses: undefined;
-  BinManagement: undefined;
+  Suppliers: undefined;
+  SupplierDetails: { supplierId: string };
+  SupplierForm: { supplier?: Supplier };
+  ProductSuppliers: undefined;
+  ProductSupplierForm: { productSupplier?: any };
+  PurchaseOrders: undefined;
+  PurchaseOrderDetails: { orderId: string };
+  PurchaseOrderForm: { order?: any; isEditing: boolean };
+  InventoryReports: undefined;
+  ProfileEdit: undefined;
 };
 export type LoginScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Login'>;
 export type SignupScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Signup'>;
@@ -32,4 +41,11 @@ export type InventoryScreenNavigationProp = NativeStackNavigationProp<RootStackP
 export type AllProductsScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'AllProducts'>;
 export type AllTransfersScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'AllTransfers'>;
 export type LowStockInventoryScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'LowStockInventory'>;
-export type AllWarehousesScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'AllWarehouses'>;
+export type SuppliersScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Suppliers' | 'SupplierDetails' | 'SupplierForm' | 'ProductSuppliers' | 'ProductSupplierForm' | 'PurchaseOrders' | 'PurchaseOrderDetails' | 'PurchaseOrderForm'>;
+export type SupplierDetailsScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'SupplierDetails' | 'SupplierForm'>;
+export type SupplierFormScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'SupplierForm' | 'Suppliers'>;
+export type ProductSuppliersScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'ProductSuppliers' | 'ProductSupplierForm'>;
+export type ProductSupplierFormScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'ProductSupplierForm' | 'ProductSuppliers'>;
+export type PurchaseOrdersScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'PurchaseOrders' | 'PurchaseOrderDetails' | 'PurchaseOrderForm'>;
+export type PurchaseOrderDetailsScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'PurchaseOrderDetails' | 'PurchaseOrderForm'>;
+export type PurchaseOrderFormScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'PurchaseOrderForm' | 'PurchaseOrders'>;

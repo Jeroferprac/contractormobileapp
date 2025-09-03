@@ -171,7 +171,7 @@ const StockReportCard: React.FC<StockReportCardProps> = ({
                     strokeWidth={6}
                     progress={Math.min(stockUtilization, 100)}
                     color={stockStatus.color}
-                    backgroundColor={COLORS.border.light}
+
                   />
                   <Text style={styles.statValue}>{Math.round(stockUtilization)}%</Text>
                   <Text style={styles.statLabel}>Utilization</Text>

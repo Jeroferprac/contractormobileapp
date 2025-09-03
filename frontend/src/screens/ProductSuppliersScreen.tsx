@@ -186,7 +186,7 @@ const ProductSuppliersScreen: React.FC<ProductSuppliersScreenProps> = ({ navigat
   };
 
   const handleEditProductSupplier = (productSupplier: ProductSupplier) => {
-    navigation.navigate('ProductSupplierForm', { productSupplier, isEditing: true });
+            navigation.navigate('ProductSupplierFormScreen', { productSupplier, isEditing: true });
   };
 
   const handleDeleteProductSupplier = (productSupplier: ProductSupplier) => {
@@ -213,7 +213,7 @@ const ProductSuppliersScreen: React.FC<ProductSuppliersScreenProps> = ({ navigat
   };
 
   const handleAddProductSupplier = () => {
-    navigation.navigate('ProductSupplierForm', { isEditing: false });
+            navigation.navigate('ProductSupplierFormScreen', { isEditing: false });
   };
 
   const renderProductSupplierItem = ({ item, index }: { item: ProductSupplier; index: number }) => {

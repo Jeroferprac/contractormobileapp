@@ -814,7 +814,7 @@ const AllWarehouseScreen: React.FC<AllWarehouseScreenProps> = ({ navigation, rou
       <FilterModal
         visible={showFilterModal}
         onClose={() => setShowFilterModal(false)}
-        onApply={handleFilterApply}
+        onApply={() => handleFilterApply(filterOptions)}
         onClear={handleFilterReset}
         filterStatus={filterOptions.status}
         setFilterStatus={(status) => setFilterOptions(prev => ({ ...prev, status }))}

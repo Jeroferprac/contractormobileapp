@@ -41,69 +41,66 @@ const StatsCard: React.FC<StatsCardProps> = ({
     }
   };
 
-
-
-    return (
+  return (
     <TouchableOpacity
       style={styles.wrapper}
       activeOpacity={0.9}
       onPress={onPress}
     >
-        {/* Card Background with Enhanced Gradient */}
-        <LinearGradient
-          colors={['#FFFFFF', '#FAFAFA', '#F5F5F5']}
-          style={styles.container}
-        >
+      {/* Card Background with Enhanced Gradient */}
+      <LinearGradient
+        colors={['#FFFFFF', '#FAFAFA', '#F5F5F5']}
+        style={styles.container}
+      >
         {/* Icon Circle with Enhanced Gradient Glow */}
-                 <LinearGradient
-           colors={getGradientColors()}
-           style={styles.iconContainer}
-           start={{ x: 2, y: 0 }}
-           end={{ x: 1, y: 1 }}
-         >
-                      <Icon name={icon as any} size={16} color={COLORS.text.light} />
-         </LinearGradient>
+        <LinearGradient
+          colors={getGradientColors()}
+          style={styles.iconContainer}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+        >
+          <Icon name={icon as any} size={16} color={COLORS.text.light} />
+        </LinearGradient>
 
         {/* Text Content */}
-                 <View style={styles.content}>
-           <Text style={styles.title} numberOfLines={2}>{title}</Text>
-           <Text style={styles.value} numberOfLines={1}>{value}</Text>
+        <View style={styles.content}>
+          <Text style={styles.title} numberOfLines={2}>{title}</Text>
+          <Text style={styles.value} numberOfLines={1}>{value}</Text>
 
           {trend && trendValue && (
             <View style={styles.trendContainer}>
-                                             <Icon
-                  name={trend === 'up' ? 'trending-up' : 'trending-down'}
-                  size={14}
-                  color={trend === 'up' ? COLORS.status.success : COLORS.status.error}
-                />
-                                                                            <Text
-                   style={[
-                     styles.trendText,
-                     { color: trend === 'up' ? COLORS.status.success : COLORS.status.error }
-                   ]}
-                   numberOfLines={1}
-                 >
-                   {trendValue}
-                 </Text>
+              <Icon
+                name={trend === 'up' ? 'trending-up' : 'trending-down'}
+                size={14}
+                color={trend === 'up' ? COLORS.status.success : COLORS.status.error}
+              />
+              <Text
+                style={[
+                  styles.trendText,
+                  { color: trend === 'up' ? COLORS.status.success : COLORS.status.error }
+                ]}
+                numberOfLines={1}
+              >
+                {trendValue}
+              </Text>
             </View>
           )}
         </View>
 
-                 {/* Subtle Overlay for Depth */}
-         <View style={styles.overlay} />
-       </LinearGradient>
-     </TouchableOpacity>
-   );
+        {/* Subtle Overlay for Depth */}
+        <View style={styles.overlay} />
+      </LinearGradient>
+    </TouchableOpacity>
+  );
 };
 
 const styles = StyleSheet.create({
   wrapper: {
-    borderRadius: BORDER_RADIUS.xl,
+    borderRadius: BORDER_RADIUS.lg,
     overflow: 'hidden',
-    height: 120,
+    height: 100,
     flex: 1,
-    marginHorizontal: 2,
-    ...SHADOWS.lg,
+    ...SHADOWS.md,
   },
   container: {
     padding: SPACING.sm,
@@ -125,11 +122,9 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    justifyContent: 'space-between',
+    justifyContent: 'center',
     width: '100%',
     alignItems: 'center',
-    paddingTop: SPACING.xs,
-    paddingBottom: SPACING.xs,
   },
   title: {
     fontSize: TYPOGRAPHY.sizes.sm,
@@ -137,32 +132,26 @@ const styles = StyleSheet.create({
     color: COLORS.text.secondary,
     marginBottom: 4,
     textAlign: 'center',
-    flexShrink: 1,
-    numberOfLines: 2,
+    lineHeight: 16,
   },
   value: {
     fontSize: TYPOGRAPHY.sizes.lg,
     fontWeight: TYPOGRAPHY.weights.bold,
     color: COLORS.text.primary,
-    marginBottom: 4,
+    marginBottom: 2,
     textAlign: 'center',
-    flexShrink: 1,
-    numberOfLines: 1,
+    lineHeight: 20,
   },
   trendContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 2,
     justifyContent: 'center',
-    flexShrink: 1,
   },
   trendText: {
-    fontSize: TYPOGRAPHY.sizes.sm,
+    fontSize: TYPOGRAPHY.sizes.xs,
     fontWeight: TYPOGRAPHY.weights.semibold,
     marginLeft: 4,
     textAlign: 'center',
-    flexShrink: 1,
-    numberOfLines: 1,
   },
   overlay: {
     position: 'absolute',

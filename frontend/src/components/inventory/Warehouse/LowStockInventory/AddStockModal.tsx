@@ -92,13 +92,13 @@ const AddStockModal: React.FC<AddStockModalProps> = ({
 
       if (mode === 'add') {
         // Add to existing stock
-        const newQuantity = selectedStock.quantity + quantity;
+        const newQuantity = parseFloat(selectedStock.quantity.toString()) + quantity;
         await inventoryApiService.updateStock(selectedStock.id, {
           product_id: selectedProduct.id,
           warehouse_id: selectedWarehouse.id,
           quantity: newQuantity,
-          reserved_quantity: selectedStock.reserved_quantity,
-          available_quantity: newQuantity - selectedStock.reserved_quantity,
+          reserved_quantity: parseFloat(selectedStock.reserved_quantity.toString()),
+          available_quantity: newQuantity - parseFloat(selectedStock.reserved_quantity.toString()),
           bin_location: form.bin_location || selectedStock.bin_location,
         });
         Alert.alert('Success', `Added ${quantity} items to stock`);

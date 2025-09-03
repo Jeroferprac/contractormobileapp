@@ -1326,13 +1326,13 @@ const InventoryReportsScreen: React.FC<InventoryReportsScreenProps> = ({ navigat
           onPress: () => {
             switch (title) {
               case 'Total Products':
-                navigation.navigate('AllProductsScreen' as any);
+                navigation.navigate('AllProducts' as any);
                 break;
               case 'Low Stock':
-                navigation.navigate('LowStockInventoryScreen' as any);
+                navigation.navigate('LowStockInventory' as any);
                 break;
               case 'Warehouses':
-                navigation.navigate('WarehouseScreen' as any);
+                navigation.navigate('Warehouse' as any);
                 break;
               case 'Stock Value':
                 // Show detailed stock value breakdown
@@ -1361,7 +1361,7 @@ const InventoryReportsScreen: React.FC<InventoryReportsScreenProps> = ({ navigat
           text: 'View Items', 
           onPress: () => {
             if (type === 'Low Stock') {
-              navigation.navigate('LowStockInventoryScreen' as any);
+              navigation.navigate('LowStockInventory' as any);
             } else if (type === 'Out of Stock') {
               // Show out of stock items
               const outOfStockItems = products.filter(p => Number(p.current_stock) === 0);
@@ -1455,7 +1455,7 @@ const InventoryReportsScreen: React.FC<InventoryReportsScreenProps> = ({ navigat
           text: 'Continue', 
           onPress: () => {
             // Navigate to purchase order form
-            navigation.navigate('PurchaseOrderForm' as any);
+                            navigation.navigate('PurchaseOrderFormScreen' as any);
           }
         }
       ]
@@ -1472,7 +1472,7 @@ const InventoryReportsScreen: React.FC<InventoryReportsScreenProps> = ({ navigat
           text: 'Continue', 
           onPress: () => {
             // Navigate to stock transfer screen
-            navigation.navigate('AllTransfersScreen' as any);
+                            navigation.navigate('AllTransfers' as any);
           }
         }
       ]
@@ -1489,7 +1489,7 @@ const InventoryReportsScreen: React.FC<InventoryReportsScreenProps> = ({ navigat
           text: 'Continue', 
           onPress: () => {
             // Navigate to settings screen
-            navigation.navigate('ProfileScreen' as any);
+                            navigation.navigate('MainTabs' as any);
           }
         }
       ]

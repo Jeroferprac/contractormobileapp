@@ -70,9 +70,7 @@ const LowStockStories: React.FC<LowStockStoriesProps> = ({ items, onItemPress })
         horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
-        decelerationRate="fast"
-        snapToInterval={STORY_SIZE + STORY_SPACING}
-        snapToAlignment="start"
+
       >
         {items.map((item, index) => (
           <TouchableOpacity

@@ -111,15 +111,15 @@ const PurchaseOrdersScreen: React.FC<PurchaseOrdersScreenProps> = ({ navigation 
   };
 
   const handlePurchaseOrderPress = (order: PurchaseOrder) => {
-    navigation.navigate('PurchaseOrderDetails', { orderId: order.id });
+            navigation.navigate('PurchaseOrderDetailsScreen', { orderId: order.id });
   };
 
   const handleEditPurchaseOrder = (order: PurchaseOrder) => {
-    navigation.navigate('PurchaseOrderForm', { order, isEditing: true });
+            navigation.navigate('PurchaseOrderFormScreen', { order, isEditing: true });
   };
 
   const handleAddPurchaseOrder = () => {
-    navigation.navigate('PurchaseOrderForm', { isEditing: false });
+            navigation.navigate('PurchaseOrderFormScreen', { isEditing: false });
   };
 
 

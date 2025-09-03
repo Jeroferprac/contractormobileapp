@@ -101,7 +101,7 @@ const PurchaseOrderDetails: React.FC<PurchaseOrderDetailsProps> = ({ navigation,
 
   const handleEdit = () => {
     if (order) {
-      navigation.navigate('PurchaseOrderForm', { order, isEditing: true });
+              navigation.navigate('PurchaseOrderFormScreen', { order, isEditing: true });
     }
   };
 
@@ -452,14 +452,14 @@ const PurchaseOrderDetails: React.FC<PurchaseOrderDetailsProps> = ({ navigation,
             title="Edit Purchase Order"
             onPress={handleEdit}
             style={styles.editButton}
-            icon="edit"
+
           />
           
           <Button
             title="Delete Purchase Order"
             onPress={handleDelete}
             style={styles.deleteButton}
-            icon="delete"
+
             variant="outline"
           />
         </View>

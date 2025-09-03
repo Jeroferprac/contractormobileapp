@@ -4,4 +4,5 @@ export { default as ServiceGrid } from './ServiceGrid';
 export { default as DiscountBanner } from './DiscountBanner';
 export { default as ProjectCard } from './ProjectCard';
 export { default as ProfessionalCard } from './ProfessionalCard';
-export { default as PriceListCard } from './PriceListCard'; 
+export { default as PriceListCard } from './PriceListCard';
+export { default as BatchCard } from './BatchCard'; 

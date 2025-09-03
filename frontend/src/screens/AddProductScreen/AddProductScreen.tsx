@@ -10,11 +10,11 @@ import {
   Alert,
   TextInput,
   Platform,
-  Switch,
+
   Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import Animated, { useSharedValue, withSpring } from 'react-native-reanimated';
+import { Animated } from 'react-native';
 import Icon from 'react-native-vector-icons/Feather';
 import LinearGradient from 'react-native-linear-gradient';
 import { COLORS } from '../../constants/colors';
@@ -84,10 +84,10 @@ const AddProductScreen: React.FC<AddProductScreenProps> = ({ navigation, route }
 
   const [saving, setSaving] = useState(false);
   const [successVisible, setSuccessVisible] = useState(false);
-  const successScale = useSharedValue(0);
+  const successScale = useRef(new Animated.Value(0)).current;
 
   const [failureVisible, setFailureVisible] = useState(false);
-  const failureScale = useSharedValue(0);
+  const failureScale = useRef(new Animated.Value(0)).current;
 
   const handleChange = (key: string, value: any) => {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -103,19 +103,21 @@ const AddProductScreen: React.FC<AddProductScreenProps> = ({ navigation, route }
       }
       setSaving(false);
       setSuccessVisible(true);
-      successScale.value = 0;
-      successScale.value = withSpring(1, {
-        damping: 6,
-        stiffness: 80,
-      });
+      successScale.setValue(0);
+      Animated.timing(successScale, {
+        toValue: 1,
+        duration: 300,
+        useNativeDriver: true,
+      }).start();
     } catch (error) {
       setSaving(false);
       setFailureVisible(true);
-      failureScale.value = 0;
-      failureScale.value = withSpring(1, {
-        damping: 6,
-        stiffness: 80,
-      });
+      failureScale.setValue(0);
+      Animated.timing(failureScale, {
+        toValue: 1,
+        duration: 300,
+        useNativeDriver: true,
+      }).start();
     }
   };
 
@@ -337,42 +339,70 @@ const AddProductScreen: React.FC<AddProductScreenProps> = ({ navigation, route }
             <View style={styles.switchGridRow}>
               <View style={styles.switchItem}>
                 <Text style={styles.switchLabel}>Active</Text>
-                <Switch 
-                  value={form.is_active} 
-                  onValueChange={(v) => handleChange('is_active', v)}
-                  trackColor={{ false: '#E5E7EB', true: '#FF6B35' }}
-                  thumbColor={form.is_active ? '#fff' : '#f4f3f4'}
-                />
+                <TouchableOpacity
+                  style={[
+                    styles.customSwitch,
+                    { backgroundColor: form.is_active ? '#FF6B35' : '#E5E7EB' }
+                  ]}
+                  onPress={() => handleChange('is_active', !form.is_active)}
+                  activeOpacity={0.7}
+                >
+                  <View style={[
+                    styles.switchThumb,
+                    { transform: [{ translateX: form.is_active ? 20 : 0 }] }
+                  ]} />
+                </TouchableOpacity>
               </View>
               <View style={styles.switchItem}>
                 <Text style={styles.switchLabel}>Track Serial</Text>
-                <Switch 
-                  value={form.track_serial} 
-                  onValueChange={(v) => handleChange('track_serial', v)}
-                  trackColor={{ false: '#E5E7EB', true: '#FF6B35' }}
-                  thumbColor={form.track_serial ? '#fff' : '#f4f3f4'}
-                />
+                <TouchableOpacity
+                  style={[
+                    styles.customSwitch,
+                    { backgroundColor: form.track_serial ? '#FF6B35' : '#E5E7EB' }
+                  ]}
+                  onPress={() => handleChange('track_serial', !form.track_serial)}
+                  activeOpacity={0.7}
+                >
+                  <View style={[
+                    styles.switchThumb,
+                    { transform: [{ translateX: form.track_serial ? 20 : 0 }] }
+                  ]} />
+                </TouchableOpacity>
               </View>
             </View>
             
             <View style={styles.switchGridRow}>
               <View style={styles.switchItem}>
                 <Text style={styles.switchLabel}>Track Batch</Text>
-                <Switch 
-                  value={form.track_batch} 
-                  onValueChange={(v) => handleChange('track_batch', v)}
-                  trackColor={{ false: '#E5E7EB', true: '#FF6B35' }}
-                  thumbColor={form.track_batch ? '#fff' : '#f4f3f4'}
-                />
+                <TouchableOpacity
+                  style={[
+                    styles.customSwitch,
+                    { backgroundColor: form.track_batch ? '#FF6B35' : '#E5E7EB' }
+                  ]}
+                  onPress={() => handleChange('track_batch', !form.track_batch)}
+                  activeOpacity={0.7}
+                >
+                  <View style={[
+                    styles.switchThumb,
+                    { transform: [{ translateX: form.track_batch ? 20 : 0 }] }
+                  ]} />
+                </TouchableOpacity>
               </View>
               <View style={styles.switchItem}>
                 <Text style={styles.switchLabel}>Composite</Text>
-                <Switch 
-                  value={form.is_composite} 
-                  onValueChange={(v) => handleChange('is_composite', v)}
-                  trackColor={{ false: '#E5E7EB', true: '#FF6B35' }}
-                  thumbColor={form.is_composite ? '#fff' : '#f4f3f4'}
-                />
+                <TouchableOpacity
+                  style={[
+                    styles.customSwitch,
+                    { backgroundColor: form.is_composite ? '#FF6B35' : '#E5E7EB' }
+                  ]}
+                  onPress={() => handleChange('is_composite', !form.is_composite)}
+                  activeOpacity={0.7}
+                >
+                  <View style={[
+                    styles.switchThumb,
+                    { transform: [{ translateX: form.is_composite ? 20 : 0 }] }
+                  ]} />
+                </TouchableOpacity>
               </View>
             </View>
           </View>
@@ -742,6 +772,24 @@ const styles = StyleSheet.create({
     color: COLORS.text.light,
     fontSize: 16,
     fontWeight: '600',
+  },
+  customSwitch: {
+    width: 44,
+    height: 24,
+    borderRadius: 12,
+    padding: 2,
+    justifyContent: 'center',
+  },
+  switchThumb: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: '#fff',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+    elevation: 2,
   },
 });
 

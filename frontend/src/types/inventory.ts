@@ -458,6 +458,63 @@ export interface StockAdjustmentRequest {
   notes?: string;
 }
 
+// ===== BARCODE TYPES =====
+
+export interface BarcodeGenerateRequest {
+  product_id: string;
+  barcode_type?: string;
+}
+
+export interface BarcodeScanRequest {
+  barcode: string;
+  warehouse_id?: string;
+}
+
+// ===== PROFIT/LOSS TYPES =====
+
+export interface ProfitLossAnalysis {
+  total_revenue: number;
+  total_cost: number;
+  gross_profit: number;
+  gross_profit_margin: number;
+  net_profit: number;
+  net_profit_margin: number;
+  period: {
+    start_date: string;
+    end_date: string;
+  };
+  breakdown: {
+    sales: number;
+    purchases: number;
+    expenses: number;
+    adjustments: number;
+  };
+}
+
+export interface CustomerProfitLoss {
+  customer_id: string;
+  customer_name: string;
+  total_sales: number;
+  total_revenue: number;
+  total_cost: number;
+  gross_profit: number;
+  gross_profit_margin: number;
+  order_count: number;
+  average_order_value: number;
+}
+
+export interface ProductProfitLoss {
+  product_id: string;
+  product_name: string;
+  total_sold: number;
+  total_revenue: number;
+  total_cost: number;
+  gross_profit: number;
+  gross_profit_margin: number;
+  average_selling_price: number;
+  average_cost_price: number;
+}
+
 // ===== API RESPONSE TYPES =====
 
 export interface InventoryResponse<T> {

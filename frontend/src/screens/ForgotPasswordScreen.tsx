@@ -99,7 +99,7 @@ const ForgotPasswordScreen: React.FC<ForgotPasswordScreenProps> = ({ navigation 
         [
           {
             text: 'Go to Home',
-            onPress: () => navigation.navigate('Home')
+            onPress: () => navigation.navigate('MainTabs')
           }
         ]
       );

@@ -140,7 +140,7 @@ const StockReportCard: React.FC<StockReportCardProps> = ({
               <View style={styles.detailsGrid}>
                 <View style={styles.detailItem}>
                   <Text style={styles.detailLabel}>Category</Text>
-                  <Text style={styles.detailValue}>{product?.category || 'N/A'}</Text>
+                  <Text style={styles.detailValue}>{product?.category_name || 'N/A'}</Text>
                 </View>
                 <View style={styles.detailItem}>
                   <Text style={styles.detailLabel}>Last Updated</Text>

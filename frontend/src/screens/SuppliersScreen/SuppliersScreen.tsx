@@ -108,11 +108,11 @@ const SuppliersScreen: React.FC<SuppliersScreenProps> = ({ navigation }) => {
   };
 
   const handleSupplierPress = (supplier: Supplier) => {
-    navigation.navigate('SupplierDetails', { supplierId: supplier.id });
+            navigation.navigate('SupplierDetailsScreen', { supplierId: supplier.id });
   };
 
   const handleEditSupplier = (supplier: Supplier) => {
-    navigation.navigate('SupplierForm', { supplier, isEditing: true });
+            navigation.navigate('SupplierFormScreen', { supplier, isEditing: true });
   };
 
   const handleDeleteSupplier = (supplier: Supplier) => {
@@ -163,7 +163,7 @@ const SuppliersScreen: React.FC<SuppliersScreenProps> = ({ navigation }) => {
   };
 
   const handleAddSupplier = () => {
-    navigation.navigate('SupplierForm', { isEditing: false });
+            navigation.navigate('SupplierFormScreen', { isEditing: false });
   };
 
   const renderSupplierItem = ({ item, index }: { item: Supplier; index: number }) => (
@@ -319,13 +319,13 @@ const SuppliersScreen: React.FC<SuppliersScreenProps> = ({ navigation }) => {
             <View style={styles.headerActions}>
               <TouchableOpacity 
                 style={styles.headerActionButton}
-                onPress={() => navigation.navigate('PurchaseOrders')}
+                onPress={() => navigation.navigate('PurchaseOrdersScreen')}
               >
                 <Icon name="receipt" size={20} color="#FFFFFF" />
               </TouchableOpacity>
               <TouchableOpacity 
                 style={styles.headerActionButton}
-                onPress={() => navigation.navigate('ProductSuppliers')}
+                onPress={() => navigation.navigate('ProductSuppliersScreen')}
               >
                 <Icon name="link" size={20} color="#FFFFFF" />
               </TouchableOpacity>
@@ -385,13 +385,13 @@ const SuppliersScreen: React.FC<SuppliersScreenProps> = ({ navigation }) => {
            <View style={styles.headerActions}>
              <TouchableOpacity 
                style={styles.headerActionButton}
-               onPress={() => navigation.navigate('PurchaseOrders')}
+               onPress={() => navigation.navigate('PurchaseOrdersScreen')}
              >
                <Icon name="receipt" size={20} color="#FFFFFF" />
              </TouchableOpacity>
              <TouchableOpacity 
                style={styles.headerActionButton}
-               onPress={() => navigation.navigate('ProductSuppliers')}
+               onPress={() => navigation.navigate('ProductSuppliersScreen')}
              >
                <Icon name="link" size={20} color="#FFFFFF" />
              </TouchableOpacity>
@@ -536,7 +536,18 @@ const SuppliersScreen: React.FC<SuppliersScreenProps> = ({ navigation }) => {
       <Sidebar
         visible={sidebarVisible}
         onClose={() => setSidebarVisible(false)}
-        onNavigate={(screen) => navigation.navigate(screen as any)}
+        currentScreen="SuppliersScreen"
+        onNavigate={(screen) => {
+          console.log('🔧 [DEBUG] SuppliersScreen: Sidebar requesting navigation to:', screen);
+          try {
+            setSidebarVisible(false);
+            navigation.navigate(screen as any);
+            console.log('✅ [DEBUG] SuppliersScreen: Navigation successful to:', screen);
+          } catch (error) {
+            console.error('❌ [DEBUG] SuppliersScreen: Navigation failed to:', screen, error);
+            Alert.alert('Navigation Error', `Unable to navigate to ${screen}. Please try again.`);
+          }
+        }}
       />
     </SafeAreaView>
   );
@@ -548,7 +559,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#F8FAFC',
   },
   headerGradient: {
-    paddingTop: SPACING.xl + 20, // Add extra padding for status bar
+    paddingTop: SPACING.lg,
     paddingBottom: SPACING.lg,
     borderBottomLeftRadius: BORDER_RADIUS.xl,
     borderBottomRightRadius: BORDER_RADIUS.xl,

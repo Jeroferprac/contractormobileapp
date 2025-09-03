@@ -760,7 +760,7 @@ const AllTransfersScreen: React.FC<AllTransfersScreenProps> = ({ navigation }) =
         onApply={handleApplyFilters}
         onClear={handleClearFilters}
         filterStatus={filterStatus}
-        setFilterStatus={setFilterStatus}
+        setFilterStatus={(status: string) => setFilterStatus(status as TransferStatus | 'all')}
         selectedWarehouse={selectedWarehouse}
         setSelectedWarehouse={setSelectedWarehouse}
         dateRange={dateRange}

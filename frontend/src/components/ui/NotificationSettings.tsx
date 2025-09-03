@@ -7,7 +7,7 @@ import {
   Alert,
   ScrollView,
 } from 'react-native';
-import { Switch } from 'react-native';
+
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { COLORS } from '../../constants/colors';
 import { SPACING } from '../../constants/spacing';
@@ -105,12 +105,19 @@ const NotificationSettings: React.FC<NotificationSettingsProps> = ({ onClose }) 
               {hasPermission ? 'Enabled' : 'Disabled'}
             </Text>
           </View>
-          <Switch
-            value={hasPermission}
-            onValueChange={handleTogglePermission}
-            trackColor={{ false: COLORS.border.light, true: COLORS.primary }}
-            thumbColor={hasPermission ? COLORS.text.light : COLORS.text.secondary}
-          />
+          <TouchableOpacity
+            style={[
+              styles.customSwitch,
+              { backgroundColor: hasPermission ? COLORS.primary : COLORS.border.light }
+            ]}
+            onPress={handleTogglePermission}
+            activeOpacity={0.7}
+          >
+            <View style={[
+              styles.switchThumb,
+              { transform: [{ translateX: hasPermission ? 20 : 0 }] }
+            ]} />
+          </TouchableOpacity>
         </View>
       </View>
 
@@ -127,12 +134,19 @@ const NotificationSettings: React.FC<NotificationSettingsProps> = ({ onClose }) 
               {isMonitoring ? 'Active' : 'Inactive'}
             </Text>
           </View>
-          <Switch
-            value={isMonitoring}
-            onValueChange={handleToggleMonitoring}
-            trackColor={{ false: COLORS.border.light, true: COLORS.primary }}
-            thumbColor={isMonitoring ? COLORS.text.light : COLORS.text.secondary}
-          />
+          <TouchableOpacity
+            style={[
+              styles.customSwitch,
+              { backgroundColor: isMonitoring ? COLORS.primary : COLORS.border.light }
+            ]}
+            onPress={handleToggleMonitoring}
+            activeOpacity={0.7}
+          >
+            <View style={[
+              styles.switchThumb,
+              { transform: [{ translateX: isMonitoring ? 20 : 0 }] }
+            ]} />
+          </TouchableOpacity>
         </View>
       </View>
 
@@ -148,12 +162,19 @@ const NotificationSettings: React.FC<NotificationSettingsProps> = ({ onClose }) 
             <Text style={styles.settingLabel}>Low Stock Alerts</Text>
             <Text style={styles.settingDescription}>When stock levels are low</Text>
           </View>
-          <Switch
-            value={preferences.lowStockEnabled}
-            onValueChange={(value) => handlePreferenceChange('lowStockEnabled', value)}
-            trackColor={{ false: COLORS.border.light, true: COLORS.primary }}
-            thumbColor={preferences.lowStockEnabled ? COLORS.text.light : COLORS.text.secondary}
-          />
+          <TouchableOpacity
+            style={[
+              styles.customSwitch,
+              { backgroundColor: preferences.lowStockEnabled ? COLORS.primary : COLORS.border.light }
+            ]}
+            onPress={() => handlePreferenceChange('lowStockEnabled', !preferences.lowStockEnabled)}
+            activeOpacity={0.7}
+          >
+            <View style={[
+              styles.switchThumb,
+              { transform: [{ translateX: preferences.lowStockEnabled ? 20 : 0 }] }
+            ]} />
+          </TouchableOpacity>
         </View>
 
         <View style={styles.settingRow}>
@@ -161,12 +182,19 @@ const NotificationSettings: React.FC<NotificationSettingsProps> = ({ onClose }) 
             <Text style={styles.settingLabel}>Out of Stock Alerts</Text>
             <Text style={styles.settingDescription}>When items are completely out</Text>
           </View>
-          <Switch
-            value={preferences.outOfStockEnabled}
-            onValueChange={(value) => handlePreferenceChange('outOfStockEnabled', value)}
-            trackColor={{ false: COLORS.border.light, true: COLORS.primary }}
-            thumbColor={preferences.outOfStockEnabled ? COLORS.text.light : COLORS.text.secondary}
-          />
+          <TouchableOpacity
+            style={[
+              styles.customSwitch,
+              { backgroundColor: preferences.outOfStockEnabled ? COLORS.primary : COLORS.border.light }
+            ]}
+            onPress={() => handlePreferenceChange('outOfStockEnabled', !preferences.outOfStockEnabled)}
+            activeOpacity={0.7}
+          >
+            <View style={[
+              styles.switchThumb,
+              { transform: [{ translateX: preferences.outOfStockEnabled ? 20 : 0 }] }
+            ]} />
+          </TouchableOpacity>
         </View>
 
         <View style={styles.settingRow}>
@@ -174,12 +202,19 @@ const NotificationSettings: React.FC<NotificationSettingsProps> = ({ onClose }) 
             <Text style={styles.settingLabel}>Transfer Notifications</Text>
             <Text style={styles.settingDescription}>When transfers are completed</Text>
           </View>
-          <Switch
-            value={preferences.transferEnabled}
-            onValueChange={(value) => handlePreferenceChange('transferEnabled', value)}
-            trackColor={{ false: COLORS.border.light, true: COLORS.primary }}
-            thumbColor={preferences.transferEnabled ? COLORS.text.light : COLORS.text.secondary}
-          />
+          <TouchableOpacity
+            style={[
+              styles.customSwitch,
+              { backgroundColor: preferences.transferEnabled ? COLORS.primary : COLORS.border.light }
+            ]}
+            onPress={() => handlePreferenceChange('transferEnabled', !preferences.transferEnabled)}
+            activeOpacity={0.7}
+          >
+            <View style={[
+              styles.switchThumb,
+              { transform: [{ translateX: preferences.transferEnabled ? 20 : 0 }] }
+            ]} />
+          </TouchableOpacity>
         </View>
       </View>
 
@@ -195,12 +230,20 @@ const NotificationSettings: React.FC<NotificationSettingsProps> = ({ onClose }) 
             <Text style={styles.settingLabel}>Sound</Text>
             <Text style={styles.settingDescription}>Play notification sounds</Text>
           </View>
-          <Switch
-            value={preferences.soundEnabled}
-            onValueChange={(value) => handlePreferenceChange('soundEnabled', value)}
-            trackColor={{ false: COLORS.border.light, true: COLORS.primary }}
-            thumbColor={preferences.soundEnabled ? COLORS.text.light : COLORS.text.secondary}
-          />
+          <TouchableOpacity
+            style={[
+              styles.customSwitch,
+              { backgroundColor: preferences.soundEnabled ? COLORS.primary : COLORS.border.light }
+            ]}
+            onPress={() => handlePreferenceChange('soundEnabled', !preferences.soundEnabled)}
+            activeOpacity={0.7}
+          >
+            <View style={[
+              styles.switchThumb,
+              { transform: [{ translateX: preferences.soundEnabled ? 20 : 0 }] }
+            ]} />
+          </TouchableOpacity>
+
         </View>
 
         <View style={styles.settingRow}>
@@ -208,12 +251,19 @@ const NotificationSettings: React.FC<NotificationSettingsProps> = ({ onClose }) 
             <Text style={styles.settingLabel}>Vibration</Text>
             <Text style={styles.settingDescription}>Vibrate on notifications</Text>
           </View>
-          <Switch
-            value={preferences.vibrationEnabled}
-            onValueChange={(value) => handlePreferenceChange('vibrationEnabled', value)}
-            trackColor={{ false: COLORS.border.light, true: COLORS.primary }}
-            thumbColor={preferences.vibrationEnabled ? COLORS.text.light : COLORS.text.secondary}
-          />
+          <TouchableOpacity
+            style={[
+              styles.customSwitch,
+              { backgroundColor: preferences.vibrationEnabled ? COLORS.primary : COLORS.border.light }
+            ]}
+            onPress={() => handlePreferenceChange('vibrationEnabled', !preferences.vibrationEnabled)}
+            activeOpacity={0.7}
+          >
+            <View style={[
+              styles.switchThumb,
+              { transform: [{ translateX: preferences.vibrationEnabled ? 20 : 0 }] }
+            ]} />
+          </TouchableOpacity>
         </View>
       </View>
 
@@ -300,6 +350,24 @@ const styles = StyleSheet.create({
     fontSize: TYPOGRAPHY.sizes.md,
     fontWeight: '600',
     marginLeft: SPACING.sm,
+  },
+  customSwitch: {
+    width: 44,
+    height: 24,
+    borderRadius: 12,
+    padding: 2,
+    justifyContent: 'center',
+  },
+  switchThumb: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: '#fff',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+    elevation: 2,
   },
 });
 

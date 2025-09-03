@@ -6,7 +6,7 @@ import {
   FlatList,
   TouchableOpacity,
 } from "react-native";
-import { LoadingSkeleton } from "../common/LoadingSkeleton";
+
 import { FadeSlideInView } from "../ui";
 import WarehouseCard from "./WarehouseCard";
 import type { Warehouse } from "../../types/inventory";

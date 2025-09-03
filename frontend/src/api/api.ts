@@ -52,6 +52,14 @@ class ApiService {
         return response;
       },
       async (error) => {
+        console.error('🌐 [ApiService] Request failed:', {
+          url: error.config?.url,
+          method: error.config?.method,
+          status: error.response?.status,
+          message: error.message,
+          code: error.code
+        });
+        
         if (error.response?.status === 401) {
           await this.clearAuthToken();
         }
@@ -220,7 +228,120 @@ class ApiService {
   async markNotificationAsRead(notificationId: string, isRead: boolean = true): Promise<AxiosResponse<Notification>> {
     return this.api.put(`/notifications/${notificationId}`, { is_read: isRead });
   }
+
+  // ===== PROFILE & COMPANY ENDPOINTS =====
+
+  async getCompanyProfile(): Promise<AxiosResponse<any>> {
+    return this.api.get('/company/profile');
+  }
+
+  async updateCompanyProfile(companyData: any): Promise<AxiosResponse<any>> {
+    return this.api.put('/company/profile', companyData);
+  }
+
+  async getCompanyProjects(): Promise<AxiosResponse<any[]>> {
+    return this.api.get('/company/projects');
+  }
+
+  async createCompanyProject(projectData: any): Promise<AxiosResponse<any>> {
+    return this.api.post('/company/projects', projectData);
+  }
+
+  async updateCompanyProject(projectId: string, projectData: any): Promise<AxiosResponse<any>> {
+    return this.api.put(`/company/projects/${projectId}`, projectData);
+  }
+
+  async deleteCompanyProject(projectId: string): Promise<AxiosResponse<void>> {
+    return this.api.delete(`/company/projects/${projectId}`);
+  }
+
+  async getCompanyReviews(): Promise<AxiosResponse<any[]>> {
+    return this.api.get('/company/reviews');
+  }
+
+  async replyToReview(reviewId: string, replyData: any): Promise<AxiosResponse<any>> {
+    return this.api.post(`/company/reviews/${reviewId}/reply`, replyData);
+  }
+
+  async getCompanyCredentials(): Promise<AxiosResponse<any[]>> {
+    return this.api.get('/company/credentials');
+  }
+
+  async addCompanyCredential(credentialData: any): Promise<AxiosResponse<any>> {
+    return this.api.post('/company/credentials', credentialData);
+  }
+
+  async updateCompanyCredential(credentialId: string, credentialData: any): Promise<AxiosResponse<any>> {
+    return this.api.put(`/company/credentials/${credentialId}`, credentialData);
+  }
+
+  async deleteCompanyCredential(credentialId: string): Promise<AxiosResponse<void>> {
+    return this.api.delete(`/company/credentials/${credentialId}`);
+  }
+
+  async getCompanyStats(): Promise<AxiosResponse<any>> {
+    return this.api.get('/company/stats');
+  }
+
+  async getCompanyAwards(): Promise<AxiosResponse<any[]>> {
+    return this.api.get('/company/awards');
+  }
+
+  async addCompanyAward(awardData: any): Promise<AxiosResponse<any>> {
+    return this.api.post('/company/awards', awardData);
+  }
+
+  async updateCompanyAward(awardId: string, awardData: any): Promise<AxiosResponse<any>> {
+    return this.api.put(`/company/awards/${awardId}`, awardData);
+  }
+
+  async deleteCompanyAward(awardId: string): Promise<AxiosResponse<void>> {
+    return this.api.delete(`/company/awards/${awardId}`);
+  }
+
+  // ===== GENERIC HTTP METHODS =====
+
+  async get<T = any>(url: string, config?: any): Promise<AxiosResponse<T>> {
+    return this.api.get(url, config);
+  }
+
+  async post<T = any>(url: string, data?: any, config?: any): Promise<AxiosResponse<T>> {
+    return this.api.post(url, data, config);
+  }
+
+  async put<T = any>(url: string, data?: any, config?: any): Promise<AxiosResponse<T>> {
+    return this.api.put(url, data, config);
+  }
+
+  async delete<T = any>(url: string, config?: any): Promise<AxiosResponse<T>> {
+    return this.api.delete(url, config);
+  }
+
+  async patch<T = any>(url: string, data?: any, config?: any): Promise<AxiosResponse<T>> {
+    return this.api.patch(url, data, config);
+  }
 }
 
 export const apiService = new ApiService();
 export default apiService; 
+
+// Price Lists API endpoints
+export const PRICE_LISTS_API = {
+  // Create Price List
+  CREATE_PRICE_LIST: '/price-lists/',
+  
+  // List Price Lists
+  GET_PRICE_LISTS: '/price-lists/',
+  
+  // Get Price List by ID
+  GET_PRICE_LIST: (id: string) => `/price-lists/${id}`,
+  
+  // Update Price List
+  UPDATE_PRICE_LIST: (id: string) => `/price-lists/${id}`,
+  
+  // Get Price List Items
+  GET_PRICE_LIST_PRODUCTS: (id: string) => `/price-lists/${id}/products`,
+  
+  // Add Price List Item
+  ADD_PRICE_LIST_ITEM: (id: string) => `/price-lists/${id}/products`,
+}; 

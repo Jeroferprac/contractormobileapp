@@ -325,10 +325,7 @@ const WarehouseDashboard: React.FC<WarehouseScreenProps> = ({ navigation }) => {
           <TransferActivityChart />
           
           {/* Stock Trend Chart */}
-          <StockTrendChart 
-            title="Stock Trend"
-            timeRange="6m"
-          />
+          <StockTrendChart />
           
           {/* Stock by Warehouse Chart */}
           <StockByWarehouseChart 

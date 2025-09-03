@@ -33,7 +33,8 @@ import {
   TopSellingList,
   RecentActivityCard,
   WarehouseList,
-  SupplierList
+  SupplierList,
+  PriceListSection
 } from '../../components/inventory';
 import { SectionHeader } from '../../components/layout';
 
@@ -88,6 +89,11 @@ const InventoryScreen: React.FC<InventoryScreenProps> = ({ navigation }) => {
     }
   }, []);
 
+  // Debug sidebar state changes
+  useEffect(() => {
+    console.log('🔧 [DEBUG] SidebarVisible state changed to:', sidebarVisible);
+  }, [sidebarVisible]);
+
   // Refresh data when screen comes into focus
   useEffect(() => {
     const unsubscribe = navigation.addListener('focus', () => {
@@ -103,6 +109,7 @@ const InventoryScreen: React.FC<InventoryScreenProps> = ({ navigation }) => {
   const loadInventoryData = async () => {
     try {
       console.log('🔄 [InventoryScreen] Starting to load inventory data...');
+      console.log('🌐 [InventoryScreen] API Base URL:', inventoryApiService['api'].defaults.baseURL);
       setLoading(true);
       
       // Add individual error handling for each API call
@@ -110,41 +117,47 @@ const InventoryScreen: React.FC<InventoryScreenProps> = ({ navigation }) => {
         summaryRes,
         topSellingRes,
         transactionsRes,
-          suppliersRes,
+        suppliersRes,
         warehouseRes,
-        monthlySalesRes,
       ] = await Promise.all([
-        inventoryApiService.getSummary().catch(() => ({ data: null })),
-        inventoryApiService.getSalesByProduct().catch(() => ({ data: [] })),
-        inventoryApiService.getTransactions({ limit: 3 }).catch(() => ({ data: [] })),
-        inventoryApiService.getWarehouses().catch(() => ({ data: [] })),
-        inventoryApiService.getMonthlySalesSummary().catch(() => ({ 
-          data: { 
-            total_sales: 0, 
-            total_revenue: 0, 
-            average_order_value: 0, 
-            top_selling_products: [], 
-            monthly_trends: [] 
-          } 
-        })),
+        inventoryApiService.getSummary().catch((error) => {
+          console.error('❌ [InventoryScreen] Summary API error:', error);
+          return { data: null };
+        }),
+        inventoryApiService.getSalesByProduct().catch((error) => {
+          console.error('❌ [InventoryScreen] Products API error:', error);
+          return { data: [] };
+        }),
+        inventoryApiService.getTransactions({ limit: 3 }).catch((error) => {
+          console.error('❌ [InventoryScreen] Transactions API error:', error);
+          return { data: [] };
+        }),
+        inventoryApiService.getSuppliers().catch((error) => {
+          console.error('❌ [InventoryScreen] Suppliers API error:', error);
+          return { data: [] };
+        }),
+        inventoryApiService.getWarehouses().catch((error) => {
+          console.error('❌ [InventoryScreen] Warehouses API error:', error);
+          return { data: [] };
+        }),
       ]);
 
       setSummary(summaryRes.data);
       setProducts(topSellingRes.data || []);
       setTransactions(transactionsRes.data || []);
+      setSuppliers(suppliersRes.data || []);
+      
+      console.log('📊 [InventoryScreen] Suppliers loaded:', suppliersRes.data?.length || 0);
 
       // Attach image URL to each warehouse
-      const updatedWarehouses = (warehouseRes.data || []).slice(0, 10).map((wh, idx) => ({
+      const warehouseData = Array.isArray(warehouseRes.data) ? warehouseRes.data : [];
+      const updatedWarehouses = warehouseData.map((wh, idx) => ({
         ...wh,
         imageUrl: `${UNSPLASH_IMAGES[idx % UNSPLASH_IMAGES.length]}&sig=${idx}`,
       }));
       setWarehouses(updatedWarehouses);
       
-      const formattedChartData = (monthlySalesRes.data?.monthly_trends || []).map((item) => ({
-        value: item.sales,
-        label: `${getMonthName(parseInt(item.month.split('-')[1]))} ${item.month.split('-')[0]}`,
-        dataPointText: `${item.sales} units`,
-      }));
+      const formattedChartData = []; // Chart data not available from current API calls
       setChartData(formattedChartData);
     } catch (error) {
       console.error('Error loading inventory data:', error);
@@ -152,8 +165,10 @@ const InventoryScreen: React.FC<InventoryScreenProps> = ({ navigation }) => {
       setSummary(null);
       setProducts([]);
       setTransactions([]);
+      setSuppliers([]);
       setWarehouses([]);
       setChartData([]);
+      console.log('❌ [InventoryScreen] Error loading data, all data reset to empty');
     } finally {
       setLoading(false);
       console.log('🏁 [InventoryScreen] Finished loading inventory data');
@@ -169,7 +184,7 @@ const InventoryScreen: React.FC<InventoryScreenProps> = ({ navigation }) => {
   };
 
   const handleSupplierPress = (supplier: Supplier) => {
-    navigation.navigate('SupplierDetails', { supplierId: supplier.id });
+            navigation.navigate('SupplierDetailsScreen', { supplierId: supplier.id });
   };
 
   if (hasError) {
@@ -240,6 +255,11 @@ const InventoryScreen: React.FC<InventoryScreenProps> = ({ navigation }) => {
             ))}
           </View>
 
+          <SectionHeader title="Suppliers" />
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.productsScrollContainer}>
+            {[...Array(4)].map((_, i) => <ProductCardSkeleton key={i} />)}
+          </ScrollView>
+
           <SectionHeader title="Recent Activity" />
           <View style={styles.activityContainer}>
             {[...Array(3)].map((_, i) => <ListItemSkeleton key={i} />)}
@@ -256,7 +276,9 @@ const InventoryScreen: React.FC<InventoryScreenProps> = ({ navigation }) => {
         <InventoryHeader
           onSidebarPress={() => {
             console.log('🔧 [DEBUG] Sidebar button pressed, setting visible to true');
+            console.log('🔧 [DEBUG] Current sidebarVisible state:', sidebarVisible);
             setSidebarVisible(true);
+            console.log('🔧 [DEBUG] SidebarVisible set to true');
           }}
           onSettingsPress={() => Alert.alert('Settings', 'Coming soon')}
           onScanPress={() => setBarcodeScannerVisible(true)}
@@ -285,14 +307,25 @@ const InventoryScreen: React.FC<InventoryScreenProps> = ({ navigation }) => {
         </View>
 
       <SectionHeader
-        title="Warehouses"
-        onViewAllPress={() => navigation.navigate('Warehouses')}
+        title={`Warehouses (${warehouses.length})`}
+        onViewAllPress={() => navigation.navigate('AllWarehouses')}
       />
       <WarehouseList 
         warehouses={warehouses} 
         loading={loading}
         onWarehousePress={(warehouse) => Alert.alert('Warehouse', `Selected: ${warehouse.name}`)}
-        onViewAll={() => navigation.navigate('Warehouses')}
+        onViewAll={() => navigation.navigate('AllWarehouses')}
+      />
+
+      <SectionHeader
+        title={`Suppliers (${suppliers.length})`}
+        onViewAllPress={() => navigation.navigate('SuppliersScreen')}
+      />
+      <SupplierList 
+        suppliers={suppliers} 
+        loading={loading}
+        onPressSupplier={handleSupplierPress}
+        onViewAll={() => navigation.navigate('SuppliersScreen')}
       />
 
         <SectionHeader title="Recent Activity" />
@@ -308,13 +341,19 @@ const InventoryScreen: React.FC<InventoryScreenProps> = ({ navigation }) => {
       <Sidebar
         visible={sidebarVisible}
         onClose={() => setSidebarVisible(false)}
+        currentScreen="MainTabs"
         onNavigate={(screen) => {
           console.log('🔧 [DEBUG] InventoryScreen: Sidebar requesting navigation to:', screen);
           try {
+            // Close sidebar first
+            setSidebarVisible(false);
+            // Navigate to the requested screen
             navigation.navigate(screen as any);
             console.log('✅ [DEBUG] InventoryScreen: Navigation successful to:', screen);
           } catch (error) {
             console.error('❌ [DEBUG] InventoryScreen: Navigation failed to:', screen, error);
+            // Show error alert to user
+            Alert.alert('Navigation Error', `Unable to navigate to ${screen}. Please try again.`);
           }
         }}
       />

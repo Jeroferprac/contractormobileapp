@@ -20,7 +20,7 @@ class ProfileService {
   async getUserProfile(): Promise<User> {
     console.log('🔍 [ProfileService] Calling getUserProfile...');
     try {
-      const response = await apiService.getUserProfile();
+      const response = await apiService.getCurrentUser();
       console.log('✅ [ProfileService] getUserProfile response:', response.data);
       return response.data;
     } catch (error) {
@@ -54,9 +54,8 @@ class ProfileService {
     }
     
     try {
-      const response = await apiService.uploadAvatar(imageData);
-      console.log('✅ [ProfileService] Avatar uploaded successfully:', response.data);
-      return response.data;
+      console.log('🔍 [ProfileService] Avatar upload not implemented in API service');
+      throw new Error('Avatar upload not implemented');
     } catch (error) {
       console.error('❌ [ProfileService] Avatar upload failed:', error);
       throw error;
@@ -66,8 +65,8 @@ class ProfileService {
   async deleteAvatar(): Promise<void> {
     console.log('🔍 [ProfileService] Calling deleteAvatar...');
     try {
-      await apiService.deleteAvatar();
-      console.log('✅ [ProfileService] Avatar deleted successfully');
+      console.log('🔍 [ProfileService] Avatar deletion not implemented in API service');
+      throw new Error('Avatar deletion not implemented');
     } catch (error) {
       console.error('❌ [ProfileService] Avatar deletion failed:', error);
       throw error;

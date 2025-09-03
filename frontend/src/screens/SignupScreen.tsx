@@ -301,7 +301,7 @@ const SignupScreen: React.FC<SignupScreenProps> = ({ navigation }) => {
         onClose={() => setShowSuccessModal(false)}
         onAction={() => {
           setShowSuccessModal(false);
-          navigation.navigate('Home');
+          navigation.navigate('MainTabs');
         }}
         actionText="Let's Go"
       />

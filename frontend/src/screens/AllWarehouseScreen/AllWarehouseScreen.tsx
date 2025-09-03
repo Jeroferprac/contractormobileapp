@@ -204,7 +204,7 @@ const AllWarehouseScreen: React.FC<AllWarehouseScreenProps> = ({ navigation }) =
     const checkScrollPosition = () => {
       // Simulate scroll position detection
       // Since we can't get scroll events, we'll use a different approach
-      const currentScrollX = scrollX._value;
+      const currentScrollX = scrollX.value;
       detectCenterCard(currentScrollX);
     };
 
@@ -214,7 +214,7 @@ const AllWarehouseScreen: React.FC<AllWarehouseScreenProps> = ({ navigation }) =
     return () => {
       clearInterval(intervalId);
     };
-  }, [currentIndex, filteredWarehouses]);
+  }, [currentIndex]);
 
   // Card dimensions for snap-to-center functionality
   const CARD_WIDTH = screenWidth * 0.8;
@@ -712,7 +712,7 @@ const AllWarehouseScreen: React.FC<AllWarehouseScreenProps> = ({ navigation }) =
       <FilterModal
         visible={showFilterModal}
         onClose={() => setShowFilterModal(false)}
-        onApply={handleFilterApply}
+        onApply={() => handleFilterApply(filterOptions)}
         onClear={handleFilterReset}
         filterStatus={filterOptions.status}
         setFilterStatus={(status) => setFilterOptions(prev => ({ ...prev, status }))}

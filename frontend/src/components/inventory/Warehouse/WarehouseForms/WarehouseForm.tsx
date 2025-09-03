@@ -8,7 +8,7 @@ import {
   ScrollView,
   Alert,
 } from 'react-native';
-import { ActivityIndicator, Switch } from 'react-native';
+import { ActivityIndicator } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { inventoryApiService } from '../../../../api/inventoryApi';
@@ -216,12 +216,19 @@ const WarehouseForm: React.FC<WarehouseFormProps> = ({
                  <Icon name="check-circle" size={20} color={COLORS.primary} />
                  <Text style={styles.switchLabel}>Active Warehouse</Text>
                </View>
-               <Switch
-                 value={formData.is_active}
-                 onValueChange={(value) => updateField('is_active', value)}
-                 trackColor={{ false: COLORS.border.light, true: COLORS.primary }}
-                 thumbColor={formData.is_active ? '#fff' : '#f4f3f4'}
-               />
+               <TouchableOpacity
+                 style={[
+                   styles.customSwitch,
+                   { backgroundColor: formData.is_active ? COLORS.primary : COLORS.border.light }
+                 ]}
+                 onPress={() => updateField('is_active', !formData.is_active)}
+                 activeOpacity={0.7}
+               >
+                 <View style={[
+                   styles.switchThumb,
+                   { transform: [{ translateX: formData.is_active ? 20 : 0 }] }
+                 ]} />
+               </TouchableOpacity>
              </View>
            </View>
 
@@ -422,6 +429,24 @@ const styles = StyleSheet.create({
   },
   buttonIcon: {
     marginRight: 8,
+  },
+  customSwitch: {
+    width: 44,
+    height: 24,
+    borderRadius: 12,
+    padding: 2,
+    justifyContent: 'center',
+  },
+  switchThumb: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: '#fff',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+    elevation: 2,
   },
 });
 

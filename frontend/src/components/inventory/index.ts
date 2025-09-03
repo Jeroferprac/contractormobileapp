@@ -7,3 +7,4 @@ export { default as WarehouseList } from './WarehouseList';
 export { default as TopSellingList} from './TopSellingList';
 export { default as SupplierCard } from './SupplierCard';
 export { default as SupplierList } from './SupplierList';
+export { default as PriceListSection } from './PriceListSection';

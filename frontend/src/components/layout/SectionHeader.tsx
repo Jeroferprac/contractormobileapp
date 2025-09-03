@@ -39,9 +39,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: SPACING.lg,
     marginBottom: SPACING.sm,
-    marginTop: SPACING.md,
+    marginTop: SPACING.sm,
   },
   titleContainer: {
     flex: 1,

@@ -12,7 +12,6 @@ interface QuickAction {
   label: string;
   colors: string[];
   onPress?: () => void;
-  testID?: string;
 }
 
 interface QuickActionsRowProps {
@@ -24,22 +23,19 @@ const defaultActions: QuickAction[] = [
     id: 1, 
     iconName: 'repeat', 
     label: 'Create Transfer', 
-    colors: ['#FF9500', '#FF5E3A'],
-    testID: 'create-transfer-btn'
+    colors: ['#FF9500', '#FF5E3A']
   },
   { 
     id: 2, 
     iconName: 'home', 
     label: 'Add Warehouse', 
-    colors: ['#FF5E3A', '#FF2A6D'],
-    testID: 'add-warehouse-btn'
+    colors: ['#FF5E3A', '#FF2A6D']
   },
   { 
     id: 3, 
     iconName: 'package', 
     label: 'Add Stock', 
-    colors: ['#4F46E5', '#7C3AED'],
-    testID: 'add-stock-btn'
+    colors: ['#4F46E5', '#7C3AED']
   },
 ];
 
@@ -53,7 +49,6 @@ const QuickActionsRow: React.FC<QuickActionsRowProps> = ({ actions = defaultActi
             onPress={action.onPress}
             style={styles.buttonWrapper}
             activeOpacity={0.7}
-            testID={action.testID}
           >
             <LinearGradient
               colors={action.colors}

@@ -6,7 +6,7 @@ import { Animated } from 'react-native';
  * @param onComplete - Optional completion callback
  */
 export const safeStartAnimation = (
-  animation: Animated.CompositeAnimation,
+  animation: any,
   onComplete?: () => void
 ) => {
   try {
@@ -22,7 +22,7 @@ export const safeStartAnimation = (
  * Safely stop an animation
  * @param animation - The animation to stop
  */
-export const safeStopAnimation = (animation: Animated.CompositeAnimation) => {
+export const safeStopAnimation = (animation: any) => {
   try {
     animation.stop();
   } catch (error) {
@@ -36,7 +36,7 @@ export const safeStopAnimation = (animation: Animated.CompositeAnimation) => {
  * @param config - Animation configuration
  */
 export const createTimingAnimation = (
-  value: Animated.Value,
+  value: any,
   config: {
     toValue: number;
     duration: number;
@@ -55,17 +55,17 @@ export const createTimingAnimation = (
  * @param iterations - Number of iterations (-1 for infinite)
  */
 export const createLoopAnimation = (
-  animation: Animated.CompositeAnimation,
+  animation: any,
   iterations: number = -1
 ) => {
-  return Animated.loop(animation, { iterations });
+  return Animated.loop(animation);
 };
 
 /**
  * Cleanup multiple animations safely
  * @param animations - Array of animations to stop
  */
-export const cleanupAnimations = (animations: Animated.CompositeAnimation[]) => {
+export const cleanupAnimations = (animations: any[]) => {
   animations.forEach(safeStopAnimation);
 };
 

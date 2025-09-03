@@ -53,7 +53,7 @@ const SupplierDetailsScreen: React.FC<SupplierDetailsScreenProps> = ({ navigatio
 
   const handleEdit = () => {
     if (supplier) {
-      navigation.navigate('SupplierForm', { supplier, isEditing: true });
+              navigation.navigate('SupplierFormScreen', { supplier, isEditing: true });
     }
   };
 

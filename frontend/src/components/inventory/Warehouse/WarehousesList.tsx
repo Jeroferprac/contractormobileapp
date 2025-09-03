@@ -107,7 +107,7 @@ const WarehousesList: React.FC<WarehousesListProps> = ({ warehouses: propWarehou
         </View>
       ) : (
         warehouses.map((warehouse) => {
-        const usagePercentage = getUsagePercentage(warehouse.used, warehouse.capacity);
+        const usagePercentage = getUsagePercentage(warehouse.used || 0, warehouse.capacity || 1);
         const usageColor = getUsageColor(usagePercentage);
         
         return (
@@ -134,7 +134,7 @@ const WarehousesList: React.FC<WarehousesListProps> = ({ warehouses: propWarehou
                   <View style={styles.capacityLabelContainer}>
                     <Text style={styles.capacityLabel}>Capacity</Text>
                     <Text style={styles.capacityValue}>
-                      {warehouse.used.toLocaleString()} / {warehouse.capacity.toLocaleString()}
+                      {(warehouse.used || 0).toLocaleString()} / {(warehouse.capacity || 0).toLocaleString()}
                     </Text>
                   </View>
                   

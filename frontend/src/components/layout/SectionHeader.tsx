@@ -10,6 +10,7 @@ interface SectionHeaderProps {
   showViewAll?: boolean;
   onViewAllPress?: () => void;
   style?: any;
+  rightContent?: React.ReactNode;
 }
 
 const SectionHeader: React.FC<SectionHeaderProps> = ({
@@ -18,6 +19,7 @@ const SectionHeader: React.FC<SectionHeaderProps> = ({
   showViewAll = true,
   onViewAllPress,
   style,
+  rightContent,
 }) => {
   return (
     <View style={[styles.container, style]}>
@@ -25,10 +27,14 @@ const SectionHeader: React.FC<SectionHeaderProps> = ({
         <Text style={styles.title}>{title}</Text>
         {subtitle && <Text style={styles.subtitle}>{subtitle}</Text>}
       </View>
-      {showViewAll && (
-        <TouchableOpacity onPress={onViewAllPress}>
-          <Text style={styles.viewAllText}>View All</Text>
-        </TouchableOpacity>
+      {rightContent ? (
+        <View style={styles.rightContainer}>{rightContent}</View>
+      ) : (
+        showViewAll && (
+          <TouchableOpacity onPress={onViewAllPress}>
+            <Text style={styles.viewAllText}>View All</Text>
+          </TouchableOpacity>
+        )
       )}
     </View>
   );
@@ -44,6 +50,11 @@ const styles = StyleSheet.create({
   },
   titleContainer: {
     flex: 1,
+  },
+  rightContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
   },
   title: {
     fontSize: TEXT_STYLES.h3.fontSize,

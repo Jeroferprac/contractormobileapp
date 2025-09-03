@@ -41,11 +41,16 @@ interface HomeScreenProps {
 
 const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
   const [activeFilters, setActiveFilters] = useState(mockFilters || []);
+  const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
   const [searchText, setSearchText] = useState('');
   const { logout } = useAuth();
 
-  const handleRemoveFilter = (filterId: string) => {
-    setActiveFilters(prev => prev.filter(f => f.id !== filterId));
+  const handleFilterChange = (filterId: string) => {
+    setSelectedFilters(prev => 
+      prev.includes(filterId) 
+        ? prev.filter(id => id !== filterId)
+        : [...prev, filterId]
+    );
   };
 
   const handleServicePress = (service: any) => {
@@ -148,8 +153,13 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
         {activeFilters.length > 0 && FilterChips && (
           <FilterChips
             filters={activeFilters}
-            selectedFilters={[]}
-            onFilterChange={() => {}}
+
+            
+            selectedFilters={selectedFilters}
+            onFilterChange={handleFilterChange}
+
+            onRemoveFilter={handleRemoveFilter}
+            style={styles.filterChips}
 
 
           />
@@ -402,9 +412,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.lg,
     marginBottom: SPACING.md,
   },
-  filterChips: {
-    marginBottom: SPACING.lg,
-  },
+
   section: {
     marginBottom: SPACING.xl,
   },

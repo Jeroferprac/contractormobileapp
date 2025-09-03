@@ -164,15 +164,14 @@ const WarehousesList: React.FC<WarehousesListProps> = ({ warehouses: propWarehou
 };
 
 const styles = StyleSheet.create({
-  scrollContent: {
-    paddingBottom: SPACING.sm,
-  },
+  // scrollContent: {
+  //   paddingBottom: SPACING.xs,
+  // },
   cardContainer: {
     width: 200,
     height: 160,
     marginRight: SPACING.sm,
     borderRadius: BORDER_RADIUS.lg,
-    overflow: 'hidden',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,

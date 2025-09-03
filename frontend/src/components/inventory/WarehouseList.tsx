@@ -99,8 +99,8 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingHorizontal: 16,
-    marginBottom: 4,
+    paddingHorizontal: 0,
+    marginBottom: 1,
   },
   headerTitle: {
     fontSize: 22,
@@ -125,8 +125,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   listContent: {
-    paddingHorizontal: 16,
     paddingBottom: 10, // Add some bottom padding for shadow
+    paddingHorizontal: 0,
   }
 });
 

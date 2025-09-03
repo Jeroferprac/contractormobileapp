@@ -5,7 +5,6 @@ import { SPACING } from '../../constants/spacing';
 import { StatsCard } from '../ui';
 import { InventorySummary } from '../../types/inventory';
 import { inventoryApiService } from '../../api/inventoryApi';
-import LoadingSkeleton from '../ui/LoadingSkeleton';
 
 const InventoryStats: React.FC = () => {
   const [summary, setSummary] = useState<InventorySummary | null>(null);
@@ -27,20 +26,7 @@ const InventoryStats: React.FC = () => {
   }, []);
 
   if (loading) {
-    return (
-      <View style={styles.container}>
-        <View style={styles.grid}>
-          {Array.from({ length: 4 }).map((_, index) => (
-            <View key={index} style={styles.cardWrapper}>
-              <LoadingSkeleton 
-                height={120} 
-                borderRadius={16} 
-              />
-            </View>
-          ))}
-        </View>
-      </View>
-    );
+    return null;
   }
 
   if (!summary) return null;

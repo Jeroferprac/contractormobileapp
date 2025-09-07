@@ -1,15 +1,22 @@
 import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import inventoryApiService from '../../api/inventoryApi';
+// import LottieView from 'lottie-react-native';
 // import LottieView from 'lottie-react-native';
 import {
   View,
   Text,
   ScrollView,
+  ScrollView,
   TouchableOpacity,
   StyleSheet,
   Alert,
   TextInput,
+  Alert,
+  TextInput,
   Platform,
+  Switch,
+  Modal,
   Switch,
   Modal,
 } from 'react-native';

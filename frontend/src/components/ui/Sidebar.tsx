@@ -72,6 +72,12 @@ const Sidebar: React.FC<SidebarProps> = ({ visible, onClose, onNavigate }) => {
       slideAnim.stopAnimation();
       fadeAnim.stopAnimation();
     };
+
+    return () => {
+      // Cleanup animations when component unmounts
+      slideAnim.stopAnimation();
+      fadeAnim.stopAnimation();
+    };
   }, [visible, slideAnim, fadeAnim]);
 
   const menuItems = [
@@ -79,11 +85,20 @@ const Sidebar: React.FC<SidebarProps> = ({ visible, onClose, onNavigate }) => {
     { id: 'products', label: 'Products', icon: 'box', screen: 'AllProducts' },
     { id: 'warehouse', label: 'Warehouse', icon: 'home', screen: 'Warehouse' },
     { id: 'suppliers', label: 'Suppliers', icon: 'users', screen: 'Suppliers' },
+    { id: 'suppliers', label: 'Suppliers', icon: 'users', screen: 'Suppliers' },
     { id: 'purchaseorders', label: 'Purchase Orders', icon: 'shopping-cart', screen: 'PurchaseOrders' },
+    { id: 'reports', label: 'Reports', icon: 'bar-chart-2', screen: 'InventoryReports' },
     { id: 'reports', label: 'Reports', icon: 'bar-chart-2', screen: 'InventoryReports' },
   ];
 
   const handleMenuItemPress = (screen: string) => {
+    console.log('🔧 [DEBUG] Sidebar: Attempting to navigate to screen:', screen);
+    try {
+      onNavigate(screen);
+      console.log('✅ [DEBUG] Sidebar: Navigation successful to:', screen);
+    } catch (error) {
+      console.error('❌ [DEBUG] Sidebar: Navigation failed to:', screen, error);
+    }
     console.log('🔧 [DEBUG] Sidebar: Attempting to navigate to screen:', screen);
     try {
       onNavigate(screen);

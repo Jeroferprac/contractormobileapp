@@ -2,13 +2,16 @@ import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
+  Text,
   ScrollView,
   TouchableOpacity,
   StyleSheet,
   Alert,
   Platform,
   SafeAreaView,
+  SafeAreaView,
 } from 'react-native';
+import FastImage from 'react-native-fast-image';
 import FastImage from 'react-native-fast-image';
 import Icon from 'react-native-vector-icons/Feather';
 import { COLORS } from '../../constants/colors';
@@ -135,8 +138,10 @@ const ProductScreen: React.FC<ProductScreenProps> = ({ navigation, route }) => {
       {/* Header with Image */}
       <View style={styles.header}>
         <FastImage
+        <FastImage
           source={{ uri: getProductImage(product) }}
           style={styles.headerImage}
+          resizeMode="cover"
           resizeMode="cover"
         >
           <View style={styles.headerOverlay}>
@@ -161,6 +166,7 @@ const ProductScreen: React.FC<ProductScreenProps> = ({ navigation, route }) => {
               />
             </TouchableOpacity>
           </View>
+        </FastImage>
         </FastImage>
       </View>
       
@@ -202,8 +208,24 @@ const ProductScreen: React.FC<ProductScreenProps> = ({ navigation, route }) => {
                 return '0.00';
               }
             })()}
+            ${(() => {
+              try {
+                const price = parseFloat(product.selling_price.toString());
+                return isNaN(price) ? '0.00' : price.toFixed(2);
+              } catch (error) {
+                return '0.00';
+              }
+            })()}
           </Text>
           <Text style={styles.costPrice}>
+            Cost: ${(() => {
+              try {
+                const price = parseFloat(product.cost_price.toString());
+                return isNaN(price) ? '0.00' : price.toFixed(2);
+              } catch (error) {
+                return '0.00';
+              }
+            })()}
             Cost: ${(() => {
               try {
                 const price = parseFloat(product.cost_price.toString());

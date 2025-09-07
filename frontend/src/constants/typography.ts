@@ -29,6 +29,38 @@ export const TYPOGRAPHY = {
     normal: 1.4,
     relaxed: 1.6,
     loose: 1.8
+  },
+
+  // Predefined text styles for common use cases
+  h1: {
+    fontSize: 32,
+    fontWeight: '700' as const,
+    lineHeight: 32 * 1.2
+  },
+  h2: {
+    fontSize: 24,
+    fontWeight: '700' as const,
+    lineHeight: 24 * 1.2
+  },
+  h3: {
+    fontSize: 20,
+    fontWeight: '600' as const,
+    lineHeight: 20 * 1.4
+  },
+  body1: {
+    fontSize: 16,
+    fontWeight: '400' as const,
+    lineHeight: 16 * 1.4
+  },
+  body2: {
+    fontSize: 14,
+    fontWeight: '400' as const,
+    lineHeight: 14 * 1.4
+  },
+  caption: {
+    fontSize: 10,
+    fontWeight: '400' as const,
+    lineHeight: 10 * 1.4
   }
 };
 

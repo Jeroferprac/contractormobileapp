@@ -28,6 +28,7 @@ const StatsCard: React.FC<StatsCardProps> = ({
   gradient = 'primary',
   variant = 'small'
 }) => {
+
   const getGradientColors = () => {
     switch (gradient) {
       case 'primary':
@@ -42,6 +43,8 @@ const StatsCard: React.FC<StatsCardProps> = ({
         return COLORS.gradient.primary;
     }
   };
+
+
 
   // Render large variant (top row cards)
   if (variant === 'large') {

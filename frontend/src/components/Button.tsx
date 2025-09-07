@@ -52,8 +52,9 @@ export const Button: React.FC<ButtonProps> = ({
 
   return (
     <TouchableOpacity
-      style={[styles.button, variant === 'outline' && styles.outlineButton, style]}
+      style={buttonStyle}
       onPress={onPress}
+      disabled={isDisabled}
       activeOpacity={0.8}
     >
       {loading ? (
@@ -79,7 +80,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.primary,
   },
   secondary: {
-    backgroundColor: '#F8F9FA',
+    backgroundColor: COLORS.surface,
   },
   outline: {
     backgroundColor: 'transparent',

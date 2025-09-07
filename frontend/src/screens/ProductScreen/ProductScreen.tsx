@@ -1,19 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import {
   View,
-  ScrollView,
-  SafeAreaView,
-  StatusBar,
-  StyleSheet,
   Text,
+  ScrollView,
   TouchableOpacity,
+  StyleSheet,
   Alert,
-  ImageBackground,
-  Dimensions,
   Platform,
+  SafeAreaView,
 } from 'react-native';
-import Icon from 'react-native-vector-icons/Feather';
 import FastImage from 'react-native-fast-image';
+import Icon from 'react-native-vector-icons/Feather';
 import { COLORS } from '../../constants/colors';
 import { SPACING, BORDER_RADIUS, SHADOWS } from '../../constants/spacing';
 import { Product, Stock } from '../../types/inventory';
@@ -135,14 +132,12 @@ const ProductScreen: React.FC<ProductScreenProps> = ({ navigation, route }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
-      
       {/* Header with Image */}
       <View style={styles.header}>
-        <ImageBackground
+        <FastImage
           source={{ uri: getProductImage(product) }}
           style={styles.headerImage}
-          imageStyle={styles.headerImageStyle}
+          resizeMode="cover"
         >
           <View style={styles.headerOverlay}>
             {/* Back Button */}
@@ -166,7 +161,7 @@ const ProductScreen: React.FC<ProductScreenProps> = ({ navigation, route }) => {
               />
             </TouchableOpacity>
           </View>
-        </ImageBackground>
+        </FastImage>
       </View>
       
       {/* Product Content */}
@@ -199,10 +194,24 @@ const ProductScreen: React.FC<ProductScreenProps> = ({ navigation, route }) => {
         {/* Price Section */}
         <View style={styles.priceSection}>
           <Text style={styles.sellingPrice}>
-            ${parseFloat(product.selling_price.toString()).toFixed(2)}
+            ${(() => {
+              try {
+                const price = parseFloat(product.selling_price.toString());
+                return isNaN(price) ? '0.00' : price.toFixed(2);
+              } catch (error) {
+                return '0.00';
+              }
+            })()}
           </Text>
           <Text style={styles.costPrice}>
-            Cost: ${parseFloat(product.cost_price.toString()).toFixed(2)}
+            Cost: ${(() => {
+              try {
+                const price = parseFloat(product.cost_price.toString());
+                return isNaN(price) ? '0.00' : price.toFixed(2);
+              } catch (error) {
+                return '0.00';
+              }
+            })()}
           </Text>
         </View>
         
@@ -349,8 +358,6 @@ const ProductScreen: React.FC<ProductScreenProps> = ({ navigation, route }) => {
   );
 };
 
-const { width } = Dimensions.get('window');
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -364,10 +371,6 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
     justifyContent: 'space-between',
-  },
-  headerImageStyle: {
-    borderBottomLeftRadius: 30,
-    borderBottomRightRadius: 30,
   },
   headerOverlay: {
     flexDirection: 'row',

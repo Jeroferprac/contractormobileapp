@@ -6,3 +6,5 @@ export { default as RecentActivityList } from './RecentActivityList';
 export { default as WarehouseCard } from './WarehouseCard'; 
 export { default as WarehouseList } from './WarehouseList'; 
 export { default as TopSellingList} from './TopSellingList';
+export { default as SupplierCard } from './SupplierCard';
+export { default as SupplierList } from './SupplierList';

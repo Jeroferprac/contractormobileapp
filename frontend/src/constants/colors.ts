@@ -85,9 +85,17 @@ export const COLORS = {
   
   // Legacy color properties for backward compatibility
   success: '#28A745',
+  warning: '#FFC107',
+  info: '#17A2B8',
   textPrimary: '#1A1A1A',
   textSecondary: '#6C757D',
   textLight: '#FFFFFF',
   error: '#DC3545',
-  white: '#FFFFFF'
+  white: '#FFFFFF',
+  
+  // Additional colors for reports
+  primaryDark: '#E55A2B',
+  successDark: '#1E7E34',
+  warningDark: '#E0A800',
+  infoDark: '#138496',
 }; 

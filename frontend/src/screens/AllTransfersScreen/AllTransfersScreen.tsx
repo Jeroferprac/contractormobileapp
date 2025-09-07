@@ -18,8 +18,8 @@ import LinearGradient from 'react-native-linear-gradient';
 import Icon from 'react-native-vector-icons/Feather';
 import { BarChart } from 'react-native-gifted-charts';
 import Svg, { Circle, Polygon } from 'react-native-svg';
-import RNFS from 'react-native-fs';
-import Share from 'react-native-share';
+// import RNFS from 'react-native-fs';
+// import Share from 'react-native-share';
 import { COLORS } from '../../constants/colors';
 import { SPACING, BORDER_RADIUS, SHADOWS } from '../../constants/spacing';
 import { TYPOGRAPHY } from '../../constants/typography';
@@ -220,7 +220,7 @@ const AllTransfersScreen: React.FC<AllTransfersScreenProps> = ({ navigation }) =
     Animated.timing(contentAnimation, {
       toValue: 1,
       duration: 300,
-      useNativeDriver: false,
+      useNativeDriver: true,
     }).start();
   }, [contentAnimation]);
 
@@ -228,7 +228,7 @@ const AllTransfersScreen: React.FC<AllTransfersScreenProps> = ({ navigation }) =
     Animated.timing(contentAnimation, {
       toValue: 1,
       duration: 300,
-      useNativeDriver: false,
+      useNativeDriver: true,
     }).start(() => {
       setSelectedTransfer(null);
     });
@@ -249,7 +249,7 @@ const AllTransfersScreen: React.FC<AllTransfersScreenProps> = ({ navigation }) =
     Animated.timing(searchAnimation, {
       toValue: showSearch ? 0 : 1,
       duration: 300,
-      useNativeDriver: false,
+      useNativeDriver: true,
     }).start();
     setShowSearch(!showSearch);
     if (showSearch) {
@@ -379,28 +379,23 @@ const AllTransfersScreen: React.FC<AllTransfersScreenProps> = ({ navigation }) =
       setExportProgress(30);
       
       // Create temporary HTML file
-      const tempHtmlPath = `${RNFS.TemporaryDirectoryPath}/transfer_report.html`;
-      await RNFS.writeFile(tempHtmlPath, pdfContent, 'utf8');
+      // const tempHtmlPath = `${RNFS.TemporaryDirectoryPath}/transfer_report.html`;
+      // await RNFS.writeFile(tempHtmlPath, pdfContent, 'utf8');
       
       setExportProgress(60);
       
       // Convert HTML to PDF (you'll need to implement this based on your PDF library)
       // For now, we'll create a text file as placeholder
-      const pdfPath = `${RNFS.DocumentDirectoryPath}/transfer_report_${Date.now()}.txt`;
-      await RNFS.writeFile(pdfPath, pdfContent, 'utf8');
+      // const pdfPath = `${RNFS.DocumentDirectoryPath}/transfer_report_${Date.now()}.txt`;
+      // await RNFS.writeFile(pdfPath, pdfContent, 'utf8');
       
       setExportProgress(90);
       
-      // Share the file
-      await Share.open({
-        url: `file://${pdfPath}`,
-        type: 'text/plain',
-        title: 'Transfer Report',
-        message: `Transfer report with ${transfersToExport.length} transfers`
-      });
+      // For now, just show the content in an alert since file operations are disabled
+      Alert.alert('Export Preview', `PDF content generated for ${transfersToExport.length} transfers. File operations temporarily disabled.`);
       
       setExportProgress(100);
-      Alert.alert('Success', `PDF exported successfully with ${transfersToExport.length} transfers`);
+      Alert.alert('Success', `PDF content generated successfully with ${transfersToExport.length} transfers`);
       
     } catch (error) {
       Alert.alert('Error', 'Failed to export PDF');
@@ -422,21 +417,16 @@ const AllTransfersScreen: React.FC<AllTransfersScreenProps> = ({ navigation }) =
       setExportProgress(50);
       
       // Save CSV file
-      const csvPath = `${RNFS.DocumentDirectoryPath}/transfer_report_${Date.now()}.csv`;
-      await RNFS.writeFile(csvPath, csvContent, 'utf8');
+      // const csvPath = `${RNFS.DocumentDirectoryPath}/transfer_report_${Date.now()}.csv`;
+      // await RNFS.writeFile(csvPath, csvContent, 'utf8');
       
       setExportProgress(80);
       
-      // Share the file
-      await Share.open({
-        url: `file://${csvPath}`,
-        type: 'text/csv',
-        title: 'Transfer Report',
-        message: `Transfer report with ${transfersToExport.length} transfers`
-      });
+      // For now, just show the content in an alert since file operations are disabled
+      Alert.alert('Export Preview', `CSV content generated for ${transfersToExport.length} transfers. File operations temporarily disabled.`);
       
       setExportProgress(100);
-      Alert.alert('Success', `CSV exported successfully with ${transfersToExport.length} transfers`);
+      Alert.alert('Success', `CSV content generated successfully with ${transfersToExport.length} transfers`);
       
     } catch (error) {
       Alert.alert('Error', 'Failed to export CSV');

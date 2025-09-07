@@ -174,10 +174,10 @@ const Sidebar: React.FC<SidebarProps> = ({ visible, onClose, onNavigate }) => {
                 })}]
               }]}
             >
-              <Icon name="box" size={32} color="#FF6B35" />
+              <Icon name="box" size={32} color="#FB7504" />
             </Animated.View>
             <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-              <Icon name="x" size={24} color="#FF6B35" />
+              <Icon name="x" size={24} color="#FB7504" />
             </TouchableOpacity>
           </View>
 
@@ -216,7 +216,7 @@ const Sidebar: React.FC<SidebarProps> = ({ visible, onClose, onNavigate }) => {
                 style={styles.logoutIcon}
                 activeOpacity={0.7}
               >
-                <Icon name="power" size={20} color="#FF6B35" />
+                <Icon name="power" size={20} color="#FB7504" />
               </TouchableOpacity>
             </View>
           </Animated.View>
@@ -294,7 +294,7 @@ const styles = StyleSheet.create({
   menuItemHovered: {
     backgroundColor: 'rgba(255, 107, 53, 0.15)',
     borderLeftWidth: 3,
-    borderLeftColor: '#FF6B35',
+    borderLeftColor: '#FB7504',
   },
   menuText: {
     fontSize: 16,

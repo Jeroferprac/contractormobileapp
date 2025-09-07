@@ -622,11 +622,10 @@ const AllWarehouseScreen: React.FC<AllWarehouseScreenProps> = ({ navigation, rou
           <View style={styles.headerTop}>
             <TouchableOpacity 
               style={styles.backButton} 
-              onPress={handleBackPress}
+              onPress={() => navigation.goBack()}
             >
               <Icon name="arrow-left" size={24} color="#FFFFFF" />
             </TouchableOpacity>
-            
             <View style={styles.headerTitleContainer}>
               <Text style={styles.headerTitle}>All Warehouses</Text>
               <Text style={styles.headerSubtitle}>Manage your warehouse inventory</Text>
@@ -844,7 +843,7 @@ const styles = StyleSheet.create({
   },
   headerContainer: {
     paddingTop: Platform.OS === 'ios' ? 0 : 24,
-    backgroundColor: '#FF6B35',
+    backgroundColor: '#FB7504',
     borderBottomLeftRadius: BORDER_RADIUS.xl,
     borderBottomRightRadius: BORDER_RADIUS.xl,
     ...SHADOWS.lg,
@@ -852,7 +851,7 @@ const styles = StyleSheet.create({
   searchContainer: {
     paddingHorizontal: SPACING.lg,
     paddingVertical: SPACING.md,
-    backgroundColor: '#FF6B35',
+    backgroundColor: '#FB7504',
     borderBottomLeftRadius: BORDER_RADIUS.xl,
     borderBottomRightRadius: BORDER_RADIUS.xl,
   },

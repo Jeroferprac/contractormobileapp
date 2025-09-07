@@ -87,7 +87,7 @@ export const AffiliateTab: React.FC<AffiliateTabProps> = ({
         <Text style={styles.revenueAmount}>{company.revenue}</Text>
         {company.rating && company.rating > 0 && (
           <View style={styles.ratingContainer}>
-            <Icon name="star" size={12} color="#FFD700" />
+            <Icon name="star" size={12} color="#FB7504" />
             <Text style={styles.ratingText}>{company.rating}</Text>
           </View>
         )}

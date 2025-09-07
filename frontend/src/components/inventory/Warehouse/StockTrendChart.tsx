@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Platform, ActivityIndicator, Dimensions } from 'react-native';
 import { LineChart } from 'react-native-gifted-charts';
-import Icon from 'react-native-vector-icons/Feather';
+import LinearGradient from 'react-native-linear-gradient';
+import Icon from 'react-native-vector-icons/Ionicons';
 import { COLORS } from '../../../constants/colors';
 import { SPACING, BORDER_RADIUS } from '../../../constants/spacing';
 import { TYPOGRAPHY } from '../../../constants/typography';
@@ -15,6 +16,22 @@ interface StockTrendData {
 }
 
 const { width: screenWidth } = Dimensions.get('window');
+
+// --- Reusable Internal Components ---
+
+const Tooltip = ({ date, value }: { date: string; value: number }) => (
+  <View style={styles.tooltipContainer}>
+    <Text style={styles.tooltipDate}>{date}</Text>
+    <Text style={styles.tooltipValue}>{value.toLocaleString()} units</Text>
+  </View>
+);
+
+const TimeframePicker = () => (
+  <TouchableOpacity style={styles.pickerContainer}>
+    <Text style={styles.pickerText}>This Month</Text>
+    <Icon name="chevron-down" size={16} color="#333" />
+  </TouchableOpacity>
+);
 
 // Helper function to aggregate data for longer time ranges
 const aggregateData = (data: StockTrendData[], targetPoints: number): StockTrendData[] => {
@@ -50,11 +67,10 @@ const fillMissingDates = (
     if (dateMap.has(dateStr)) {
       filledData.push(dateMap.get(dateStr)!);
     } else {
-      const last = filledData[filledData.length - 1];
       filledData.push({
         date: dateStr,
-        totalStock: last ? last.totalStock : 0,
-        availableStock: last ? last.availableStock : 0
+        totalStock: 0,
+        availableStock: 0
       });
     }
   }
@@ -64,35 +80,99 @@ const fillMissingDates = (
 
 const StockTrendChart = () => {
   const [timeRange, setTimeRange] = useState<'7d' | '1m' | '3m'>('7d');
-  const [stocks, setStocks] = useState<Stock[]>([]);
+  const [stockData, setStockData] = useState<StockTrendData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchStockData();
+    fetchStockTrendData();
   }, [timeRange]);
 
-  const fetchStockData = async () => {
+  const fetchStockTrendData = async () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await inventoryApiService.getWarehouseStocks();
-      setStocks(response.data);
+      const response = await inventoryApiService.getCurrentStockLevels();
+      const stockLevels = response.data;
+      
+      // Process data to get stock trends
+      const trendData = processStockTrendData(stockLevels);
+      setStockData(trendData);
     } catch (err) {
-      console.error('Error fetching stock data:', err);
-      setError('Failed to load stock data');
+      console.error('Error fetching stock trend data:', err);
+      setError('Failed to load stock trend data');
     } finally {
       setLoading(false);
     }
   };
 
+  const processStockTrendData = (stockLevels: Stock[]): StockTrendData[] => {
+    if (!stockLevels.length) {
+      return generateFallbackData();
+    }
+
+    // Get date range based on selected timeRange
+    const today = new Date();
+    let startDate = new Date();
+    
+    switch (timeRange) {
+      case '7d':
+        startDate.setDate(today.getDate() - 7);
+        break;
+      case '1m':
+        startDate.setMonth(today.getMonth() - 1);
+        break;
+      case '3m':
+        startDate.setMonth(today.getMonth() - 3);
+        break;
+      default:
+        startDate.setDate(today.getDate() - 7);
+    }
+
+    // Group stock by date
+    const stockByDate = stockLevels.reduce((acc, stock) => {
+      const date = new Date(stock.updated_at || stock.created_at).toISOString().split('T')[0];
+      if (!acc[date]) {
+        acc[date] = { totalStock: 0, availableStock: 0 };
+      }
+      acc[date].totalStock += Number(stock.quantity);
+      acc[date].availableStock += Number(stock.available_quantity || stock.quantity);
+      return acc;
+    }, {} as Record<string, { totalStock: number; availableStock: number }>);
+
+    // Convert to array and fill missing dates
+    const dates = Object.keys(stockByDate).sort();
+    if (dates.length === 0) {
+      return generateFallbackData();
+    }
+
+    let processedData = dates.map(date => ({
+      date,
+      totalStock: stockByDate[date].totalStock,
+      availableStock: stockByDate[date].availableStock
+    }));
+
+    // Fill missing dates
+    processedData = fillMissingDates(processedData, startDate, today);
+
+    // Aggregate data for longer time ranges
+    if (timeRange === '1m' && processedData.length > 15) {
+      processedData = aggregateData(processedData, 15);
+    } else if (timeRange === '3m' && processedData.length > 20) {
+      processedData = aggregateData(processedData, 20);
+    }
+
+    return processedData;
+  };
+
+  // Generate fallback data when no API data is available
   const generateFallbackData = (): StockTrendData[] => {
     const data: StockTrendData[] = [];
     const today = new Date();
-
+    
     let days = 7;
     let dataPoints = 7;
-
+    
     if (timeRange === '1m') {
       days = 30;
       dataPoints = 15;
@@ -107,344 +187,245 @@ const StockTrendChart = () => {
       const dayOffset = Math.floor((days - 1) * (i / (dataPoints - 1)));
       date.setDate(date.getDate() - dayOffset);
       const dateStr = date.toISOString().split('T')[0];
-
+      
       data.push({
         date: dateStr,
         totalStock: Math.floor(Math.random() * 1000) + 500,
-        availableStock: Math.floor(Math.random() * 800) + 300,
+        availableStock: Math.floor(Math.random() * 800) + 400,
       });
     }
-
+    
     return data.reverse();
   };
 
-  const processStockData = (): StockTrendData[] => {
-    if (!stocks.length) {
-      return generateFallbackData();
-    }
+  const totalStock = stockData.reduce((sum, item) => sum + item.totalStock, 0);
+  const maxValueItem = stockData.length > 0 ? stockData.reduce((prev, current) =>
+    prev.totalStock > current.totalStock ? prev : current
+  ) : { date: '', totalStock: 0, availableStock: 0 };
 
-    const today = new Date();
-    let startDate = new Date();
-    
-    switch (timeRange) {
-      case '7d':
-        startDate.setDate(today.getDate() - 6);
-        break;
-      case '1m':
-        startDate.setMonth(today.getMonth() - 1);
-        break;
-      case '3m':
-        startDate.setMonth(today.getMonth() - 3);
-        break;
-    }
-
-    const filteredStocks = stocks.filter(stock => {
-      const stockDate = new Date(stock.updated_at);
-      return stockDate >= startDate && stockDate <= today;
-    });
-
-    const stocksByDate = filteredStocks.reduce((acc, stock) => {
-      const date = new Date(stock.updated_at).toISOString().split('T')[0];
-      if (!acc[date]) {
-        acc[date] = { totalStock: 0, availableStock: 0 };
-      }
-      acc[date].totalStock += Number(stock.quantity) || 0;
-      acc[date].availableStock += Number(stock.available_quantity) || 0;
-      return acc;
-    }, {} as Record<string, { totalStock: number; availableStock: number }>);
-
-    const dates = Object.keys(stocksByDate).sort();
-    if (dates.length === 0) {
-      return generateFallbackData();
-    }
-
-    let processedData = dates.map(date => ({
-      date,
-      totalStock: stocksByDate[date].totalStock,
-      availableStock: stocksByDate[date].availableStock
-    }));
-
-    if (timeRange === '1m' && processedData.length > 15) {
-      processedData = aggregateData(processedData, 15);
-    } else if (timeRange === '3m' && processedData.length > 20) {
-      processedData = aggregateData(processedData, 20);
-    }
-
-    return fillMissingDates(processedData, startDate, today);
-  };
-
-  const chartData = processStockData();
-
-  const totalStockData = chartData.map(item => ({
+  const lineData = stockData.map((item, index) => ({
     value: item.totalStock,
-    label: new Date(item.date).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric'
-    })
+    label: new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+    date: new Date(item.date).toLocaleDateString('en-US', { day: 'numeric', month: 'long' }),
+    dataPointText: item.totalStock.toString(),
+    topLabelComponent: item.date === maxValueItem.date 
+      ? () => <Tooltip date={new Date(item.date).toLocaleDateString('en-US', { day: 'numeric', month: 'long' })} value={item.totalStock} />
+      : undefined
   }));
 
-  const availableStockData = chartData.map(item => ({
-    value: item.availableStock,
-    label: new Date(item.date).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric'
-    })
-  }));
+  if (loading) {
+    return (
+      <View style={styles.card}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={COLORS.primary} />
+          <Text style={styles.loadingText}>Loading stock trend data...</Text>
+        </View>
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={styles.card}>
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorText}>{error}</Text>
+          <TouchableOpacity style={styles.retryButton} onPress={fetchStockTrendData}>
+            <Text style={styles.retryButtonText}>Retry</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }
+
+  if (stockData.length === 0) {
+    return (
+      <View style={styles.card}>
+        <View style={styles.emptyContainer}>
+          <Text style={styles.emptyText}>No stock trend data available</Text>
+        </View>
+      </View>
+    );
+  }
 
   return (
-    <View style={styles.container}>
-      <View style={styles.titleContainer}>
-        <View style={styles.titleContent}>
-          <View style={styles.iconContainer}>
-            <Icon name="bar-chart-2" size={20} color="#8B5CF6" />
-          </View>
-          <Text style={styles.title}>Stock Trend</Text>
-            </View>
-
-            <View style={styles.buttonGroup}>
-          {['7d', '1m', '3m'].map((range) => (
-                <TouchableOpacity
-                  key={range}
-                  style={[
-                    styles.button,
-                timeRange === range ? styles.activeButton : styles.inactiveButton
-                  ]}
-              onPress={() => setTimeRange(range as '7d' | '1m' | '3m')}
-                >
-                  <Text
-                    style={[
-                      styles.buttonText,
-                  timeRange === range ? styles.activeButtonText : styles.inactiveButtonText
-                    ]}
-                  >
-                {range === '7d' ? '7 Days' : range === '1m' ? '1 Month' : '3 Months'}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
-          
-      <View style={styles.card}>
-        <View style={styles.chartContainer}>
-          {loading ? (
-            <View style={styles.loadingContainer}>
-              <ActivityIndicator size="large" color="#8B5CF6" />
-              <Text style={styles.loadingText}>Loading stock data...</Text>
-            </View>
-          ) : error ? (
-            <View style={styles.errorContainer}>
-              <Text style={styles.errorText}>{error}</Text>
-              <TouchableOpacity style={styles.retryButton} onPress={fetchStockData}>
-                <Text style={styles.retryButtonText}>Retry</Text>
-              </TouchableOpacity>
-            </View>
-          ) : (
-            <>
-              <View style={styles.legendContainer}>
-                <View style={styles.legendItem}>
-                  <View style={[styles.legendDot, { backgroundColor: '#8B5CF6' }]} />
-                  <Text style={styles.legendText}>Total Stock</Text>
-                </View>
-                <View style={styles.legendItem}>
-                  <View style={[styles.legendDot, { backgroundColor: '#10B981' }]} />
-                  <Text style={styles.legendText}>Available Stock</Text>
-                </View>
-            </View>
-
-            <LineChart
-                data={totalStockData}
-                data2={availableStockData}
-                height={200}
-                width={screenWidth - 80}
-                noOfSections={4}
-                spacing={40}
-                color="#8B5CF6"
-                color2="#10B981"
-                thickness={3}
-                thickness2={3}
-                startFillColor="#8B5CF6"
-                endFillColor="#8B5CF6"
-                startFillColor2="#10B981"
-                endFillColor2="#10B981"
-                startOpacity={0.4}
-                endOpacity={0.05}
-                startOpacity2={0.4}
-                endOpacity2={0.05}
-                initialSpacing={20}
-                endSpacing={20}
-                yAxisTextStyle={{ color: '#9CA3AF', fontSize: 10 }}
-                yAxisColor="transparent"
-                xAxisColor="transparent"
-                rulesColor="transparent"
-                hideRules
-              hideYAxisText
-                showVerticalLines={false}
-              isAnimated
-              animationDuration={1200}
-                animateOnDataChange
-                onDataChangeAnimationDuration={300}
-                animateTogether
-              curved
-              hideDataPoints={false}
-                lineGradient
-                lineGradientStartColor="#8B5CF6"
-                lineGradientEndColor="#A855F7"
-                xAxisLabelTextStyle={{ color: '#6B7280', fontSize: 10 }}
-              pointerConfig={{
-                  pointerStripHeight: 160,
-                  pointerStripColor: '#9CA3AF',
-                pointerStripWidth: 1,
-                  pointerColor: '#8B5CF6',
-                radius: 4,
-                pointerLabelWidth: 100,
-                  pointerLabelHeight: 90,
-                autoAdjustPointerLabelPosition: true,
-                  pointerLabelComponent: (items: any) => (
-                    <View style={styles.tooltipContainer}>
-                      <Text style={styles.tooltipTitle}>{items[0].label}</Text>
-                      <View style={styles.tooltipRow}>
-                        <View style={[styles.tooltipDot, { backgroundColor: '#8B5CF6' }]} />
-                        <Text style={styles.tooltipLabel}>Total Stock:</Text>
-                        <Text style={styles.tooltipValue}>{items[0].value}</Text>
-                      </View>
-                      <View style={styles.tooltipRow}>
-                        <View style={[styles.tooltipDot, { backgroundColor: '#10B981' }]} />
-                        <Text style={styles.tooltipLabel}>Available:</Text>
-                        <Text style={styles.tooltipValue}>{items[1]?.value || 0}</Text>
-                      </View>
-                    </View>
-                  ),
-              }}
-            />
-            </>
-          )}
-          </View>
+    <View style={styles.card}>
+      <View style={styles.header}>
+        <Text style={styles.title}>Stock Trends (This Month)</Text>
+        <TimeframePicker />
       </View>
+      <View style={styles.chartContainer}>
+        <LineChart
+          data={lineData}
+          areaChart
+          curved
+          height={200}
+          width={screenWidth - 90}
+          noOfSections={4}
+          spacing={40}
+          color={COLORS.primary}
+          thickness={3}
+          startFillColor={COLORS.primary}
+          endFillColor={COLORS.accent}
+          startOpacity={0.4}
+          endOpacity={0.1}
+          initialSpacing={20}
+          yAxisTextStyle={{ color: '#A0A0A0', fontSize: 12 }}
+          xAxisColor="#E5E7EB"
+          yAxisColor="#E5E7EB"
+          rulesType="dashed"
+          rulesColor="#E5E7EB"
+          isAnimated
+          animationDuration={1200}
+          dataPointsColor={COLORS.primary}
+          dataPointsRadius={5}
+          hideDataPoints={false}
+        />
+      </View>
+      <View style={styles.summaryContainer}>
+        <View style={styles.summaryDot} />
+        <Text style={styles.summaryText}>
+          <Text style={styles.summaryValue}>{totalStock.toLocaleString()}</Text> Total Stock Units This Month
+        </Text>
+      </View>
+      <Text style={styles.summarySubtitle}>
+        Monthly stock level trends over the last 30 days.
+      </Text>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { marginVertical: SPACING.md },
-  titleContainer: {
+  card: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    paddingVertical: 20,
+    paddingHorizontal: 15,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 5,
+    marginVertical: SPACING.md,
+  },
+  header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: SPACING.md,
-    paddingHorizontal: SPACING.sm,
-  },
-  titleContent: { flexDirection: 'row', alignItems: 'center' },
-  iconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(139, 92, 246, 0.1)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: SPACING.sm,
-    borderWidth: 1,
-    borderColor: 'rgba(139, 92, 246, 0.2)',
+    marginBottom: 30,
+    paddingHorizontal: 10,
   },
   title: {
-    fontSize: TYPOGRAPHY.sizes.lg,
-    fontWeight: Platform.OS === 'ios' ? '600' : 'bold',
-    color: COLORS.text.primary,
-    fontFamily: Platform.OS === 'ios' ? 'System' : 'sans-serif',
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#2C2C2C',
   },
-  buttonGroup: {
+  pickerContainer: {
     flexDirection: 'row',
-    backgroundColor: '#F3F4F6',
-    borderRadius: BORDER_RADIUS.md,
-    padding: 2,
-  },
-  button: { paddingHorizontal: SPACING.sm, paddingVertical: SPACING.xs, borderRadius: BORDER_RADIUS.sm },
-  activeButton: {
+    alignItems: 'center',
     backgroundColor: '#FFFFFF',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 1,
-    elevation: 1,
+    paddingHorizontal: 15,
+    paddingVertical: 10,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#F0F0F0',
   },
-  inactiveButton: { backgroundColor: 'transparent' },
-  buttonText: { fontSize: TYPOGRAPHY.sizes.xs, fontFamily: Platform.OS === 'ios' ? 'System' : 'sans-serif' },
-  activeButtonText: { color: COLORS.text.primary, fontWeight: '500' },
-  inactiveButtonText: { color: COLORS.text.secondary },
-  card: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: BORDER_RADIUS.lg,
-    padding: SPACING.lg,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 6,
-    elevation: 8,
+  pickerText: {
+    fontSize: 14,
+    color: '#333',
+    marginRight: 8,
+    fontWeight: '500',
   },
-  chartContainer: { alignItems: 'center', justifyContent: 'center', width: '100%' },
-  legendContainer: { flexDirection: 'row', justifyContent: 'center', marginBottom: SPACING.md },
-  legendItem: { flexDirection: 'row', alignItems: 'center', marginHorizontal: SPACING.md },
-  legendDot: { width: 8, height: 8, borderRadius: 4, marginRight: SPACING.xs },
-  legendText: {
-    fontSize: TYPOGRAPHY.sizes.sm,
-    color: COLORS.text.secondary,
-    fontFamily: Platform.OS === 'ios' ? 'System' : 'sans-serif',
+  chartContainer: {
+    height: 250,
+    paddingLeft: 10,
   },
-  loadingContainer: { height: 200, justifyContent: 'center', alignItems: 'center' },
+  tooltipContainer: {
+    backgroundColor: '#3D3D3D',
+    borderRadius: 6,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    alignItems: 'center',
+    marginBottom: 4,
+    minWidth: 100,
+  },
+  tooltipDate: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  tooltipValue: {
+    color: '#E0E0E0',
+    fontSize: 11,
+  },
+  summaryContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 25,
+    paddingHorizontal: 10,
+  },
+  summaryDot: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: COLORS.primary,
+    marginRight: 12,
+  },
+  summaryText: {
+    fontSize: 14,
+    color: '#666',
+    flex: 1,
+    lineHeight: 20,
+  },
+  summaryValue: {
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  summarySubtitle: {
+    fontSize: 12,
+    color: '#A0A0A0',
+    marginTop: 8,
+    paddingHorizontal: 10,
+  },
+  loadingContainer: {
+    height: 250,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   loadingText: {
     marginTop: SPACING.sm,
     fontSize: TYPOGRAPHY.sizes.sm,
     color: COLORS.text.secondary,
-    fontFamily: Platform.OS === 'ios' ? 'System' : 'sans-serif',
   },
-  errorContainer: { height: 200, justifyContent: 'center', alignItems: 'center' },
+  errorContainer: {
+    height: 250,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   errorText: {
     fontSize: TYPOGRAPHY.sizes.sm,
     color: COLORS.status.error,
-    marginBottom: SPACING.sm,
-    fontFamily: Platform.OS === 'ios' ? 'System' : 'sans-serif',
+    marginBottom: SPACING.md,
+    textAlign: 'center',
   },
   retryButton: {
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.xs,
-    backgroundColor: '#8B5CF6',
-    borderRadius: BORDER_RADIUS.md,
+    backgroundColor: COLORS.primary,
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.sm,
+    borderRadius: BORDER_RADIUS.pill,
   },
   retryButtonText: {
-    color: '#FFFFFF',
+    color: COLORS.white,
+    fontWeight: TYPOGRAPHY.weights.bold,
+  },
+  emptyContainer: {
+    height: 250,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  emptyText: {
     fontSize: TYPOGRAPHY.sizes.sm,
-    fontWeight: '500',
-    fontFamily: Platform.OS === 'ios' ? 'System' : 'sans-serif',
-  },
-  tooltipContainer: {
-    backgroundColor: 'white',
-    padding: SPACING.sm,
-    borderRadius: BORDER_RADIUS.md,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  tooltipTitle: {
-    fontSize: TYPOGRAPHY.sizes.sm,
-    fontWeight: '600',
-    marginBottom: SPACING.xs,
-    color: COLORS.text.primary,
-    fontFamily: Platform.OS === 'ios' ? 'System' : 'sans-serif',
-  },
-  tooltipRow: { flexDirection: 'row', alignItems: 'center', marginVertical: 2 },
-  tooltipDot: { width: 6, height: 6, borderRadius: 3, marginRight: SPACING.xs },
-  tooltipLabel: {
-    fontSize: TYPOGRAPHY.sizes.xs,
     color: COLORS.text.secondary,
-    marginRight: SPACING.xs,
-    fontFamily: Platform.OS === 'ios' ? 'System' : 'sans-serif',
-  },
-  tooltipValue: {
-    fontSize: TYPOGRAPHY.sizes.xs,
-    fontWeight: '500',
-    color: COLORS.text.primary,
-    fontFamily: Platform.OS === 'ios' ? 'System' : 'sans-serif',
+    textAlign: 'center',
   },
 });
 

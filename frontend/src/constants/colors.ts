@@ -1,8 +1,8 @@
 export const COLORS = {
   // Primary Colors
-  primary: '#FF6B35',        // Orange
-  secondary: '#FFD700',      // Yellow
-  accent: '#FF8C42',         // Light Orange
+  primary: '#FB7504',        // Orange gradient start
+  secondary: '#FFD700',      // Yellow (keeping for compatibility)
+  accent: '#C2252C',         // Orange gradient end
   
   // Background Colors
   background: '#FFFFFF',
@@ -21,7 +21,7 @@ export const COLORS = {
   // Status Colors
   status: {
     success: '#28A745',
-    warning: '#FFC107',
+    warning: '#FB7504',
     error: '#DC3545',
     info: '#17A2B8',
     verified: '#007BFF'
@@ -36,9 +36,10 @@ export const COLORS = {
   
   // Gradient Colors
   gradient: {
-    primary: ['#FF6B35', '#FF8C42'],
-    secondary: ['#FFD700', '#FFED4E'],
-    discount: ['#8B4513', '#FF6B35']
+    primary: ['#FB7504', '#C2252C'],
+    secondary: ['#FB7504', '#C2252C'],
+    discount: ['#8B4513', '#FB7504'],
+    themeColorGradient: ['#FB7504', '#C2252C']
   },
   
   // Overlay Colors
@@ -46,6 +47,40 @@ export const COLORS = {
     dark: 'rgba(0, 0, 0, 0.7)',
     light: 'rgba(255, 255, 255, 0.9)',
     card: 'rgba(0, 0, 0, 0.8)'
+  },
+  
+  // Input Styles
+  input: {
+    background: '#FFFFFF',
+    border: '#E5E7EB',
+    borderFocused: '#FB7504',
+    placeholder: '#9B9898',
+    text: '#1A1B2D',
+    icon: '#9B9898'
+  },
+  
+  // Button Styles
+  button: {
+    primary: ['#FB7504', '#C2252C'],
+    secondary: '#FFFFFF',
+    text: '#FFFFFF',
+    disabled: '#9B9898'
+  },
+  
+  // Role Button Styles
+  roleButton: {
+    background: '#FFFFFF',
+    border: '#E5E7EB',
+    text: '#9B9898',
+    activeBackground: ['#FB7504', '#C2252C'],
+    activeText: '#FFFFFF'
+  },
+  
+  // Social Button Styles
+  socialButton: {
+    background: '#FFFFFF',
+    border: '#E5E7EB',
+    icon: '#000000'
   },
   
   // Legacy color properties for backward compatibility

@@ -1,4 +1,3 @@
-// Chart.tsx
 import React, { useMemo, useState } from 'react';
 import {
   View,
@@ -8,7 +7,8 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { BarChart } from 'react-native-gifted-charts';
-import Icon from 'react-native-vector-icons/Feather';
+import LinearGradient from 'react-native-linear-gradient';
+import Icon from 'react-native-vector-icons/Ionicons';
 import FadeSlideInView from './FadeSlideInView';
 import { ChartSkeleton } from './LoadingSkeleton';
 import { COLORS } from '../../constants/colors';
@@ -29,6 +29,22 @@ interface ChartProps {
   loading?: boolean;
 }
 
+// --- Reusable Internal Components ---
+
+const Tooltip = ({ time }: { time: string }) => (
+  <View style={styles.tooltipContainer}>
+    <Text style={styles.tooltipTitle}>Most Active</Text>
+    <Text style={styles.tooltipTime}>Time - {time}</Text>
+  </View>
+);
+
+const TimeframePicker = () => (
+  <TouchableOpacity style={styles.pickerContainer}>
+    <Text style={styles.pickerText}>In week</Text>
+    <Icon name="chevron-down" size={16} color="#333" />
+  </TouchableOpacity>
+);
+
 const Chart: React.FC<ChartProps> = ({
   title,
   data,
@@ -40,15 +56,19 @@ const Chart: React.FC<ChartProps> = ({
   const screenWidth = Dimensions.get('window').width;
   const chartWidth = screenWidth - SPACING.lg * 2;
 
+  const maxValueItem = data.length > 0 ? data.reduce((prev, current) =>
+    prev.value > current.value ? prev : current
+  ) : { value: 0, label: '', dataPointText: '' };
+
   const chartData = useMemo(
     () =>
       data.map((item, index) => ({
         ...item,
-        frontColor: index % 2 === 0 ? '#FF6B35' : '#FF8C42',
-        gradientColor: index % 2 === 0 ? '#FF8C42' : '#FF6B35',
-        barBorderRadius: BORDER_RADIUS.md,
+        topLabelComponent: item.label === maxValueItem.label
+          ? () => <Tooltip time={`${item.value}:09`} />
+          : undefined
       })),
-    [data]
+    [data, maxValueItem]
   );
 
   const handleDataPointPress = (_: any, index: number) => {
@@ -56,15 +76,12 @@ const Chart: React.FC<ChartProps> = ({
   };
 
   return (
-    <FadeSlideInView delay={200}>
-      <View style={styles.container}>
-        <FadeSlideInView delay={300}>
-          <View style={styles.titleContainer}>
-            <Icon name="bar-chart-2" size={20} color={COLORS.primary} style={styles.titleIcon} />
-            <Text style={styles.title}>{title}</Text>
-          </View>
-        </FadeSlideInView>
-
+    <View style={styles.card}>
+      <View style={styles.header}>
+        <Text style={styles.title}>{title}</Text>
+        <TimeframePicker />
+      </View>
+      <View style={styles.chartContainer}>
         {loading ? (
           <ChartSkeleton />
         ) : data.length === 0 ? (
@@ -74,142 +91,127 @@ const Chart: React.FC<ChartProps> = ({
             </View>
           </FadeSlideInView>
         ) : (
-          <>
-            <FadeSlideInView delay={400}>
-              <View style={styles.chartContainer}>
-                <BarChart
-                  data={chartData}
-                  height={height}
-                  width={chartWidth}
-                  barWidth={32}
-                  initialSpacing={20}
-                  spacing={30}
-                  barBorderRadius={BORDER_RADIUS.md}
-                  hideRules
-                  yAxisThickness={0}
-                  xAxisThickness={0}
-                  showGradient
-                  isAnimated
-                  animationDuration={1200}
-                  showVerticalLines
-                  verticalLinesColor={COLORS.border}
-                  xAxisLabelTextStyle={{
-                    color: COLORS.text.secondary,
-                    fontSize: TYPOGRAPHY.sizes.sm,
-                    fontWeight: '500',
-                  }}
-                  yAxisTextStyle={{
-                    color: COLORS.text.secondary,
-                    fontSize: TYPOGRAPHY.sizes.sm,
-                    fontWeight: '500',
-                  }}
-                  onPress={handleDataPointPress}
-                />
-              </View>
-            </FadeSlideInView>
-
-            {showLegend && (
-              <FadeSlideInView delay={500}>
-                <View style={styles.legendContainer}>
-                  <TouchableOpacity style={styles.legendItem}>
-                    <View style={[styles.legendDot, { backgroundColor: '#FF6B35' }]} />
-                    <Text style={styles.legendText}>Stock In</Text>
-                    <Text style={styles.legendValue}>+15%</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity style={styles.legendItem}>
-                    <View style={[styles.legendDot, { backgroundColor: '#FF8C42' }]} />
-                    <Text style={styles.legendText}>Stock Out</Text>
-                    <Text style={styles.legendValue}>-8%</Text>
-                  </TouchableOpacity>
-                </View>
-              </FadeSlideInView>
-            )}
-
-            {selectedDataPoint !== null && data[selectedDataPoint] && (
-              <FadeSlideInView delay={100}>
-                <View style={styles.selectedInfo}>
-                  <Text style={styles.selectedLabel}>
-                    {data[selectedDataPoint]?.label}: {data[selectedDataPoint]?.dataPointText}
-                  </Text>
-                </View>
-              </FadeSlideInView>
-            )}
-          </>
+          <BarChart
+            data={chartData}
+            barWidth={35}
+            spacing={20}
+            roundedTop
+            hideRules
+            xAxisThickness={0}
+            yAxisThickness={0}
+            yAxisTextStyle={styles.axisLabel}
+            xAxisLabelTextStyle={styles.axisLabel}
+            noOfSections={4}
+            maxValue={1440}
+            yAxisLabelTexts={['00:00', '06:00', '12:00', '18:00', '24:00']}
+            isAnimated
+            animationDuration={800}
+            showGradient
+            gradientColor={COLORS.gradient.primary[1]}
+            frontColor={COLORS.gradient.primary[0]}
+          />
         )}
       </View>
-    </FadeSlideInView>
+      <View style={styles.summaryContainer}>
+        <View style={styles.summaryDot} />
+        <Text style={styles.summaryText}>
+          <Text style={styles.summaryValue}>Most Active Time Slots: </Text>
+          12:00 to 21:30 (Mon-Fri), with the busiest day on Wednesday
+        </Text>
+      </View>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    backgroundColor: COLORS.card,
-    borderRadius: BORDER_RADIUS.lg,
-    padding: SPACING.lg,
+  card: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    paddingVertical: 20,
+    paddingHorizontal: 15,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 5,
     marginVertical: SPACING.md,
-    ...SHADOWS.lg,
   },
-  titleContainer: {
+  header: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: SPACING.lg,
-  },
-  titleIcon: {
-    marginRight: SPACING.sm,
+    marginBottom: 30,
+    paddingHorizontal: 10,
   },
   title: {
-    fontSize: TYPOGRAPHY.sizes.xl,
-    fontWeight: TYPOGRAPHY.weights.bold,
-    color: COLORS.text.primary,
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#2C2C2C',
+  },
+  pickerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 15,
+    paddingVertical: 10,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#F0F0F0',
+  },
+  pickerText: {
+    fontSize: 14,
+    color: '#333',
+    marginRight: 8,
+    fontWeight: '500',
   },
   chartContainer: {
+    height: 250,
+    paddingLeft: 10,
+  },
+  axisLabel: {
+    color: '#A0A0A0',
+    fontSize: 12,
+  },
+  tooltipContainer: {
+    backgroundColor: '#3D3D3D',
+    borderRadius: 6,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
     alignItems: 'center',
-    marginBottom: SPACING.md,
+    marginBottom: 4,
+    minWidth: 100,
   },
-  legendContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginTop: SPACING.md,
-    paddingTop: SPACING.md,
-    borderTopWidth: 1,
-    borderTopColor: COLORS.border,
+  tooltipTitle: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: 'bold',
   },
-  legendItem: {
+  tooltipTime: {
+    color: '#E0E0E0',
+    fontSize: 11,
+  },
+  summaryContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: SPACING.sm,
-    paddingVertical: SPACING.xs,
-    borderRadius: BORDER_RADIUS.md,
-    backgroundColor: 'rgba(255, 255, 255, 0.5)',
+    marginTop: 25,
+    paddingHorizontal: 10,
   },
-  legendDot: {
+  summaryDot: {
     width: 12,
     height: 12,
     borderRadius: 6,
-    marginRight: SPACING.xs,
-  },
-  legendText: {
-    fontSize: TYPOGRAPHY.sizes.sm,
-    color: COLORS.text.secondary,
-    fontWeight: TYPOGRAPHY.weights.medium,
-    marginRight: SPACING.xs,
-  },
-  legendValue: {
-    fontSize: TYPOGRAPHY.sizes.xs,
-    color: COLORS.primary,
-    fontWeight: TYPOGRAPHY.weights.bold,
-  },
-  selectedInfo: {
     backgroundColor: COLORS.primary,
-    padding: SPACING.sm,
-    borderRadius: BORDER_RADIUS.md,
-    marginTop: SPACING.md,
-    alignItems: 'center',
+    marginRight: 12,
   },
-  selectedLabel: {
-    color: COLORS.text.light,
-    fontSize: TYPOGRAPHY.sizes.sm,
-    fontWeight: TYPOGRAPHY.weights.semibold,
+  summaryText: {
+    fontSize: 14,
+    color: '#666',
+    flex: 1,
+    lineHeight: 20,
+  },
+  summaryValue: {
+    fontWeight: 'bold',
+    color: '#333',
   },
   noDataContainer: {
     padding: SPACING.md,

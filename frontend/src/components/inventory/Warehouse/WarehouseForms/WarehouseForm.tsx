@@ -7,14 +7,18 @@ import {
   StyleSheet,
   ScrollView,
   Alert,
+  SafeAreaView,
+  StatusBar,
 } from 'react-native';
-import { ActivityIndicator, Switch } from 'react-native';
+import { ActivityIndicator } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { inventoryApiService } from '../../../../api/inventoryApi';
 import { Warehouse, WarehouseCreate, WarehouseUpdate } from '../../../../types/inventory';
 import { COLORS } from '../../../../constants/colors';
+import { FORM_STYLES, FORM_COLORS, INPUT_ICONS } from '../../../../constants/formStyles';
 import SuccessModal from '../../../SuccessModal';
+import FailureModal from '../../../FailureModal';
 
 interface WarehouseFormProps {
   warehouse?: Warehouse | null;
@@ -43,6 +47,8 @@ const WarehouseForm: React.FC<WarehouseFormProps> = ({
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
+  const [showFailureModal, setShowFailureModal] = useState(false);
+  const [failureMessage, setFailureMessage] = useState('');
 
   useEffect(() => {
     if (warehouse && mode === 'update') {
@@ -109,10 +115,8 @@ const WarehouseForm: React.FC<WarehouseFormProps> = ({
       }
     } catch (error: any) {
       console.error('Warehouse form error:', error);
-      Alert.alert(
-        'Error',
-        error.response?.data?.detail || 'Failed to save warehouse. Please try again.'
-      );
+      setFailureMessage(error.response?.data?.detail || 'Failed to save warehouse. Please check your connection and try again.');
+      setShowFailureModal(true);
     } finally {
       setLoading(false);
     }
@@ -121,6 +125,16 @@ const WarehouseForm: React.FC<WarehouseFormProps> = ({
   const handleSuccessModalClose = () => {
     setShowSuccessModal(false);
     onSuccess();
+  };
+
+  const handleFailureModalClose = () => {
+    setShowFailureModal(false);
+  };
+
+  const handleFailureModalAction = () => {
+    setShowFailureModal(false);
+    // Optionally retry the operation
+    // handleSubmit();
   };
 
   const updateField = (field: keyof WarehouseCreate, value: string | boolean) => {
@@ -138,53 +152,49 @@ const WarehouseForm: React.FC<WarehouseFormProps> = ({
     keyboardType: 'default' | 'email-address' | 'phone-pad' = 'default',
     multiline: boolean = false
   ) => (
-    <View style={styles.inputContainer}>
-      <View style={styles.inputHeader}>
-        <Icon name={icon} size={20} color={COLORS.primary} style={styles.inputIcon} />
-        <Text style={styles.inputLabel}>{label}</Text>
+    <View style={FORM_STYLES.inputContainer}>
+      <Text style={FORM_STYLES.inputLabel}>{label}</Text>
+      <View style={[
+          FORM_STYLES.inputWrapper,
+          errors[field] && FORM_STYLES.inputWrapperError,
+        ]}>
+        <Icon name={icon} size={20} color={FORM_COLORS.text.secondary} style={FORM_STYLES.inputIcon} />
+        <TextInput
+          style={[FORM_STYLES.input, multiline && FORM_STYLES.inputMultiline]}
+          placeholder={placeholder}
+          placeholderTextColor={FORM_COLORS.text.tertiary}
+          value={formData[field] as string}
+          onChangeText={(value) => updateField(field, value)}
+          keyboardType={keyboardType}
+          multiline={multiline}
+          numberOfLines={multiline ? 3 : 1}
+        />
       </View>
-      <TextInput
-        style={[
-          styles.textInput,
-          multiline && styles.multilineInput,
-          errors[field] && styles.inputError,
-        ]}
-        placeholder={placeholder}
-        placeholderTextColor={COLORS.text.tertiary}
-        value={formData[field] as string}
-        onChangeText={(value) => updateField(field, value)}
-        keyboardType={keyboardType}
-        multiline={multiline}
-        numberOfLines={multiline ? 3 : 1}
-      />
-      {errors[field] && <Text style={styles.errorText}>{errors[field]}</Text>}
+      {errors[field] && <Text style={FORM_STYLES.errorText}>{errors[field]}</Text>}
     </View>
   );
 
   return (
-    <View style={styles.container}>
-      <LinearGradient
-        colors={[COLORS.gradient.primary[0], COLORS.gradient.primary[1]]}
-        style={styles.headerGradient}
-      >
-        <View style={styles.header}>
-          <TouchableOpacity onPress={onCancel} style={styles.backButton}>
-            <Icon name="arrow-left" size={24} color="#fff" />
+    <SafeAreaView style={FORM_STYLES.safeArea}>
+      <StatusBar barStyle="dark-content" backgroundColor={FORM_COLORS.background} />
+      <View style={FORM_STYLES.container}>
+        <View style={FORM_STYLES.header}>
+          <TouchableOpacity onPress={onCancel} style={FORM_STYLES.backButton}>
+            <Icon name="arrow-left" size={24} color="#000" />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>
+          <Text style={FORM_STYLES.headerTitle}>
             {mode === 'create' ? 'Create Warehouse' : 'Update Warehouse'}
           </Text>
-          <View style={styles.placeholder} />
+          <View style={FORM_STYLES.headerSpacer} />
         </View>
-      </LinearGradient>
 
-             <ScrollView style={styles.scrollContainer} showsVerticalScrollIndicator={false}>
-         <View style={styles.formContainer}>
+             <ScrollView style={FORM_STYLES.scrollView} showsVerticalScrollIndicator={false}>
+         <View style={FORM_STYLES.scrollContent}>
            {/* Basic Information Card */}
-           <View style={styles.card}>
-             <View style={styles.cardHeader}>
-               <Icon name="warehouse" size={24} color={COLORS.primary} />
-               <Text style={styles.cardTitle}>Basic Information</Text>
+           <View style={FORM_STYLES.card}>
+             <View style={FORM_STYLES.cardHeader}>
+               <Icon name="warehouse" size={24} color={FORM_COLORS.primary} />
+               <Text style={FORM_STYLES.cardTitle}>Basic Information</Text>
              </View>
              
              {renderInputField('name', 'Warehouse Name', 'Enter warehouse name', 'home')}
@@ -193,10 +203,10 @@ const WarehouseForm: React.FC<WarehouseFormProps> = ({
            </View>
 
            {/* Contact Information Card */}
-           <View style={styles.card}>
-             <View style={styles.cardHeader}>
-               <Icon name="account" size={24} color={COLORS.primary} />
-               <Text style={styles.cardTitle}>Contact Information</Text>
+           <View style={FORM_STYLES.card}>
+             <View style={FORM_STYLES.cardHeader}>
+               <Icon name="account" size={24} color={FORM_COLORS.primary} />
+               <Text style={FORM_STYLES.cardTitle}>Contact Information</Text>
              </View>
              
              {renderInputField('contact_person', 'Contact Person', 'Enter contact person name', 'account')}
@@ -205,55 +215,68 @@ const WarehouseForm: React.FC<WarehouseFormProps> = ({
            </View>
 
            {/* Status Card */}
-           <View style={styles.card}>
-             <View style={styles.cardHeader}>
-               <Icon name="toggle-switch" size={24} color={COLORS.primary} />
-               <Text style={styles.cardTitle}>Status</Text>
+           <View style={FORM_STYLES.card}>
+             <View style={FORM_STYLES.cardHeader}>
+               <Icon name="toggle-switch" size={24} color={FORM_COLORS.primary} />
+               <Text style={FORM_STYLES.cardTitle}>Status</Text>
              </View>
              
-             <View style={styles.switchContainer}>
-               <View style={styles.switchLabelContainer}>
-                 <Icon name="check-circle" size={20} color={COLORS.primary} />
-                 <Text style={styles.switchLabel}>Active Warehouse</Text>
+             <View style={FORM_STYLES.toggleContainer}>
+               <View style={FORM_STYLES.toggleLabelContainer}>
+                 <Icon name="check-circle" size={20} color={FORM_COLORS.primary} />
+                 <Text style={FORM_STYLES.toggleLabel}>Active Warehouse</Text>
                </View>
-               <Switch
-                 value={formData.is_active}
-                 onValueChange={(value) => updateField('is_active', value)}
-                 trackColor={{ false: COLORS.border.light, true: COLORS.primary }}
-                 thumbColor={formData.is_active ? '#fff' : '#f4f3f4'}
-               />
+               <TouchableOpacity
+                 style={[
+                   FORM_STYLES.toggleSwitch,
+                   formData.is_active && FORM_STYLES.toggleSwitchActive
+                 ]}
+                 onPress={() => updateField('is_active', !formData.is_active)}
+               >
+                 <View style={[
+                   FORM_STYLES.toggleThumb,
+                   formData.is_active && FORM_STYLES.toggleThumbActive
+                 ]} />
+               </TouchableOpacity>
              </View>
            </View>
 
            {/* Action Buttons */}
-           <View style={styles.buttonContainer}>
+           <View style={FORM_STYLES.buttonContainer}>
              <TouchableOpacity
-               style={styles.cancelButton}
+               style={FORM_STYLES.secondaryButton}
                onPress={onCancel}
              >
-               <Text style={styles.cancelButtonText}>Cancel</Text>
-             </TouchableOpacity>
-             
-             <TouchableOpacity
-               style={[styles.submitButton, loading && styles.submitButtonDisabled]}
-               onPress={handleSubmit}
+               <Text style={FORM_STYLES.secondaryButtonText}>Cancel</Text>
+             </TouchableOpacity> 
+             <LinearGradient
+               colors={FORM_COLORS.primaryGradient}
+               style={[FORM_STYLES.primaryButton, loading && FORM_STYLES.buttonDisabled]}
+               start={{ x: 0, y: 0 }}
+               end={{ x: 1, y: 0 }}
              >
-               {loading ? (
-                 <ActivityIndicator color="#fff" size="small" />
-               ) : (
-                 <>
-                   <Icon 
-                     name={mode === 'create' ? 'plus' : 'content-save'} 
-                     size={20} 
-                     color="#fff" 
-                     style={styles.buttonIcon}
-                   />
-                   <Text style={styles.submitButtonText}>
-                     {mode === 'create' ? 'Create Warehouse' : 'Update Warehouse'}
-                   </Text>
-                 </>
-               )}
-             </TouchableOpacity>
+               <TouchableOpacity
+                 style={FORM_STYLES.primaryButtonContent}
+                 onPress={handleSubmit}
+                 disabled={loading}
+               >
+                 {loading ? (
+                   <ActivityIndicator color="#fff" size="small" />
+                 ) : (
+                   <>
+                     <Icon 
+                       name={mode === 'create' ? 'plus' : 'content-save'} 
+                       size={20} 
+                       color="#fff" 
+                       style={FORM_STYLES.primaryButtonIcon}
+                     />
+                     <Text style={FORM_STYLES.primaryButtonText}>
+                       {mode === 'create' ? 'Create Warehouse' : 'Update Warehouse'}
+                     </Text>
+                   </>
+                 )}
+               </TouchableOpacity>
+             </LinearGradient>
            </View>
          </View>
        </ScrollView>
@@ -266,163 +289,24 @@ const WarehouseForm: React.FC<WarehouseFormProps> = ({
          onClose={handleSuccessModalClose}
          onAction={handleSuccessModalClose}
          actionText="Continue"
+          iconType="message"
+        />
+
+        {/* Failure Modal */}
+        <FailureModal
+          visible={showFailureModal}
+          title="Update Failed"
+          message={failureMessage}
+          onClose={handleFailureModalClose}
+          onAction={handleFailureModalAction}
+          actionText="Try Again"
+          animationType="shake"
+          iconType="error"
        />
-    </View>
+      </View>
+    </SafeAreaView>
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-  },
-  headerGradient: {
-    paddingTop: 20,
-    paddingBottom: 20,
-    paddingHorizontal: 20,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  backButton: {
-    padding: 8,
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: COLORS.text.light,
-    textAlign: 'center',
-  },
-  placeholder: {
-    width: 40,
-  },
-  scrollContainer: {
-    flex: 1,
-  },
-  formContainer: {
-    padding: 20,
-  },
-  card: {
-    backgroundColor: COLORS.card,
-    borderRadius: 16,
-    padding: 20,
-    marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  cardHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  cardTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: COLORS.text.primary,
-    marginLeft: 12,
-  },
-  inputContainer: {
-    marginBottom: 16,
-  },
-  inputHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  inputIcon: {
-    marginRight: 8,
-  },
-  inputLabel: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: COLORS.text.primary,
-  },
-  textInput: {
-    borderWidth: 1,
-    borderColor: COLORS.border.medium,
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    fontSize: 16,
-    backgroundColor: COLORS.surface,
-    color: COLORS.text.primary,
-  },
-  multilineInput: {
-    height: 80,
-    textAlignVertical: 'top',
-  },
-  inputError: {
-    borderColor: COLORS.status.error,
-  },
-  errorText: {
-    color: COLORS.status.error,
-    fontSize: 12,
-    marginTop: 4,
-    marginLeft: 4,
-  },
-  switchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 8,
-  },
-  switchLabelContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  switchLabel: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: COLORS.text.primary,
-    marginLeft: 8,
-  },
-  buttonContainer: {
-    flexDirection: 'row',
-    gap: 12,
-    marginTop: 20,
-  },
-  cancelButton: {
-    flex: 1,
-    backgroundColor: COLORS.surface,
-    borderRadius: 12,
-    paddingVertical: 16,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: COLORS.border.medium,
-  },
-  cancelButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: COLORS.text.secondary,
-  },
-  submitButton: {
-    flex: 2,
-    backgroundColor: COLORS.primary,
-    borderRadius: 12,
-    paddingVertical: 16,
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'center',
-  },
-  submitButtonDisabled: {
-    backgroundColor: COLORS.text.tertiary,
-  },
-  submitButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: COLORS.text.light,
-  },
-  buttonIcon: {
-    marginRight: 8,
-  },
-});
 
 export default WarehouseForm;

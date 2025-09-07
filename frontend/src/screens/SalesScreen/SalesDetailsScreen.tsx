@@ -548,7 +548,7 @@ const SalesDetailsScreen: React.FC<SalesDetailsScreenProps> = ({ navigation, rou
           onPress={actionLoading ? undefined : handleActionButton}
         >
           <LinearGradient
-            colors={['#FF6B35', '#FF8E53']}
+            colors={['#FB7504', '#C2252C']}
             style={styles.actionButtonGradient}
           >
             <Text style={styles.actionButtonText}>

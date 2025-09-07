@@ -17,11 +17,14 @@ import {
   SafeAreaView,
 } from 'react-native';
 import { Switch } from 'react-native';
-import Icon from 'react-native-vector-icons/Feather';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import LinearGradient from 'react-native-linear-gradient';
 import { COLORS } from '../../constants/colors';
 import { SPACING, BORDER_RADIUS, SHADOWS } from '../../constants/spacing';
+import { FORM_STYLES, FORM_COLORS, INPUT_ICONS } from '../../constants/formStyles';
 import { Product } from '../../types/inventory';
+import SuccessModal from '../../components/SuccessModal';
+import FailureModal from '../../components/FailureModal';
 
 interface AddProductScreenProps {
   navigation: any;
@@ -85,11 +88,10 @@ const AddProductScreen: React.FC<AddProductScreenProps> = ({ navigation, route }
   }, [editingProduct]);
 
   const [saving, setSaving] = useState(false);
-  const [successVisible, setSuccessVisible] = useState(false);
-  const successScale = useRef(new Animated.Value(0)).current;
-
-  const [failureVisible, setFailureVisible] = useState(false);
-  const failureScale = useRef(new Animated.Value(0)).current;
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
+  const [showFailureModal, setShowFailureModal] = useState(false);
+  const [failureMessage, setFailureMessage] = useState('');
 
   const handleChange = (key: string, value: any) => {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -100,675 +102,283 @@ const AddProductScreen: React.FC<AddProductScreenProps> = ({ navigation, route }
       setSaving(true);
       if (isEditing && editingProduct) {
         await inventoryApiService.updateProduct(editingProduct.id, form);
+        setSuccessMessage('Product updated successfully!');
       } else {
         await inventoryApiService.createProduct(form);
+        setSuccessMessage('Product created successfully!');
       }
+      setShowSuccessModal(true);
+    } catch (error: any) {
+      console.error('Product form error:', error);
+      setFailureMessage(error.response?.data?.detail || 'Failed to save product. Please check your connection and try again.');
+      setShowFailureModal(true);
+    } finally {
       setSaving(false);
-      setSuccessVisible(true);
-      successScale.setValue(0);
-      Animated.parallel([
-        Animated.spring(successScale, {
-          toValue: 1,
-          useNativeDriver: true,
-          friction: 6,
-          tension: 80,
-        }),
-      ]).start();
-    } catch (error) {
-      setSaving(false);
-      setFailureVisible(true);
-      failureScale.setValue(0);
-      Animated.parallel([
-        Animated.spring(failureScale, {
-          toValue: 1,
-          useNativeDriver: true,
-          friction: 6,
-          tension: 80,
-        })
-      ]).start();
     }
   };
 
-  const handleSuccessClose = () => {
-    setSuccessVisible(false);
+  const handleSuccessModalClose = () => {
+    setShowSuccessModal(false);
     navigation.goBack();
   };
 
-  const handleFailureClose = () => {
-    setFailureVisible(false);
+  const handleFailureModalClose = () => {
+    setShowFailureModal(false);
+  };
+
+  const handleFailureModalAction = () => {
+    setShowFailureModal(false);
+    // Optionally retry the operation
+    // handleSave();
   };
 
   const getHeaderImage = () => {
     return 'https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=800&h=600&fit=crop';
   };
 
+  const renderInputField = (
+    field: string,
+    label: string,
+    placeholder: string,
+    icon: string,
+    keyboardType: 'default' | 'numeric' = 'default',
+    multiline: boolean = false
+  ) => (
+    <View style={FORM_STYLES.inputContainer}>
+      <Text style={FORM_STYLES.inputLabel}>{label}</Text>
+      <View style={FORM_STYLES.inputWrapper}>
+        <Icon name={icon} size={20} color={FORM_COLORS.text.secondary} style={FORM_STYLES.inputIcon} />
+        <TextInput
+          style={[FORM_STYLES.input, multiline && FORM_STYLES.inputMultiline]}
+          placeholder={placeholder}
+          placeholderTextColor={FORM_COLORS.text.tertiary}
+          value={form[field as keyof typeof form] as string}
+          onChangeText={(value) => handleChange(field, value)}
+          keyboardType={keyboardType}
+          multiline={multiline}
+          numberOfLines={multiline ? 3 : 1}
+        />
+      </View>
+    </View>
+  );
+
+  const renderRowInputs = (leftField: string, leftLabel: string, leftIcon: string, rightField: string, rightLabel: string, rightIcon: string, keyboardType: 'default' | 'numeric' = 'default') => (
+    <View style={FORM_STYLES.formRow}>
+      <View style={FORM_STYLES.formRowItem}>
+        {renderInputField(leftField, leftLabel, leftLabel, leftIcon, keyboardType)}
+      </View>
+      <View style={FORM_STYLES.formRowItem}>
+        {renderInputField(rightField, rightLabel, rightLabel, rightIcon, keyboardType)}
+      </View>
+    </View>
+  );
+
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
-      
-      {/* Header with Image */}
-      <View style={styles.header}>
-        <ImageBackground
-          source={{ uri: getHeaderImage() }}
-          style={styles.headerImage}
-          imageStyle={styles.headerImageStyle}
-        >
-          <View style={styles.headerOverlay}>
-            {/* Back Button */}
-            <TouchableOpacity 
-              style={styles.backButton}
-              onPress={() => navigation.goBack()}
-            >
-              <Icon name="arrow-left" size={24} color={COLORS.text.light} />
-            </TouchableOpacity>
-            
-            <Text style={styles.headerTitle}>
-              {isEditing ? 'Edit Product' : 'Add Product'}
-            </Text>
-            
-            <View style={{width: 40}} />
-          </View>
-        </ImageBackground>
-      </View>
-      
-      {/* Form Content */}
-      <ScrollView 
-        style={styles.content} 
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.contentContainer}
-      >
-        <View style={styles.formCard}>
-          {/* Row 1 */}
-          <View style={styles.row}>
-            <View style={[styles.inputHalf, styles.inputLeft]}>
-              <Text style={styles.label}>Name</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Name"
-                value={form.name}
-                onChangeText={(v) => handleChange('name', v)}
-              />
-            </View>
-            <View style={[styles.inputHalf, styles.inputRight]}>
-              <Text style={styles.label}>SKU</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="SKU"
-                value={form.sku}
-                onChangeText={(v) => handleChange('sku', v)}
-              />
-            </View>
-          </View>
-
-          {/* Row 2 */}
-          <View style={styles.row}>
-            <View style={[styles.inputHalf, styles.inputLeft]}>
-              <Text style={styles.label}>Barcode</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Barcode"
-                value={form.barcode}
-                onChangeText={(v) => handleChange('barcode', v)}
-              />
-            </View>
-            <View style={[styles.inputHalf, styles.inputRight]}>
-              <Text style={styles.label}>Category</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Category"
-                value={form.category_name}
-                onChangeText={(v) => handleChange('category_name', v)}
-              />
-            </View>
-          </View>
-
-          {/* Row 3 */}
-          <View style={styles.row}>
-            <View style={[styles.inputHalf, styles.inputLeft]}>
-              <Text style={styles.label}>Brand</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Brand"
-                value={form.brand}
-                onChangeText={(v) => handleChange('brand', v)}
-              />
-            </View>
-            <View style={[styles.inputHalf, styles.inputRight]}>
-              <Text style={styles.label}>Unit</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Unit"
-                value={form.unit}
-                onChangeText={(v) => handleChange('unit', v)}
-              />
-            </View>
-          </View>
-
-          {/* Row 4 */}
-          <View style={styles.row}>
-            <View style={[styles.inputHalf, styles.inputLeft]}>
-              <Text style={styles.label}>Current Stock</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Current Stock"
-                value={String(form.current_stock)}
-                onChangeText={(v) => handleChange('current_stock', v)}
-                keyboardType="numeric"
-              />
-            </View>
-            <View style={[styles.inputHalf, styles.inputRight]}>
-              <Text style={styles.label}>Min Stock Level</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Min Stock Level"
-                value={String(form.min_stock_level)}
-                onChangeText={(v) => handleChange('min_stock_level', v)}
-                keyboardType="numeric"
-              />
-            </View>
-          </View>
-
-          {/* Row 5 */}
-          <View style={styles.row}>
-            <View style={[styles.inputHalf, styles.inputLeft]}>
-              <Text style={styles.label}>Reorder Point</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Reorder Point"
-                value={String(form.reorder_point)}
-                onChangeText={(v) => handleChange('reorder_point', v)}
-                keyboardType="numeric"
-              />
-            </View>
-            <View style={[styles.inputHalf, styles.inputRight]}>
-              <Text style={styles.label}>Max Stock Level</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Max Stock Level"
-                value={String(form.max_stock_level)}
-                onChangeText={(v) => handleChange('max_stock_level', v)}
-                keyboardType="numeric"
-              />
-            </View>
-          </View>
-
-          {/* Row 6 */}
-          <View style={styles.row}>
-            <View style={[styles.inputHalf, styles.inputLeft]}>
-              <Text style={styles.label}>Cost Price</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Cost Price"
-                value={String(form.cost_price)}
-                onChangeText={(v) => handleChange('cost_price', v)}
-                keyboardType="numeric"
-              />
-            </View>
-            <View style={[styles.inputHalf, styles.inputRight]}>
-              <Text style={styles.label}>Selling Price</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Selling Price"
-                value={String(form.selling_price)}
-                onChangeText={(v) => handleChange('selling_price', v)}
-                keyboardType="numeric"
-              />
-            </View>
-          </View>
-
-          {/* Row 7 */}
-          <View style={styles.row}>
-            <View style={[styles.inputHalf, styles.inputLeft]}>
-              <Text style={styles.label}>Weight</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Weight"
-                value={form.weight}
-                onChangeText={(v) => handleChange('weight', v)}
-              />
-            </View>
-            <View style={[styles.inputHalf, styles.inputRight]}>
-              <Text style={styles.label}>Dimensions</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Dimensions"
-                value={form.dimensions}
-                onChangeText={(v) => handleChange('dimensions', v)}
-              />
-            </View>
-          </View>
-
-          {/* Description */}
-          <View style={styles.inputContainerFull}>
-            <Text style={styles.label}>Description</Text>
-            <TextInput
-              style={[styles.input, { height: 90, textAlignVertical: 'top' }]}
-              placeholder="Description"
-              value={form.description}
-              onChangeText={(v) => handleChange('description', v)}
-              multiline={true}
-            />
-          </View>
-
-          {/* Switches - two-column layout */}
-          <View style={styles.switchSection}>
-            <Text style={styles.sectionTitle}>Product Options</Text>
-            
-            <View style={styles.switchGridRow}>
-              <View style={styles.switchItem}>
-                <Text style={styles.switchLabel}>Active</Text>
-                <Switch 
-                  value={form.is_active} 
-                  onValueChange={(v) => handleChange('is_active', v)}
-                  trackColor={{ false: '#E5E7EB', true: '#FF6B35' }}
-                  thumbColor={form.is_active ? '#fff' : '#f4f3f4'}
-                />
-              </View>
-              <View style={styles.switchItem}>
-                <Text style={styles.switchLabel}>Track Serial</Text>
-                <Switch 
-                  value={form.track_serial} 
-                  onValueChange={(v) => handleChange('track_serial', v)}
-                  trackColor={{ false: '#E5E7EB', true: '#FF6B35' }}
-                  thumbColor={form.track_serial ? '#fff' : '#f4f3f4'}
-                />
-              </View>
-            </View>
-            
-            <View style={styles.switchGridRow}>
-              <View style={styles.switchItem}>
-                <Text style={styles.switchLabel}>Track Batch</Text>
-                <Switch 
-                  value={form.track_batch} 
-                  onValueChange={(v) => handleChange('track_batch', v)}
-                  trackColor={{ false: '#E5E7EB', true: '#FF6B35' }}
-                  thumbColor={form.track_batch ? '#fff' : '#f4f3f4'}
-                />
-              </View>
-              <View style={styles.switchItem}>
-                <Text style={styles.switchLabel}>Composite</Text>
-                <Switch 
-                  value={form.is_composite} 
-                  onValueChange={(v) => handleChange('is_composite', v)}
-                  trackColor={{ false: '#E5E7EB', true: '#FF6B35' }}
-                  thumbColor={form.is_composite ? '#fff' : '#f4f3f4'}
-                />
-              </View>
-            </View>
-          </View>
+    <SafeAreaView style={FORM_STYLES.safeArea}>
+      <StatusBar barStyle="dark-content" backgroundColor={FORM_COLORS.background} />
+      <View style={FORM_STYLES.container}>
+        <View style={FORM_STYLES.header}>
+          <TouchableOpacity onPress={() => navigation.goBack()} style={FORM_STYLES.backButton}>
+            <Icon name="arrow-left" size={24} color="#000" />
+          </TouchableOpacity>
+          <Text style={FORM_STYLES.headerTitle}>
+            {isEditing ? 'Edit Product' : 'Add Product'}
+          </Text>
+          <View style={FORM_STYLES.headerSpacer} />
         </View>
-      </ScrollView>
-      
-      {/* Bottom Action Buttons */}
-      <View style={styles.bottomActions}>
-        <TouchableOpacity 
-          style={[styles.actionButton, styles.cancelButton]}
-          onPress={() => navigation.goBack()}
-          disabled={saving}
-        >
-          <Icon name="x" size={20} color={COLORS.text.primary} />
-          <Text style={styles.cancelButtonText}>Cancel</Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity 
-          style={[styles.actionButton, styles.saveButton]}
-          onPress={handleSave}
-          disabled={saving}
-        >
-          <Icon name="check" size={20} color={COLORS.text.light} />
-          <Text style={styles.saveButtonText}>{saving ? 'Saving...' : 'Save'}</Text>
-        </TouchableOpacity>
-      </View>
 
-      {/* Success Modal */}
-      <Modal visible={successVisible} transparent animationType="fade" onRequestClose={handleSuccessClose}>
-        <View style={styles.successOverlay}>
-          <Animated.View style={[styles.successCard, { transform: [{ scale: successScale }] }]}> 
-            <TouchableOpacity style={styles.successClose} onPress={handleSuccessClose}>
-              <Icon name="x" size={22} color="#111827" />
-            </TouchableOpacity>
-
-            <View style={styles.successIconCircle}>
-              <LottieView
-                source={require('../../assets/animations/success.json')} // Assuming you have a success.json animation
-                autoPlay
-                loop={false}
-                style={{ width: 80, height: 80 }}
-              />
+        <ScrollView style={FORM_STYLES.scrollView} showsVerticalScrollIndicator={false}>
+          <View style={FORM_STYLES.scrollContent}>
+            {/* Basic Information Card */}
+            <View style={FORM_STYLES.card}>
+              <View style={FORM_STYLES.cardHeader}>
+                <Icon name="package-variant" size={24} color={FORM_COLORS.primary} />
+                <Text style={FORM_STYLES.cardTitle}>Basic Information</Text>
+              </View>
+              
+              {renderRowInputs('name', 'Product Name', 'package-variant', 'sku', 'SKU', 'barcode')}
+              {renderRowInputs('barcode', 'Barcode', 'barcode', 'category_name', 'Category', 'tag')}
+              {renderRowInputs('brand', 'Brand', 'tag', 'unit', 'Unit', 'scale-unbalanced')}
             </View>
 
-            <Text style={styles.successTitle}>Successful!</Text>
-            <Text style={styles.successMessage}>
-              {isEditing ? 'Product updated successfully.' : 'Product added successfully.'}
-            </Text>
+            {/* Stock Information Card */}
+            <View style={FORM_STYLES.card}>
+              <View style={FORM_STYLES.cardHeader}>
+                <Icon name="package-variant-closed" size={24} color={FORM_COLORS.primary} />
+                <Text style={FORM_STYLES.cardTitle}>Stock Information</Text>
+              </View>
+              
+              {renderRowInputs('current_stock', 'Current Stock', 'package-variant-closed', 'min_stock_level', 'Min Stock Level', 'alert-circle', 'numeric')}
+              {renderRowInputs('reorder_point', 'Reorder Point', 'alert-circle', 'max_stock_level', 'Max Stock Level', 'trending-up', 'numeric')}
+            </View>
 
-            <TouchableOpacity style={styles.successAction} onPress={handleSuccessClose}>
-              <LinearGradient colors={["#FF6B35", "#FF8E53"]} style={styles.successActionGradient}>
-                <Text style={styles.successActionText}>Go Back</Text>
+            {/* Pricing Information Card */}
+            <View style={FORM_STYLES.card}>
+              <View style={FORM_STYLES.cardHeader}>
+                <Icon name="currency-usd" size={24} color={FORM_COLORS.primary} />
+                <Text style={FORM_STYLES.cardTitle}>Pricing Information</Text>
+              </View>
+              
+              {renderRowInputs('cost_price', 'Cost Price', 'currency-usd', 'selling_price', 'Selling Price', 'currency-usd', 'numeric')}
+            </View>
+
+            {/* Physical Properties Card */}
+            <View style={FORM_STYLES.card}>
+              <View style={FORM_STYLES.cardHeader}>
+                <Icon name="weight" size={24} color={FORM_COLORS.primary} />
+                <Text style={FORM_STYLES.cardTitle}>Physical Properties</Text>
+              </View>
+              
+              {renderRowInputs('weight', 'Weight', 'weight', 'dimensions', 'Dimensions', 'resize')}
+              {renderInputField('description', 'Description', 'Enter product description', 'text', 'default', true)}
+            </View>
+
+            {/* Product Options Card */}
+            <View style={FORM_STYLES.card}>
+              <View style={FORM_STYLES.cardHeader}>
+                <Icon name="cog" size={24} color={FORM_COLORS.primary} />
+                <Text style={FORM_STYLES.cardTitle}>Product Options</Text>
+              </View>
+              
+              <View style={FORM_STYLES.toggleContainer}>
+                <View style={FORM_STYLES.toggleLabelContainer}>
+                  <Icon name="check-circle" size={20} color={FORM_COLORS.primary} />
+                  <Text style={FORM_STYLES.toggleLabel}>Active Product</Text>
+                </View>
+                <TouchableOpacity
+                  style={[
+                    FORM_STYLES.toggleSwitch,
+                    form.is_active && FORM_STYLES.toggleSwitchActive
+                  ]}
+                  onPress={() => handleChange('is_active', !form.is_active)}
+                >
+                  <View style={[
+                    FORM_STYLES.toggleThumb,
+                    form.is_active && FORM_STYLES.toggleThumbActive
+                  ]} />
+                </TouchableOpacity>
+              </View>
+
+              <View style={FORM_STYLES.toggleContainer}>
+                <View style={FORM_STYLES.toggleLabelContainer}>
+                  <Icon name="barcode" size={20} color={FORM_COLORS.primary} />
+                  <Text style={FORM_STYLES.toggleLabel}>Track Serial Numbers</Text>
+                </View>
+                <TouchableOpacity
+                  style={[
+                    FORM_STYLES.toggleSwitch,
+                    form.track_serial && FORM_STYLES.toggleSwitchActive
+                  ]}
+                  onPress={() => handleChange('track_serial', !form.track_serial)}
+                >
+                  <View style={[
+                    FORM_STYLES.toggleThumb,
+                    form.track_serial && FORM_STYLES.toggleThumbActive
+                  ]} />
+                </TouchableOpacity>
+              </View>
+
+              <View style={FORM_STYLES.toggleContainer}>
+                <View style={FORM_STYLES.toggleLabelContainer}>
+                  <Icon name="package-variant" size={20} color={FORM_COLORS.primary} />
+                  <Text style={FORM_STYLES.toggleLabel}>Track Batch Numbers</Text>
+                </View>
+                <TouchableOpacity
+                  style={[
+                    FORM_STYLES.toggleSwitch,
+                    form.track_batch && FORM_STYLES.toggleSwitchActive
+                  ]}
+                  onPress={() => handleChange('track_batch', !form.track_batch)}
+                >
+                  <View style={[
+                    FORM_STYLES.toggleThumb,
+                    form.track_batch && FORM_STYLES.toggleThumbActive
+                  ]} />
+                </TouchableOpacity>
+              </View>
+
+              <View style={FORM_STYLES.toggleContainer}>
+                <View style={FORM_STYLES.toggleLabelContainer}>
+                  <Icon name="layers" size={20} color={FORM_COLORS.primary} />
+                  <Text style={FORM_STYLES.toggleLabel}>Composite Product</Text>
+                </View>
+                <TouchableOpacity
+                  style={[
+                    FORM_STYLES.toggleSwitch,
+                    form.is_composite && FORM_STYLES.toggleSwitchActive
+                  ]}
+                  onPress={() => handleChange('is_composite', !form.is_composite)}
+                >
+                  <View style={[
+                    FORM_STYLES.toggleThumb,
+                    form.is_composite && FORM_STYLES.toggleThumbActive
+                  ]} />
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            {/* Action Buttons */}
+            <View style={FORM_STYLES.buttonContainer}>
+              <TouchableOpacity
+                style={FORM_STYLES.secondaryButton}
+                onPress={() => navigation.goBack()}
+                disabled={saving}
+              >
+                <Text style={FORM_STYLES.secondaryButtonText}>Cancel</Text>
+              </TouchableOpacity>
+              
+              <LinearGradient
+                colors={FORM_COLORS.primaryGradient}
+                style={[FORM_STYLES.primaryButton, saving && FORM_STYLES.buttonDisabled]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+              >
+                <TouchableOpacity
+                  style={FORM_STYLES.primaryButtonContent}
+                  onPress={handleSave}
+                  disabled={saving}
+                >
+                  <Icon 
+                    name={isEditing ? 'content-save' : 'plus'} 
+                    size={20} 
+                    color="#fff" 
+                    style={FORM_STYLES.primaryButtonIcon}
+                  />
+                  <Text style={FORM_STYLES.primaryButtonText}>
+                    {saving ? 'Saving...' : (isEditing ? 'Update Product' : 'Create Product')}
+                  </Text>
+                </TouchableOpacity>
               </LinearGradient>
-            </TouchableOpacity>
-          </Animated.View>
-        </View>
-      </Modal>
-
-      {/* Failure Modal */}
-      <Modal visible={failureVisible} transparent animationType="fade" onRequestClose={handleFailureClose}>
-        <View style={styles.failureOverlay}>
-          <Animated.View style={[styles.failureCard, { transform: [{ scale: failureScale }] }]}>
-            <TouchableOpacity style={styles.failureClose} onPress={handleFailureClose}>
-              <Icon name="x" size={22} color="#111827" />
-            </TouchableOpacity>
-
-            <View style={styles.failureIconCircle}>
-              <LottieView
-                source={require('../../assets/animations/failure.json')} // Assuming you have a failure.json animation
-                autoPlay
-                loop={false}
-                style={{ width: 80, height: 80 }}
-              />
             </View>
+          </View>
+        </ScrollView>
 
-            <Text style={styles.failureTitle}>Failed!</Text>
-            <Text style={styles.failureMessage}>
-              {isEditing ? 'Failed to update product.' : 'Failed to add product.'} Please try again.
-            </Text>
+        {/* Success Modal */}
+        <SuccessModal
+          visible={showSuccessModal}
+          title="Success!"
+          message={successMessage}
+          onClose={handleSuccessModalClose}
+          onAction={handleSuccessModalClose}
+          actionText="Continue"
+          iconType="message"
+        />
 
-            <TouchableOpacity style={styles.failureAction} onPress={handleFailureClose}>
-              <LinearGradient colors={["#EF4444", "#DC2626"]} style={styles.failureActionGradient}>
-                <Text style={styles.failureActionText}>Try Again</Text>
-              </LinearGradient>
-            </TouchableOpacity>
-          </Animated.View>
-        </View>
-      </Modal>
+        {/* Failure Modal */}
+        <FailureModal
+          visible={showFailureModal}
+          title="Update Failed"
+          message={failureMessage}
+          onClose={handleFailureModalClose}
+          onAction={handleFailureModalAction}
+          actionText="Try Again"
+          animationType="shake"
+          iconType="error"
+        />
+      </View>
     </SafeAreaView>
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-  },
-  header: {
-    height: 200,
-    position: 'relative',
-  },
-  headerImage: {
-    width: '100%',
-    height: '100%',
-    justifyContent: 'space-between',
-  },
-  headerImageStyle: {
-    borderBottomLeftRadius: 30,
-    borderBottomRightRadius: 30,
-  },
-  headerOverlay: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: SPACING.lg,
-    paddingTop: Platform.OS === 'ios' ? SPACING.lg : SPACING.xxxl,
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: COLORS.text.light,
-    textAlign: 'center',
-  },
-  backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: BORDER_RADIUS.round,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    ...SHADOWS.md,
-  },
-  content: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-    marginTop: -30,
-    borderTopLeftRadius: 30,
-    borderTopRightRadius: 30,
-  },
-  contentContainer: {
-    padding: SPACING.lg,
-    paddingBottom: 100, // Space for bottom buttons
-  },
-  formCard: {
-    backgroundColor: COLORS.surface,
-    borderRadius: BORDER_RADIUS.lg,
-    padding: SPACING.lg,
-    ...SHADOWS.sm,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: COLORS.text.primary,
-    marginBottom: SPACING.md,
-  },
-  row: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: SPACING.md,
-  },
-  inputHalf: {
-    flex: 1,
-  },
-  inputLeft: {
-    marginRight: SPACING.sm,
-  },
-  inputRight: {
-    marginLeft: SPACING.sm,
-  },
-  inputContainerFull: {
-    marginBottom: SPACING.md,
-  },
-  label: {
-    fontSize: 14,
-    fontWeight: '500',
-    marginBottom: SPACING.xs,
-    color: COLORS.text.secondary,
-  },
-  input: {
-    backgroundColor: '#F9FAFB',
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.sm,
-    borderRadius: BORDER_RADIUS.md,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    fontSize: 14,
-    color: COLORS.text.primary,
-  },
-  switchSection: {
-    marginTop: SPACING.md,
-  },
-  switchGridRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: SPACING.md,
-  },
-  switchItem: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: SPACING.sm,
-    paddingHorizontal: SPACING.md,
-    borderRadius: BORDER_RADIUS.md,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    backgroundColor: '#F9FAFB',
-    marginHorizontal: SPACING.xs,
-  },
-  switchLabel: {
-    fontSize: 14,
-    color: COLORS.text.secondary,
-  },
-  bottomActions: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    padding: SPACING.md,
-    backgroundColor: COLORS.background,
-    borderTopWidth: 1,
-    borderTopColor: COLORS.border.light,
-  },
-  actionButton: {
-    flex: 1,
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderRadius: BORDER_RADIUS.md,
-    paddingVertical: SPACING.md,
-    marginHorizontal: SPACING.xs,
-    ...SHADOWS.md,
-  },
-  cancelButton: {
-    backgroundColor: '#F3F4F6',
-  },
-  saveButton: {
-    backgroundColor: '#FF6B35',
-  },
-  cancelButtonText: {
-    color: COLORS.text.primary,
-    fontWeight: '600',
-    marginLeft: SPACING.sm,
-  },
-  saveButtonText: {
-    color: COLORS.text.light,
-    fontWeight: '600',
-    marginLeft: SPACING.sm,
-  },
-  // Success modal styles
-  successOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: SPACING.lg,
-  },
-  successCard: {
-    width: '100%',
-    maxWidth: 360,
-    backgroundColor: COLORS.surface,
-    borderRadius: BORDER_RADIUS.lg,
-    padding: SPACING.xl,
-    alignItems: 'center',
-    ...SHADOWS.lg,
-  },
-  successClose: {
-    position: 'absolute',
-    top: SPACING.md,
-    right: SPACING.md,
-    padding: SPACING.xs,
-    zIndex: 10,
-  },
-  successIconCircle: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: '#22C55E', // Green color for success
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: SPACING.lg,
-    ...SHADOWS.sm,
-  },
-  successTitle: {
-    fontSize: 22,
-    fontWeight: '700',
-    color: COLORS.text.primary,
-    marginBottom: SPACING.sm,
-  },
-  successMessage: {
-    fontSize: 14,
-    color: COLORS.text.secondary,
-    textAlign: 'center',
-    marginBottom: SPACING.lg,
-  },
-  successAction: {
-    width: '100%',
-    borderRadius: BORDER_RADIUS.md,
-    overflow: 'hidden',
-  },
-  successActionGradient: {
-    paddingVertical: SPACING.md,
-    borderRadius: BORDER_RADIUS.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  successActionText: {
-    color: COLORS.text.light,
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  // Failure modal styles
-  failureOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: SPACING.lg,
-  },
-  failureCard: {
-    width: '100%',
-    maxWidth: 360,
-    backgroundColor: COLORS.surface,
-    borderRadius: BORDER_RADIUS.lg,
-    padding: SPACING.xl,
-    alignItems: 'center',
-    ...SHADOWS.lg,
-  },
-  failureClose: {
-    position: 'absolute',
-    top: SPACING.md,
-    right: SPACING.md,
-    padding: SPACING.xs,
-    zIndex: 10,
-  },
-  failureIconCircle: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: '#EF4444', // Red color for failure
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: SPACING.lg,
-    ...SHADOWS.sm,
-  },
-  failureTitle: {
-    fontSize: 22,
-    fontWeight: '700',
-    color: COLORS.text.primary,
-    marginBottom: SPACING.sm,
-  },
-  failureMessage: {
-    fontSize: 14,
-    color: COLORS.text.secondary,
-    textAlign: 'center',
-    marginBottom: SPACING.lg,
-  },
-  failureAction: {
-    width: '100%',
-    borderRadius: BORDER_RADIUS.md,
-    overflow: 'hidden',
-  },
-  failureActionGradient: {
-    paddingVertical: SPACING.md,
-    borderRadius: BORDER_RADIUS.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  failureActionText: {
-    color: COLORS.text.light,
-    fontSize: 16,
-    fontWeight: '600',
-  },
-});
 
 export default AddProductScreen;

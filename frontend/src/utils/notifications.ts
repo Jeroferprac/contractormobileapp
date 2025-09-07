@@ -433,7 +433,7 @@ const getNotificationStyle = (type: string) => {
     case 'low_stock':
       return {
         icon: 'ic_notification_stock',
-        color: '#FF6B35',
+        color: '#FB7504',
         sound: true,
         vibration: true
       };

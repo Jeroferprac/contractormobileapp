@@ -8,7 +8,10 @@ import {
   Animated,
   Dimensions,
   StatusBar,
+  Platform,
+  Alert,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/Feather';
 import {
   Camera,
@@ -21,29 +24,19 @@ import { Product } from '../../types/inventory';
 import { COLORS } from '../../constants/colors';
 import { SPACING } from '../../constants/spacing';
 import { TEXT_STYLES } from '../../constants/typography';
-import SuccessModal from '../SuccessModal';
-import FailureModal from '../FailureModal';
+import SuccessModal from '../../components/SuccessModal';
+import FailureModal from '../../components/FailureModal';
+import { useNavigation } from '@react-navigation/native';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
-
-interface BarcodeScannerProps {
-  visible: boolean;
-  onClose: () => void;
-  onScan: (barcode: string, product?: Product) => void;
-  showProductDetails?: boolean;
-}
 
 interface ScanResult {
   barcode: string;
   product: Product;
 }
 
-const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
-  visible,
-  onClose,
-  onScan,
-  showProductDetails = false,
-}) => {
+const BarcodeScannerScreen: React.FC = () => {
+  const navigation = useNavigation();
   const [scannedProduct, setScannedProduct] = useState<Product | null>(null);
   const [scanResult, setScanResult] = useState<ScanResult | null>(null);
   const [isScanning, setIsScanning] = useState(true);
@@ -55,6 +48,7 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
 
   // Animation refs
   const scanLineAnim = useRef(new Animated.Value(0)).current;
+  const scannerFrameScale = useRef(new Animated.Value(1)).current;
   const overlayOpacity = useRef(new Animated.Value(0)).current;
 
   // Camera hooks
@@ -70,7 +64,7 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
 
   // Start scan line animation
   useEffect(() => {
-    if (isScanning && visible) {
+    if (isScanning) {
       const startAnimation = () => {
         Animated.loop(
           Animated.sequence([
@@ -90,27 +84,16 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
 
       startAnimation();
     }
-  }, [isScanning, visible, scanLineAnim]);
+  }, [isScanning, scanLineAnim]);
 
-  // Fade in overlay when modal becomes visible
+  // Fade in overlay on mount
   useEffect(() => {
-    if (visible) {
-      Animated.timing(overlayOpacity, {
-        toValue: 1,
-        duration: 300,
-        useNativeDriver: true,
-      }).start();
-    } else {
-      overlayOpacity.setValue(0);
-    }
-  }, [visible, overlayOpacity]);
-
-  // Reset scanner when modal opens
-  useEffect(() => {
-    if (visible) {
-      resetScanner();
-    }
-  }, [visible]);
+    Animated.timing(overlayOpacity, {
+      toValue: 1,
+      duration: 500,
+      useNativeDriver: true,
+    }).start();
+  }, [overlayOpacity]);
 
   // Code scanner configuration
   const codeScanner = useCodeScanner({
@@ -127,15 +110,15 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
     ],
     onCodeScanned: useCallback(
       async (codes) => {
-        if (isScanning && codes.length > 0 && !isLoading && visible) {
-        setIsScanning(false);
+        if (isScanning && codes.length > 0 && !isLoading) {
+          setIsScanning(false);
           setIsLoading(true);
           
-        const scannedCode = codes[0];
+          const scannedCode = codes[0];
           
-        try {
-          if (scannedCode.value) {
-            const response = await inventoryApiService.getProductByBarcode(scannedCode.value);
+          try {
+            if (scannedCode.value) {
+              const response = await inventoryApiService.getProductByBarcode(scannedCode.value);
               const product = response.data;
               
               setScannedProduct(product);
@@ -144,21 +127,11 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
                 product,
               });
               
-              // Call onScan callback
-              onScan(scannedCode.value, product);
-              
-              // Show success modal if product details are requested
-              if (showProductDetails) {
-                setShowSuccessModal(true);
-              } else {
-                // Auto-close after successful scan
-                setTimeout(() => {
-                  onClose();
-                }, 1000);
-              }
+              // Show success modal
+              setShowSuccessModal(true);
             }
           } catch (err: any) {
-          console.error('Barcode scan API error:', err);
+            console.error('Barcode scan API error:', err);
             
             const errorMsg = err.response?.data?.message || 
                            err.message || 
@@ -177,7 +150,7 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
           }
         }
       },
-      [isScanning, isLoading, visible, onScan, showProductDetails]
+      [isScanning, isLoading]
     ),
   });
 
@@ -186,7 +159,7 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
     setShowSuccessModal(false);
     setScanResult(null);
     setScannedProduct(null);
-    onClose();
+    setIsScanning(true);
   };
 
   // Handle failure modal close
@@ -209,21 +182,17 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
     setTorchOn(!torchOn);
   };
 
-  // Handle modal close
-  const handleClose = () => {
-    resetScanner();
-    onClose();
+  // Handle back navigation
+  const handleBack = () => {
+    navigation.goBack();
   };
 
   // Permission denied UI
   if (!hasPermission) {
     return (
-      <Modal
-        visible={visible}
-        animationType="slide"
-        presentationStyle="pageSheet"
-        onRequestClose={handleClose}
-      >
+      <SafeAreaView style={styles.container}>
+        <StatusBar barStyle="light-content" backgroundColor={COLORS.background} />
+        
         <View style={styles.permissionContainer}>
           <View style={styles.permissionIconContainer}>
             <Icon name="camera-off" size={80} color={COLORS.text.secondary} />
@@ -238,23 +207,20 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
             <Text style={styles.permissionButtonText}>Grant Permission</Text>
           </TouchableOpacity>
           
-          <TouchableOpacity style={styles.closeButton} onPress={handleClose}>
-            <Text style={styles.closeButtonText}>Close</Text>
+          <TouchableOpacity style={styles.backButton} onPress={handleBack}>
+            <Text style={styles.backButtonText}>Go Back</Text>
           </TouchableOpacity>
         </View>
-      </Modal>
+      </SafeAreaView>
     );
   }
 
   // Camera not available UI
   if (!device) {
     return (
-      <Modal
-        visible={visible}
-        animationType="slide"
-        presentationStyle="pageSheet"
-        onRequestClose={handleClose}
-      >
+      <SafeAreaView style={styles.container}>
+        <StatusBar barStyle="light-content" backgroundColor={COLORS.background} />
+        
         <View style={styles.permissionContainer}>
           <View style={styles.permissionIconContainer}>
             <Icon name="smartphone" size={80} color={COLORS.text.secondary} />
@@ -265,146 +231,139 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
             Your device doesn't have a camera or it's not accessible.
           </Text>
           
-          <TouchableOpacity style={styles.closeButton} onPress={handleClose}>
-            <Text style={styles.closeButtonText}>Close</Text>
+          <TouchableOpacity style={styles.backButton} onPress={handleBack}>
+            <Text style={styles.backButtonText}>Go Back</Text>
           </TouchableOpacity>
         </View>
-      </Modal>
+      </SafeAreaView>
     );
   }
 
   return (
-    <Modal
-      visible={visible}
-      animationType="slide"
-      presentationStyle="pageSheet"
-      onRequestClose={handleClose}
-    >
-      <View style={styles.container}>
-        <StatusBar barStyle="light-content" backgroundColor={COLORS.background} />
+    <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="light-content" backgroundColor={COLORS.background} />
+      
+      {/* Header */}
+      <View style={styles.header}>
+        <TouchableOpacity style={styles.backButtonHeader} onPress={handleBack}>
+          <Icon name="arrow-left" size={24} color={COLORS.text.light} />
+        </TouchableOpacity>
         
-        {/* Header */}
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>Scan Barcode</Text>
-          
-          <TouchableOpacity style={styles.torchButton} onPress={toggleTorch}>
-            <Icon 
-              name={torchOn ? "zap" : "zap-off"} 
-              size={24} 
-              color={torchOn ? COLORS.primary : COLORS.text.light} 
-            />
-          </TouchableOpacity>
-          
-          <TouchableOpacity style={styles.closeButtonHeader} onPress={handleClose}>
-            <Icon name="x" size={24} color={COLORS.text.light} />
-          </TouchableOpacity>
-        </View>
+        <Text style={styles.headerTitle}>Scan Barcode</Text>
+        
+        <TouchableOpacity style={styles.torchButton} onPress={toggleTorch}>
+          <Icon 
+            name={torchOn ? "zap" : "zap-off"} 
+            size={24} 
+            color={torchOn ? COLORS.primary : COLORS.text.light} 
+          />
+        </TouchableOpacity>
+      </View>
 
-        {/* Camera View */}
-        <View style={styles.cameraContainer}>
+      {/* Camera View */}
+      <View style={styles.cameraContainer}>
         <Camera
-            style={styles.camera}
+          style={styles.camera}
           device={device}
-            isActive={isScanning && visible}
+          isActive={isScanning}
           codeScanner={codeScanner}
           torch={torchOn ? 'on' : 'off'}
         />
 
-          {/* Scanner Overlay */}
-          <Animated.View style={[styles.overlay, { opacity: overlayOpacity }]}>
-            {/* Scanner Frame */}
+        {/* Scanner Overlay */}
+        <Animated.View style={[styles.overlay, { opacity: overlayOpacity }]}>
+          {/* Scanner Frame */}
           <View style={styles.scannerFrame}>
-              {/* Corner Indicators */}
-              <View style={[styles.corner, styles.cornerTopLeft]} />
-              <View style={[styles.corner, styles.cornerTopRight]} />
-              <View style={[styles.corner, styles.cornerBottomLeft]} />
-              <View style={[styles.corner, styles.cornerBottomRight]} />
-              
-              {/* Animated Scan Line */}
-              <Animated.View
-                style={[
-                  styles.scanLine,
-                  {
-                    transform: [
-                      {
-                        translateY: scanLineAnim.interpolate({
-                          inputRange: [0, 1],
-                          outputRange: [0, 200],
-                        }),
-                      },
-                    ],
-                  },
-                ]}
-              />
-            </View>
+            {/* Corner Indicators */}
+            <View style={[styles.corner, styles.cornerTopLeft]} />
+            <View style={[styles.corner, styles.cornerTopRight]} />
+            <View style={[styles.corner, styles.cornerBottomLeft]} />
+            <View style={[styles.corner, styles.cornerBottomRight]} />
+            
+            {/* Animated Scan Line */}
+            <Animated.View
+              style={[
+                styles.scanLine,
+                {
+                  transform: [
+                    {
+                      translateY: scanLineAnim.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [0, 200],
+                      }),
+                    },
+                  ],
+                },
+              ]}
+            />
+          </View>
 
-            {/* Instructions */}
-            <View style={styles.instructionsContainer}>
-              <Text style={styles.instructionTitle}>
-                {isScanning ? 'Position barcode within frame' : 'Processing...'}
-              </Text>
-              <Text style={styles.instructionText}>
-                {isScanning 
-                  ? 'Hold steady and ensure good lighting'
-                  : 'Please wait while we fetch product details'
-                }
+          {/* Instructions */}
+          <View style={styles.instructionsContainer}>
+            <Text style={styles.instructionTitle}>
+              {isScanning ? 'Position barcode within frame' : 'Processing...'}
+            </Text>
+            <Text style={styles.instructionText}>
+              {isScanning 
+                ? 'Hold steady and ensure good lighting'
+                : 'Please wait while we fetch product details'
+              }
             </Text>
           </View>
-          </Animated.View>
+        </Animated.View>
 
-          {/* Loading Indicator */}
-          {isLoading && (
-            <View style={styles.loadingOverlay}>
-              <View style={styles.loadingContainer}>
-                <Icon name="loader" size={32} color={COLORS.primary} />
-                <Text style={styles.loadingText}>Processing...</Text>
-              </View>
+        {/* Loading Indicator */}
+        {isLoading && (
+          <View style={styles.loadingOverlay}>
+            <View style={styles.loadingContainer}>
+              <Icon name="loader" size={32} color={COLORS.primary} />
+              <Text style={styles.loadingText}>Processing...</Text>
             </View>
-          )}
-        </View>
-
-        {/* Bottom Controls */}
-        <View style={styles.bottomControls}>
-          <TouchableOpacity
-            style={[styles.controlButton, styles.primaryButton]} 
-            onPress={resetScanner}
-            disabled={isLoading}
-          >
-            <Icon name="refresh-cw" size={20} color={COLORS.text.light} />
-            <Text style={styles.primaryButtonText}>Scan Again</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.controlButton} 
-            onPress={handleClose}
-            disabled={isLoading}
-          >
-            <Icon name="x" size={20} color={COLORS.text.secondary} />
-            <Text style={styles.controlButtonText}>Cancel</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Success Modal */}
-        <SuccessModal
-          visible={showSuccessModal}
-          title="Product Found!"
-          message={`Successfully scanned: ${scanResult?.product.name}`}
-          onClose={handleSuccessClose}
-          onAction={handleSuccessClose}
-          actionText="Continue"
-        />
-
-        {/* Failure Modal */}
-        <FailureModal
-          visible={showFailureModal}
-          title="Scan Failed"
-          message={errorMessage}
-          onClose={handleFailureClose}
-          onAction={handleFailureClose}
-          actionText="Try Again"
-        />
+          </View>
+        )}
       </View>
-    </Modal>
+
+      {/* Bottom Controls */}
+      <View style={styles.bottomControls}>
+        <TouchableOpacity 
+          style={[styles.controlButton, styles.primaryButton]} 
+          onPress={resetScanner}
+          disabled={isLoading}
+        >
+          <Icon name="refresh-cw" size={20} color={COLORS.text.light} />
+          <Text style={styles.primaryButtonText}>Scan Again</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity 
+          style={styles.controlButton} 
+          onPress={handleBack}
+          disabled={isLoading}
+        >
+          <Icon name="x" size={20} color={COLORS.text.secondary} />
+          <Text style={styles.controlButtonText}>Cancel</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Success Modal */}
+      <SuccessModal
+        visible={showSuccessModal}
+        title="Product Found!"
+        message={`Successfully scanned: ${scanResult?.product.name}`}
+        onClose={handleSuccessClose}
+        onAction={handleSuccessClose}
+        actionText="Continue"
+      />
+
+      {/* Failure Modal */}
+      <FailureModal
+        visible={showFailureModal}
+        title="Scan Failed"
+        message={errorMessage}
+        onClose={handleFailureClose}
+        onAction={handleFailureClose}
+        actionText="Try Again"
+      />
+    </SafeAreaView>
   );
 };
 
@@ -421,14 +380,7 @@ const styles = StyleSheet.create({
     paddingVertical: SPACING.md,
     backgroundColor: COLORS.background,
   },
-  headerTitle: {
-    ...TEXT_STYLES.h2,
-    color: COLORS.text.light,
-    fontWeight: '600',
-    flex: 1,
-    textAlign: 'center',
-  },
-  torchButton: {
+  backButtonHeader: {
     width: 44,
     height: 44,
     borderRadius: 22,
@@ -436,7 +388,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  closeButtonHeader: {
+  headerTitle: {
+    ...TEXT_STYLES.h2,
+    color: COLORS.text.light,
+    fontWeight: '600',
+  },
+  torchButton: {
     width: 44,
     height: 44,
     borderRadius: 22,
@@ -585,7 +542,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: SPACING.xl,
-    backgroundColor: COLORS.background,
   },
   permissionIconContainer: {
     width: 120,
@@ -620,14 +576,14 @@ const styles = StyleSheet.create({
     ...TEXT_STYLES.button,
     color: COLORS.text.light,
   },
-  closeButton: {
+  backButton: {
     paddingHorizontal: SPACING.lg,
     paddingVertical: SPACING.md,
   },
-  closeButtonText: {
+  backButtonText: {
     ...TEXT_STYLES.button,
     color: COLORS.text.secondary,
   },
 });
 
-export default BarcodeScanner;
+export default BarcodeScannerScreen;

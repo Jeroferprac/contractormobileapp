@@ -75,7 +75,7 @@ const RecentTransfers: React.FC<RecentTransfersProps> = ({
       case 'completed':
         return { bg: 'rgba(52, 199, 89, 0.15)', text: COLORS.status.success };
       case 'pending':
-        return { bg: 'rgba(255, 149, 0, 0.15)', text: '#FF9500' };
+        return { bg: 'rgba(251, 117, 4, 0.15)', text: '#FB7504' };
       case 'in_transit':
         return { bg: 'rgba(59, 130, 246, 0.15)', text: '#3B82F6' };
       case 'cancelled':

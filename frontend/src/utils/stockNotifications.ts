@@ -231,7 +231,7 @@ class StockNotificationService {
         return {
           ...baseConfig,
           icon: 'ic_notification_stock',
-          color: '#FF6B35',
+          color: '#FB7504',
           priority: 'high' as const,
           subText: 'High Priority Alert',
           vibration: true
@@ -240,7 +240,7 @@ class StockNotificationService {
         return {
           ...baseConfig,
           icon: 'ic_notification_warning',
-          color: '#FFD700',
+          color: '#FB7504',
           priority: 'default' as const,
           subText: 'Medium Priority Alert',
           vibration: false
@@ -315,9 +315,9 @@ class StockNotificationService {
       case 'critical':
         return '#FF0000';
       case 'high':
-        return '#FF6B35';
+        return '#FB7504';
       case 'medium':
-        return '#FFD700';
+        return '#FB7504';
       case 'low':
         return '#4CAF50';
       default:

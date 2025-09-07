@@ -163,7 +163,7 @@ const WarehouseCard: React.FC<WarehouseCardProps> = ({ warehouse, onPress, isLoa
                   <Ionicons
                     name="star"
                     size={14}
-                    color="#FFD700"
+                    color="#FB7504"
                   />
                   <Text style={styles.ratingText}>4.9 (100)</Text>
                 </View>

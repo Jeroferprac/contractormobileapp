@@ -28,6 +28,7 @@ import {
   InventoryStats,
   TopSellingList,
   RecentActivityCard,
+  RecentActivityList,
   WarehouseList
 } from '../../components/inventory';
 import { SectionHeader } from '../../components/layout';
@@ -37,6 +38,7 @@ import {
   InventorySummary,
   Transaction,
   Warehouse,
+  Stock,
 } from '../../types/inventory';
 
 import { InventoryScreenNavigationProp } from '../../types/navigation';
@@ -75,6 +77,42 @@ const InventoryScreen: React.FC<InventoryScreenProps> = ({ navigation }) => {
   const getMonthName = (monthNumber: number): string =>
     new Date(2000, monthNumber - 1).toLocaleString('default', { month: 'short' });
 
+  const processStockDataForChart = (warehouses: Warehouse[], stockLevels: Stock[]) => {
+    // Create a map of warehouse ID to name
+    const warehouseMap = new Map<string, string>();
+    warehouses.forEach(warehouse => {
+      warehouseMap.set(warehouse.id, warehouse.name);
+    });
+    
+    // Group stock by warehouse
+    const warehouseStocks: Record<string, number> = {};
+    
+    // Initialize with all warehouses at 0
+    warehouses.forEach(warehouse => {
+      warehouseStocks[warehouse.id] = 0;
+    });
+    
+    // Sum up quantities for each warehouse
+    stockLevels.forEach(stock => {
+      if (stock.warehouse_id && warehouseStocks[stock.warehouse_id] !== undefined) {
+        const quantity = typeof stock.quantity === 'string' ? parseFloat(stock.quantity || '0') : (stock.quantity || 0);
+        warehouseStocks[stock.warehouse_id] += isNaN(quantity) ? 0 : quantity;
+      }
+    });
+    
+    // Convert to array format for chart
+    const result = Object.entries(warehouseStocks).map(([warehouseId, quantity]) => ({
+      value: quantity,
+      label: warehouseMap.get(warehouseId) || 'Unknown',
+      dataPointText: `${quantity} units`,
+    }));
+    
+    // Sort by quantity (highest first) and limit to top 6 warehouses
+    result.sort((a, b) => b.value - a.value);
+    
+    return result.slice(0, 6);
+  };
+
   const loadInventoryData = async () => {
     try {
       setLoading(true);
@@ -85,21 +123,13 @@ const InventoryScreen: React.FC<InventoryScreenProps> = ({ navigation }) => {
         topSellingRes,
         transactionsRes,
         warehouseRes,
-        monthlySalesRes,
+        stockLevelsRes,
       ] = await Promise.all([
         inventoryApiService.getSummary().catch(() => ({ data: null })),
         inventoryApiService.getSalesByProduct().catch(() => ({ data: [] })),
         inventoryApiService.getTransactions({ limit: 3 }).catch(() => ({ data: [] })),
         inventoryApiService.getWarehouses().catch(() => ({ data: [] })),
-        inventoryApiService.getMonthlySalesSummary().catch(() => ({ 
-          data: { 
-            total_sales: 0, 
-            total_revenue: 0, 
-            average_order_value: 0, 
-            top_selling_products: [], 
-            monthly_trends: [] 
-          } 
-        })),
+        inventoryApiService.getCurrentStockLevels().catch(() => ({ data: [] })),
       ]);
 
       setSummary(summaryRes.data);
@@ -113,12 +143,9 @@ const InventoryScreen: React.FC<InventoryScreenProps> = ({ navigation }) => {
       }));
       setWarehouses(updatedWarehouses);
       
-      const formattedChartData = (monthlySalesRes.data?.monthly_trends || []).map((item) => ({
-        value: item.sales,
-        label: `${getMonthName(parseInt(item.month.split('-')[1]))} ${item.month.split('-')[0]}`,
-        dataPointText: `${item.sales} units`,
-      }));
-      setChartData(formattedChartData);
+      // Process stock data for chart - group by warehouse
+      const stockData = processStockDataForChart(warehouseRes.data || [], stockLevelsRes.data || []);
+      setChartData(stockData);
     } catch (error) {
       console.error('Error loading inventory data:', error);
       // Don't show alert, just set empty data
@@ -241,7 +268,7 @@ const InventoryScreen: React.FC<InventoryScreenProps> = ({ navigation }) => {
         </View>
 
         <View style={styles.section}>
-          <Chart title="Stock Report" data={chartData} height={200} showLegend />
+          <Chart title="Stock Levels by Warehouse" data={chartData} height={200} showLegend />
         </View>
 
         <View style={styles.section}>
@@ -268,14 +295,7 @@ const InventoryScreen: React.FC<InventoryScreenProps> = ({ navigation }) => {
         }}
       />
 
-        <SectionHeader title="Recent Activity" />
-        <View style={styles.activityContainer}>
-          {getRecentActivity().map((transaction, index) => (
-            <FadeSlideInView key={transaction.id} delay={index * 100}>
-              <RecentActivityCard transaction={transaction} />
-            </FadeSlideInView>
-          ))}
-        </View>
+        <RecentActivityList />
       </ScrollView>
 
       <Sidebar
@@ -287,7 +307,13 @@ const InventoryScreen: React.FC<InventoryScreenProps> = ({ navigation }) => {
       <BarcodeScanner
         visible={barcodeScannerVisible}
         onClose={() => setBarcodeScannerVisible(false)}
-        onScan={(barcode) => Alert.alert('Scanned', barcode)}
+        onScan={(barcode, product) => {
+          if (product) {
+            // Navigate to product details or show product info
+            console.log('Scanned product:', product);
+          }
+        }}
+        showProductDetails={true}
       />
     </SafeAreaView>
   );

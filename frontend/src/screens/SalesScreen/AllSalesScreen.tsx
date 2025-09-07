@@ -224,7 +224,7 @@ const AllSalesScreen: React.FC<AllSalesScreenProps> = ({ navigation }) => {
       case 'completed':
         return '#4CAF50';
       case 'pending':
-        return '#FF9800';
+        return '#FB7504';
       case 'cancelled':
         return '#F44336';
       default:
@@ -237,7 +237,7 @@ const AllSalesScreen: React.FC<AllSalesScreenProps> = ({ navigation }) => {
       case 'paid':
         return '#4CAF50';
       case 'partial':
-        return '#FF9800';
+        return '#FB7504';
       case 'unpaid':
         return '#F44336';
       default:
@@ -392,7 +392,7 @@ const AllSalesScreen: React.FC<AllSalesScreenProps> = ({ navigation }) => {
               
               {hasDiscount && (
                 <View style={styles.discountBadge}>
-                  <Icon name="local-offer" size={14} color="#FF6B35" />
+                  <Icon name="local-offer" size={14} color="#FB7504" />
                   <Text style={styles.discountText}>-{formatCurrency(item.discount_amount)}</Text>
               </View>
               )}
@@ -779,7 +779,7 @@ const styles = StyleSheet.create({
   discountedPricePill: {
     fontSize: 14, // Smaller font
     fontWeight: '700',
-    color: '#FF6B35',
+    color: '#FB7504',
   },
   finalPricePill: {
     fontSize: 14, // Smaller font
@@ -842,7 +842,7 @@ const styles = StyleSheet.create({
   discountText: {
     fontSize: 11, // Smaller font
     fontWeight: '600',
-    color: '#FF6B35',
+    color: '#FB7504',
   },
   // Skeleton Styles
   titleSkeleton: {

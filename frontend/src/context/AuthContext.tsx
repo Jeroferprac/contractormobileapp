@@ -11,15 +11,20 @@ interface AuthState {
   user: User | null;
   isLoading: boolean;
   token: string | null;
+  isRegistering: boolean;
+  showRegistrationSuccess: boolean;
+  registrationData: { user: User; token: string | null; needsLogin?: boolean; password?: string } | null;
 }
 
 interface AuthContextType extends AuthState {
   login: (credentials: LoginRequest) => Promise<void>;
-  register: (userData: RegisterRequest) => Promise<void>;
+  register: (userData: RegisterRequest, password?: string) => Promise<{ success: boolean; user: User; token: string | null; needsLogin?: boolean }>;
   logout: () => Promise<void>;
   getCurrentUser: () => Promise<void>;
   startOAuth: (provider: string) => Promise<void>;
   clearError: () => void;
+  authenticateFromStorage: (userData?: User, token?: string) => Promise<void>;
+  clearRegistrationSuccess: () => void;
   error: string | null;
 }
 
@@ -35,6 +40,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     user: null,
     isLoading: true,
     token: null,
+    isRegistering: false,
+    showRegistrationSuccess: false,
+    registrationData: null,
   });
   const [error, setError] = useState<string | null>(null);
 
@@ -45,129 +53,131 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const checkAuthStatus = async () => {
     try {
-      console.log('🔍 [AuthContext] Checking auth status...');
+      if (state.isRegistering) {
+        setState(prev => ({ ...prev, isLoading: false }));
+        return;
+      }
+      
       const [token, userData] = await Promise.all([
         storageService.getAuthToken(),
         storageService.getUserData(),
       ]);
 
-      console.log('🔍 [AuthContext] Token found:', !!token);
-      console.log('🔍 [AuthContext] User data found:', !!userData);
-
       if (token && userData) {
-        console.log('✅ [AuthContext] User is authenticated:', userData.email);
         setState({
           isAuthenticated: true,
           user: userData,
           token,
           isLoading: false,
+          isRegistering: false,
+          showRegistrationSuccess: false,
+          registrationData: null,
         });
       } else {
-        console.log('❌ [AuthContext] No valid auth data found');
         setState(prev => ({ ...prev, isLoading: false }));
       }
     } catch (error) {
-      console.error('❌ [AuthContext] Auth check failed:', error);
       setState(prev => ({ ...prev, isLoading: false }));
     }
   };
 
   const login = async (credentials: LoginRequest) => {
     try {
-      console.log('🔐 [AuthContext] Starting login process...');
       setState(prev => ({ ...prev, isLoading: true }));
       setError(null);
 
-      console.log('📡 [AuthContext] Calling login API...');
       const response = await apiService.login(credentials);
-      const { access_token, user } = response.data;
       
-      console.log('✅ [AuthContext] Login API successful:', user.email);
-      console.log('🔑 [AuthContext] Token received:', !!access_token);
+      const { access_token, user } = response.data;
       
       setState({
         isAuthenticated: true,
         user,
         token: access_token,
         isLoading: false,
+        isRegistering: false,
+        showRegistrationSuccess: false,
+        registrationData: null,
       });
-      
-      console.log('✅ [AuthContext] Login successful:', user.email);
     } catch (error: any) {
-      console.error('❌ [AuthContext] Login error:', error);
       const errorMessage = error.response?.data?.detail || error.message || 'Login failed';
       setError(errorMessage);
       setState(prev => ({ ...prev, isLoading: false }));
       
-      Alert.alert('Login Failed', errorMessage);
+      throw error; // Throw error so SignupScreen can handle it
     }
   };
 
-  const register = async (userData: RegisterRequest) => {
+  const register = async (userData: RegisterRequest, password?: string) => {
     try {
-      setState(prev => ({ ...prev, isLoading: true }));
+      setState(prev => ({ ...prev, isLoading: true, isRegistering: true }));
       setError(null);
 
       const response = await apiService.register(userData);
-      const { access_token, user } = response.data;
       
-      setState({
-        isAuthenticated: true,
-        user,
-        token: access_token,
-        isLoading: false,
-      });
+      // Backend returns: { message: string, user: UserResponse }
+      // Frontend expects: { access_token: string, user: UserResponse }
+      const { user } = response.data;
+      const message = (response.data as any).message;
       
-      Alert.alert('Success', 'Account created successfully!');
-      console.log('Registration successful:', user.email);
+      // Store registration data for SuccessModal
+      const registrationData = { user, token: null, needsLogin: true, password };
+      
+      setState(prev => ({ 
+        ...prev, 
+        isLoading: false, 
+        isRegistering: false, 
+        showRegistrationSuccess: true,
+        registrationData 
+      }));
+      
+      // Check if we have the required data
+      if (!user) {
+        throw new Error('Registration successful but no user data received');
+      }
+
+      // For registration, we don't get a token from backend
+      // We'll need to call login after registration to get the token
+      const result = { success: true, user, token: null, needsLogin: true };
+      return result;
     } catch (error: any) {
-      console.error('Registration error:', error);
       const errorMessage = error.response?.data?.detail || error.message || 'Registration failed';
       setError(errorMessage);
-      setState(prev => ({ ...prev, isLoading: false }));
+      setState(prev => ({ ...prev, isLoading: false, isRegistering: false }));
       
-      Alert.alert('Registration Failed', errorMessage);
+      throw error;
     }
   };
 
   const logout = async () => {
-    console.log('🔄 Starting logout process...');
-    
     try {
-      // First clear storage
-      console.log('🧹 Clearing local auth data...');
-      await storageService.clearAuthData();
-      console.log('✅ Local auth data cleared');
+      await apiService.logout();
       
-      // Then update state
-      console.log('🔄 Updating auth state...');
       setState({
         isAuthenticated: false,
         user: null,
         token: null,
         isLoading: false,
+        isRegistering: false,
+        showRegistrationSuccess: false,
+        registrationData: null,
       });
       setError(null);
-      console.log('✅ Auth state updated');
-      
-      // Finally call API in background
+    } catch (error) {
       try {
-        console.log('📡 Calling logout API...');
-        await apiService.logout();
-        console.log('✅ Logout API call successful');
-      } catch (error) {
-        console.error('❌ Logout API error:', error);
+        await storageService.clearAuthData();
+      } catch (storageError) {
+        // Ignore storage error
       }
       
-      console.log('✅ Logout process completed');
-    } catch (error) {
-      console.error('❌ Logout error:', error);
-      // Force state update even if storage clearing fails
       setState({
         isAuthenticated: false,
         user: null,
         token: null,
         isLoading: false,
+        isRegistering: false,
+        showRegistrationSuccess: false,
+        registrationData: null,
       });
       setError(null);
     }
@@ -175,13 +185,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const getCurrentUser = async () => {
     try {
-      // Profile API removed - using stored user data instead
       const storedUser = await storageService.getUserData();
       if (storedUser) {
         setState(prev => ({ ...prev, user: storedUser }));
       }
     } catch (error) {
-      console.error('Get current user error:', error);
       setState(prev => ({ ...prev, isAuthenticated: false, user: null }));
     }
   };
@@ -193,14 +201,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       if (provider === 'github') {
         await githubOAuthService.startGitHubOAuth();
-        // If successful, the user will be automatically logged in
-        // Check auth status after OAuth completion
         await checkAuthStatus();
       } else {
         Alert.alert('Coming Soon', `${provider} OAuth will be available soon!`);
       }
     } catch (error: any) {
-      console.error('OAuth error:', error);
       const errorMessage = error.message || 'OAuth failed';
       setError(errorMessage);
       Alert.alert('OAuth Failed', errorMessage);
@@ -218,9 +223,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         user,
         token: access_token,
         isLoading: false,
+        isRegistering: false,
+        showRegistrationSuccess: false,
+        registrationData: null,
       });
-      
-      console.log('OAuth login successful:', user.email);
     } else {
       setError(result.error || 'OAuth failed');
       setState(prev => ({ ...prev, isLoading: false }));
@@ -231,6 +237,60 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setError(null);
   };
 
+  const clearRegistrationSuccess = () => {
+    setState(prev => ({ ...prev, showRegistrationSuccess: false, registrationData: null }));
+  };
+
+  const authenticateFromStorage = async (userData?: User, token?: string) => {
+    try {
+      setState(prev => ({ ...prev, isLoading: true, isRegistering: false }));
+      
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Authentication timeout')), 10000);
+      });
+      
+      const authPromise = async () => {
+        let finalToken = token;
+        let finalUserData = userData;
+        
+        if (!finalToken || !finalUserData) {
+          const [storedToken, storedUserData] = await Promise.all([
+            storageService.getAuthToken(),
+            storageService.getUserData(),
+          ]);
+          finalToken = storedToken || undefined;
+          finalUserData = storedUserData || undefined;
+        }
+
+        if (finalToken && finalUserData) {
+          try {
+            await storageService.setAuthToken(finalToken);
+            await storageService.setUserData(finalUserData);
+          } catch (storageError) {
+            throw new Error('Failed to store authentication data');
+          }
+          
+          setState({
+            isAuthenticated: true,
+            user: finalUserData,
+            token: finalToken,
+            isLoading: false,
+            isRegistering: false,
+            showRegistrationSuccess: false,
+            registrationData: null,
+          });
+        } else {
+          setState(prev => ({ ...prev, isLoading: false, isRegistering: false }));
+        }
+      };
+      
+      await Promise.race([authPromise(), timeoutPromise]);
+      
+    } catch (error) {
+      setState(prev => ({ ...prev, isLoading: false, isRegistering: false }));
+    }
+  };
+
   const value: AuthContextType = {
     ...state,
     login,
@@ -239,6 +299,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     getCurrentUser,
     startOAuth,
     clearError,
+    authenticateFromStorage,
+    clearRegistrationSuccess,
     error,
   };
 

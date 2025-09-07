@@ -142,7 +142,7 @@ const ForgotPasswordScreen: React.FC<ForgotPasswordScreenProps> = ({ navigation 
           onPress={handleResetPassword}
         >
           <LinearGradient
-            colors={['#FF6B35', '#FF8E53']}
+            colors={['#FB7504', '#C2252C']}
             style={styles.gradientButton}
           >
             <Text style={styles.resetButtonText}>
@@ -208,7 +208,7 @@ const ForgotPasswordScreen: React.FC<ForgotPasswordScreenProps> = ({ navigation 
               onPress={handleConfirmOTP}
             >
               <LinearGradient
-                colors={['#FF6B35', '#FF8E53']}
+                colors={['#FB7504', '#C2252C']}
                 style={styles.gradientButton}
               >
                 <Text style={styles.confirmButtonText}>Confirm</Text>
@@ -299,7 +299,7 @@ const ForgotPasswordScreen: React.FC<ForgotPasswordScreenProps> = ({ navigation 
               onPress={handleResetPasswordSubmit}
             >
               <LinearGradient
-                colors={['#FF6B35', '#FF8E53']}
+                colors={['#FB7504', '#C2252C']}
                 style={styles.gradientButton}
               >
                 <Text style={styles.confirmButtonText}>Reset Password</Text>
@@ -384,7 +384,7 @@ const styles = StyleSheet.create({
   },
   loginLinkText: {
     fontSize: 16,
-    color: '#FF6B35',
+    color: '#FB7504',
     fontWeight: '500',
   },
   modalOverlay: {
@@ -452,7 +452,7 @@ const styles = StyleSheet.create({
     color: '#666',
   },
   linkText: {
-    color: '#FF6B35',
+    color: '#FB7504',
     fontWeight: '500',
   },
   confirmButton: {

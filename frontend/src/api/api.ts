@@ -21,11 +21,12 @@ class ApiService {
   constructor() {
     this.api = axios.create({
       baseURL: getBaseURL(),
-      timeout: API_CONFIG.TIMEOUT,
+      timeout: API_CONFIG.TIMEOUT || 30000, // 30 seconds default
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
       },
+
     });
 
     this.setupInterceptors();
@@ -46,19 +47,10 @@ class ApiService {
       }
     );
 
-    // Response interceptor for error handling
-    this.api.interceptors.response.use(
-      (response: AxiosResponse) => {
-        return response;
-      },
-      async (error) => {
-        if (error.response?.status === 401) {
-          await this.clearAuthToken();
-        }
-        return Promise.reject(error);
-      }
-    );
+    // Response interceptor removed - let components handle success/failure directly
   }
+
+
 
   private async getAuthToken(): Promise<string | null> {
     return await storageService.getAuthToken();
@@ -83,16 +75,8 @@ class ApiService {
   async register(userData: RegisterRequest): Promise<AxiosResponse<AuthResponse>> {
     const response = await this.api.post('/auth/register', userData);
     
-    // Store tokens if registration is successful
-    if (response.data.access_token) {
-      await storageService.setAuthToken(response.data.access_token);
-      if (response.data.refresh_token) {
-        await storageService.setRefreshToken(response.data.refresh_token);
-      }
-      if (response.data.user) {
-        await storageService.setUserData(response.data.user);
-      }
-    }
+    // DO NOT store tokens immediately - let the SuccessModal handle authentication
+    // This prevents the race condition where checkAuthStatus runs before SuccessModal shows
     
     return response;
   }
@@ -116,10 +100,25 @@ class ApiService {
 
   async logout(): Promise<AxiosResponse<any>> {
     try {
-      const response = await this.api.post('/auth/logout');
+      // Get the current session token
+      const sessionToken = await this.getAuthToken();
+      
+      if (!sessionToken) {
+        console.log('No session token found, skipping logout API call');
+        return { data: 'No session token', status: 200 } as AxiosResponse;
+      }
+      
+      // Call logout API with session_token as query parameter
+      const response = await this.api.post(`/auth/logout?session_token=${sessionToken}`);
+      
+      // Clear auth data after successful logout
+      await this.clearAuthToken();
+      
       return response;
     } catch (error) {
-      // Handle logout error silently
+      console.error('Logout API error:', error);
+      // Even if API call fails, clear local auth data
+      await this.clearAuthToken();
       throw error;
     }
   }

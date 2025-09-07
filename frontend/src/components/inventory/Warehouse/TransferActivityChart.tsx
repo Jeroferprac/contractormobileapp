@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Platform, ActivityIndicator, Dimensions } from 'react-native';
 import { LineChart } from 'react-native-gifted-charts';
-import Icon from 'react-native-vector-icons/Feather';
+import LinearGradient from 'react-native-linear-gradient';
+import Icon from 'react-native-vector-icons/Ionicons';
 import { COLORS } from '../../../constants/colors';
 import { SPACING, BORDER_RADIUS } from '../../../constants/spacing';
 import { TYPOGRAPHY } from '../../../constants/typography';
@@ -15,6 +16,22 @@ interface TransferData {
 }
 
 const { width: screenWidth } = Dimensions.get('window');
+
+// --- Reusable Internal Components ---
+
+const Tooltip = ({ date, value }: { date: string; value: number }) => (
+  <View style={styles.tooltipContainer}>
+    <Text style={styles.tooltipDate}>{date}</Text>
+    <Text style={styles.tooltipValue}>{value} followers</Text>
+  </View>
+);
+
+const TimeframePicker = () => (
+  <TouchableOpacity style={styles.pickerContainer}>
+    <Text style={styles.pickerText}>This Month</Text>
+    <Icon name="chevron-down" size={16} color="#333" />
+  </TouchableOpacity>
+);
 
 // Helper function to aggregate data for longer time ranges
 const aggregateData = (data: TransferData[], targetPoints: number): TransferData[] => {
@@ -171,264 +188,196 @@ const TransferActivityChart = () => {
   };
 
   const chartData = processTransferData();
+  const totalInbound = chartData.reduce((sum, item) => sum + item.inbound, 0);
+  const maxValueItem = chartData.length > 0 ? chartData.reduce((prev, current) =>
+    prev.inbound > current.inbound ? prev : current
+  ) : { date: '', inbound: 0, outbound: 0 };
 
-  const inboundData = chartData.map(item => ({ 
-    value: item.inbound, 
-    label: new Date(item.date).toLocaleDateString('en-US', { 
-      month: 'short', 
-      day: 'numeric' 
-    })
+  const lineData = chartData.map((item, index) => ({
+    value: item.inbound, // Using inbound as the primary metric for the line
+    label: new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+    date: new Date(item.date).toLocaleDateString('en-US', { day: 'numeric', month: 'long' }),
+    dataPointText: item.inbound.toString(),
+    topLabelComponent: item.date === maxValueItem.date 
+      ? () => <Tooltip date={new Date(item.date).toLocaleDateString('en-US', { day: 'numeric', month: 'long' })} value={item.inbound} />
+      : undefined
   }));
-  
-  const outboundData = chartData.map(item => ({ 
-    value: item.outbound, 
-    label: new Date(item.date).toLocaleDateString('en-US', { 
-      month: 'short', 
-      day: 'numeric' 
-    })
-  }));
+
+  if (loading) {
+    return (
+      <View style={styles.card}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={COLORS.primary} />
+          <Text style={styles.loadingText}>Loading transfer data...</Text>
+        </View>
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={styles.card}>
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorText}>{error}</Text>
+          <TouchableOpacity style={styles.retryButton} onPress={fetchTransfers}>
+            <Text style={styles.retryButtonText}>Retry</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }
+
+  if (chartData.length === 0) {
+    return (
+      <View style={styles.card}>
+        <View style={styles.emptyContainer}>
+          <Text style={styles.emptyText}>No transfer data available</Text>
+        </View>
+      </View>
+    );
+  }
 
   return (
-    <View style={styles.container}>
-      {/* Title outside chart at top right */}
-      <View style={styles.titleContainer}>
-        <View style={styles.titleContent}>
-          <View style={styles.iconContainer}>
-            <Icon name="trending-up" size={20} color="#FF6B35" />
-          </View>
-        <Text style={styles.title}>Transfer Activity</Text>
-        </View>
-        
-        <View style={styles.buttonGroup}>
-          {['7d', '1m', '3m'].map((range) => (
-            <TouchableOpacity
-              key={range}
-              style={[
-                styles.button,
-                timeRange === range ? styles.activeButton : styles.inactiveButton
-              ]}
-              onPress={() => setTimeRange(range as '7d' | '1m' | '3m')}
-            >
-              <Text
-                style={[
-                  styles.buttonText,
-                  timeRange === range ? styles.activeButtonText : styles.inactiveButtonText
-                ]}
-              >
-                {range === '7d' ? '7 Days' : range === '1m' ? '1 Month' : '3 Months'}
-              </Text>
-            </TouchableOpacity>
-              ))}
-            </View>
-          </View>
-
-      {/* Chart Card */}
-      <View style={styles.card}>
-          <View style={styles.chartContainer}>
-            {loading ? (
-              <View style={styles.loadingContainer}>
-              <ActivityIndicator size="large" color="#3B82F6" />
-                <Text style={styles.loadingText}>Loading transfer data...</Text>
-              </View>
-            ) : error ? (
-              <View style={styles.errorContainer}>
-                <Text style={styles.errorText}>{error}</Text>
-                <TouchableOpacity style={styles.retryButton} onPress={fetchTransfers}>
-                  <Text style={styles.retryButtonText}>Retry</Text>
-                </TouchableOpacity>
-              </View>
-            ) : (
-              <>
-                <View style={styles.legendContainer}>
-                  <View style={styles.legendItem}>
-                  <View style={[styles.legendDot, { backgroundColor: '#3B82F6' }]} />
-                    <Text style={styles.legendText}>Inbound</Text>
-                  </View>
-                  <View style={styles.legendItem}>
-                  <View style={[styles.legendDot, { backgroundColor: '#EF4444' }]} />
-                    <Text style={styles.legendText}>Outbound</Text>
-                  </View>
-                </View>
-
-            <LineChart
-              data={inboundData}
-              data2={outboundData}
-                height={200}
-                width={screenWidth - 80}
-              noOfSections={4}
-              spacing={40}
-                color="#3B82F6"
-                color2="#EF4444"
-                thickness={3}
-                thickness2={3}
-                startFillColor="#3B82F6"
-                startFillColor2="#EF4444"
-                endFillColor="#3B82F6"
-                endFillColor2="#EF4444"
-                startOpacity={0.8}
-                startOpacity2={0.8}
-              endOpacity={0.0}
-              endOpacity2={0.0}
-                initialSpacing={20}
-                endSpacing={20}
-                yAxisTextStyle={{ color: '#9CA3AF', fontSize: 10 }}
-                yAxisColor="transparent"
-                xAxisColor="transparent"
-                rulesColor="transparent"
-                hideRules={true}
-                hideYAxisText={true}
-                showVerticalLines={false}
-              isAnimated
-              animationDuration={1200}
-              animateOnDataChange
-              onDataChangeAnimationDuration={300}
-              animateTogether
-              curved
-              hideDataPoints={false}
-                lineGradient
-                lineGradientStartColor="#3B82F6"
-                lineGradientEndColor="#1D4ED8"
-                xAxisLabelTextStyle={{ color: '#6B7280', fontSize: 10 }}
-              pointerConfig={{
-                pointerStripHeight: 160,
-                  pointerStripColor: '#9CA3AF',
-                pointerStripWidth: 1,
-                  pointerColor: '#3B82F6',
-                radius: 4,
-                pointerLabelWidth: 100,
-                pointerLabelHeight: 90,
-                  activatePointersOnLongPress: false,
-                autoAdjustPointerLabelPosition: true,
-                pointerLabelComponent: (items: any) => {
-                  return (
-                    <View style={styles.tooltipContainer}>
-                        <Text style={styles.tooltipTitle}>{items[0].label}</Text>
-                      <View style={styles.tooltipRow}>
-                          <View style={[styles.tooltipDot, { backgroundColor: '#3B82F6' }]} />
-                        <Text style={styles.tooltipLabel}>Inbound:</Text>
-                        <Text style={styles.tooltipValue}>{items[0].value}</Text>
-                      </View>
-                      <View style={styles.tooltipRow}>
-                          <View style={[styles.tooltipDot, { backgroundColor: '#EF4444' }]} />
-                        <Text style={styles.tooltipLabel}>Outbound:</Text>
-                          <Text style={styles.tooltipValue}>{items[1]?.value || 0}</Text>
-                      </View>
-                    </View>
-                  );
-                },
-              }}
-            />
-              </>
-            )}
-        </View>
-          </View>
+    <View style={styles.card}>
+      <View style={styles.header}>
+        <Text style={styles.title}>Followers Trends (This Month)</Text>
+        <TimeframePicker />
+      </View>
+      <View style={styles.chartContainer}>
+        <LineChart
+          data={lineData}
+          areaChart
+          curved
+          height={200}
+          width={screenWidth - 90}
+          noOfSections={4}
+          spacing={40}
+          color={COLORS.primary}
+          thickness={3}
+          startFillColor={COLORS.primary}
+          endFillColor={COLORS.accent}
+          startOpacity={0.4}
+          endOpacity={0.1}
+          initialSpacing={20}
+          yAxisTextStyle={{ color: '#A0A0A0', fontSize: 12 }}
+          xAxisColor="#E5E7EB"
+          yAxisColor="#E5E7EB"
+          rulesType="dashed"
+          rulesColor="#E5E7EB"
+          isAnimated
+          animationDuration={1200}
+          dataPointsColor={COLORS.primary}
+          dataPointsRadius={5}
+          hideDataPoints={false}
+        />
+      </View>
+      <View style={styles.summaryContainer}>
+        <View style={styles.summaryDot} />
+        <Text style={styles.summaryText}>
+          <Text style={styles.summaryValue}>{totalInbound.toLocaleString()}</Text> Followers Increase In This Month
+        </Text>
+      </View>
+      <Text style={styles.summarySubtitle}>
+        Monthly growth of followers over the last 30 days.
+      </Text>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
+  card: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    paddingVertical: 20,
+    paddingHorizontal: 15,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 5,
     marginVertical: SPACING.md,
   },
-  titleContainer: {
+  header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: SPACING.md,
-    paddingHorizontal: SPACING.sm,
-  },
-  titleContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  iconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(59, 130, 246, 0.1)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: SPACING.sm,
-    borderWidth: 1,
-    borderColor: 'rgba(59, 130, 246, 0.2)',
+    marginBottom: 30,
+    paddingHorizontal: 10,
   },
   title: {
-    fontSize: TYPOGRAPHY.sizes.lg,
-    fontWeight: Platform.OS === 'ios' ? '600' : 'bold',
-    color: COLORS.text.primary,
-    fontFamily: Platform.OS === 'ios' ? 'System' : 'sans-serif',
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#2C2C2C',
   },
-  buttonGroup: {
+  pickerContainer: {
     flexDirection: 'row',
-    backgroundColor: '#F3F4F6',
-    borderRadius: BORDER_RADIUS.md,
-    padding: 2,
-  },
-  button: {
-    paddingHorizontal: SPACING.sm,
-    paddingVertical: SPACING.xs,
-    borderRadius: BORDER_RADIUS.sm,
-  },
-  activeButton: {
+    alignItems: 'center',
     backgroundColor: '#FFFFFF',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 1,
-    elevation: 1,
+    paddingHorizontal: 15,
+    paddingVertical: 10,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#F0F0F0',
   },
-  inactiveButton: {
-    backgroundColor: 'transparent',
-  },
-  buttonText: {
-    fontSize: TYPOGRAPHY.sizes.xs,
-    fontFamily: Platform.OS === 'ios' ? 'System' : 'sans-serif',
-  },
-  activeButtonText: {
-    color: COLORS.text.primary,
+  pickerText: {
+    fontSize: 14,
+    color: '#333',
+    marginRight: 8,
     fontWeight: '500',
   },
-  inactiveButtonText: {
-    color: COLORS.text.secondary,
-  },
-  card: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: BORDER_RADIUS.lg,
-    padding: SPACING.lg,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 6,
-    elevation: 8,
-  },
   chartContainer: {
+    height: 250,
+    paddingLeft: 10,
+  },
+  tooltipContainer: {
+    backgroundColor: '#3D3D3D',
+    borderRadius: 6,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
     alignItems: 'center',
-    justifyContent: 'center',
-    width: '100%',
+    marginBottom: 4,
+    minWidth: 100,
   },
-  legendContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    marginBottom: SPACING.md,
+  tooltipDate: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: 'bold',
   },
-  legendItem: {
+  tooltipValue: {
+    color: '#E0E0E0',
+    fontSize: 11,
+  },
+  summaryContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginHorizontal: SPACING.md,
+    marginTop: 25,
+    paddingHorizontal: 10,
   },
-  legendDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    marginRight: SPACING.xs,
+  summaryDot: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: COLORS.primary,
+    marginRight: 12,
   },
-  legendText: {
-    fontSize: TYPOGRAPHY.sizes.sm,
-    color: COLORS.text.secondary,
-    fontFamily: Platform.OS === 'ios' ? 'System' : 'sans-serif',
+  summaryText: {
+    fontSize: 14,
+    color: '#666',
+    flex: 1,
+    lineHeight: 20,
+  },
+  summaryValue: {
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  summarySubtitle: {
+    fontSize: 12,
+    color: '#A0A0A0',
+    marginTop: 8,
+    paddingHorizontal: 10,
   },
   loadingContainer: {
-    height: 200,
+    height: 250,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -436,70 +385,37 @@ const styles = StyleSheet.create({
     marginTop: SPACING.sm,
     fontSize: TYPOGRAPHY.sizes.sm,
     color: COLORS.text.secondary,
-    fontFamily: Platform.OS === 'ios' ? 'System' : 'sans-serif',
   },
   errorContainer: {
-    height: 200,
+    height: 250,
     justifyContent: 'center',
     alignItems: 'center',
   },
   errorText: {
     fontSize: TYPOGRAPHY.sizes.sm,
     color: COLORS.status.error,
-    marginBottom: SPACING.sm,
-    fontFamily: Platform.OS === 'ios' ? 'System' : 'sans-serif',
+    marginBottom: SPACING.md,
+    textAlign: 'center',
   },
   retryButton: {
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.xs,
-    backgroundColor: '#3B82F6',
-    borderRadius: BORDER_RADIUS.md,
+    backgroundColor: COLORS.primary,
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.sm,
+    borderRadius: 20,
   },
   retryButtonText: {
-    color: '#FFFFFF',
-    fontSize: TYPOGRAPHY.sizes.sm,
-    fontWeight: '500',
-    fontFamily: Platform.OS === 'ios' ? 'System' : 'sans-serif',
+    color: COLORS.white,
+    fontWeight: TYPOGRAPHY.weights.bold,
   },
-  tooltipContainer: {
-    backgroundColor: 'white',
-    padding: SPACING.sm,
-    borderRadius: BORDER_RADIUS.md,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  tooltipTitle: {
-    fontSize: TYPOGRAPHY.sizes.sm,
-    fontWeight: '600',
-    marginBottom: SPACING.xs,
-    color: COLORS.text.primary,
-    fontFamily: Platform.OS === 'ios' ? 'System' : 'sans-serif',
-  },
-  tooltipRow: {
-    flexDirection: 'row',
+  emptyContainer: {
+    height: 250,
+    justifyContent: 'center',
     alignItems: 'center',
-    marginVertical: 2,
   },
-  tooltipDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    marginRight: SPACING.xs,
-  },
-  tooltipLabel: {
-    fontSize: TYPOGRAPHY.sizes.xs,
+  emptyText: {
+    fontSize: TYPOGRAPHY.sizes.sm,
     color: COLORS.text.secondary,
-    marginRight: SPACING.xs,
-    fontFamily: Platform.OS === 'ios' ? 'System' : 'sans-serif',
-  },
-  tooltipValue: {
-    fontSize: TYPOGRAPHY.sizes.xs,
-    fontWeight: '500',
-    color: COLORS.text.primary,
-    fontFamily: Platform.OS === 'ios' ? 'System' : 'sans-serif',
+    textAlign: 'center',
   },
 });
 

@@ -10,10 +10,11 @@ import {
   Alert,
 } from 'react-native';
 import { FlatList } from 'react-native-gesture-handler';
-import Icon from 'react-native-vector-icons/Feather';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { COLORS } from '../../../constants/colors';
 import { SPACING, BORDER_RADIUS, SHADOWS } from '../../../constants/spacing';
 import { TYPOGRAPHY, TEXT_STYLES } from '../../../constants/typography';
+import { FORM_STYLES, FORM_COLORS, INPUT_ICONS } from '../../../constants/formStyles';
 import { Transfer, Warehouse, Product, CreateTransferRequest, TransferStatus } from '../../../types/inventory';
 import inventoryApiService from '../../../api/inventoryApi';
 import stockNotificationService from '../../../utils/stockNotifications';
@@ -21,6 +22,9 @@ import apiService from '../../../api/api';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import storageService from '../../../utils/storage';
 import { useAuth } from '../../../context/AuthContext';
+import SuccessModal from '../../SuccessModal';
+import FailureModal from '../../FailureModal';
+import DeleteModal from '../../DeleteModal';
 
 const AnyTextInput: any = TextInput;
 
@@ -60,6 +64,13 @@ const TransferForm: React.FC<TransferFormProps> = ({
   const [selectedItemIndex, setSelectedItemIndex] = useState<number>(-1);
   const [statusOptions, setStatusOptions] = useState<string[]>([]);
   const [currentUser, setCurrentUser] = useState<any>(null);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
+  const [showFailureModal, setShowFailureModal] = useState(false);
+  const [failureMessage, setFailureMessage] = useState('');
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState<number | null>(null);
 
   const [form, setForm] = useState({
     transfer_number: '',
@@ -170,10 +181,24 @@ const TransferForm: React.FC<TransferFormProps> = ({
   };
 
   const removeItem = (index: number) => {
-    setForm((prev) => ({
-      ...prev,
-      items: prev.items.filter((_, i) => i !== index),
-    }));
+    setItemToDelete(index);
+    setShowDeleteModal(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (itemToDelete === null) return;
+    
+    setIsDeleting(true);
+    try {
+      setForm(prev => ({
+        ...prev,
+        items: prev.items.filter((_, i) => i !== itemToDelete)
+      }));
+      // Success will be handled by the modal's success stage
+    } catch (error) {
+      Alert.alert('Error', 'Failed to remove item');
+      setIsDeleting(false);
+    }
   };
 
   const selectProduct = (product: Product) => {
@@ -240,7 +265,8 @@ const TransferForm: React.FC<TransferFormProps> = ({
       setLoading(true);
       const userId = currentUser?.id || authUser?.id || (await storageService.getUserData())?.id;
       if (!userId) {
-        Alert.alert('Error', 'Unable to identify current user. Please log in again.');
+        setFailureMessage('Unable to identify current user. Please log in again.');
+        setShowFailureModal(true);
         setLoading(false);
         return;
       }
@@ -259,34 +285,48 @@ const TransferForm: React.FC<TransferFormProps> = ({
         })),
       };
 
-    
-
       if (isEditing && editingTransfer) {
         await inventoryApiService.updateTransfer(editingTransfer.id, transferData);
-        Alert.alert('Success', 'Transfer updated successfully');
+        setSuccessMessage('Transfer updated successfully!');
       } else {
         await inventoryApiService.createTransfer(transferData);
-        Alert.alert('Success', 'Transfer created successfully');
+        setSuccessMessage('Transfer created successfully!');
         
         // Trigger transfer notification
         await stockNotificationService.triggerTransferNotification(transferData, 'created');
       }
       
-      onSuccess();
-      onClose();
+      setShowSuccessModal(true);
     } catch (error: any) {
-      console.error('API Error details:', error);
+      console.error('Transfer form error:', error);
       if (error.response) {
         const data = error.response.data;
         const detailArray = Array.isArray(data?.detail) ? data.detail : null;
         const detailMsg = detailArray ? detailArray.map((d: any) => d.msg || JSON.stringify(d)).join('\n') : (data?.detail || data?.message);
-        Alert.alert('Error', `API Error: ${detailMsg || 'Failed to create transfer'}`);
+        setFailureMessage(`API Error: ${detailMsg || 'Failed to create transfer'}`);
       } else {
-        Alert.alert('Error', isEditing ? 'Failed to update transfer' : 'Failed to create transfer');
+        setFailureMessage(isEditing ? 'Failed to update transfer' : 'Failed to create transfer');
       }
+      setShowFailureModal(true);
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleSuccessModalClose = () => {
+    setShowSuccessModal(false);
+    onSuccess();
+    onClose();
+  };
+
+  const handleFailureModalClose = () => {
+    setShowFailureModal(false);
+  };
+
+  const handleFailureModalAction = () => {
+    setShowFailureModal(false);
+    // Optionally retry the operation
+    // handleSave();
   };
 
   const handleDateChange = (event: any, selectedDate?: Date) => {
@@ -295,6 +335,52 @@ const TransferForm: React.FC<TransferFormProps> = ({
       handleChange('transfer_date', selectedDate.toISOString().split('T')[0]);
     }
   };
+
+  const renderInputField = (
+    field: string,
+    label: string,
+    placeholder: string,
+    icon: string,
+    keyboardType: 'default' | 'numeric' = 'default',
+    multiline: boolean = false
+  ) => (
+    <View style={FORM_STYLES.inputContainer}>
+      <Text style={FORM_STYLES.inputLabel}>{label}</Text>
+      <View style={FORM_STYLES.inputWrapper}>
+        <Icon name={icon} size={20} color={FORM_COLORS.text.secondary} style={FORM_STYLES.inputIcon} />
+        <TextInput
+          style={[FORM_STYLES.input, multiline && FORM_STYLES.inputMultiline]}
+          placeholder={placeholder}
+          placeholderTextColor={FORM_COLORS.text.tertiary}
+          value={form[field as keyof typeof form] as string}
+          onChangeText={(value) => handleChange(field, value)}
+          keyboardType={keyboardType}
+          multiline={multiline}
+          numberOfLines={multiline ? 3 : 1}
+        />
+      </View>
+    </View>
+  );
+
+  const renderPickerField = (
+    field: string,
+    label: string,
+    icon: string,
+    value: string,
+    placeholder: string,
+    onPress: () => void
+  ) => (
+    <View style={FORM_STYLES.inputContainer}>
+      <Text style={FORM_STYLES.inputLabel}>{label}</Text>
+      <TouchableOpacity style={FORM_STYLES.inputWrapper} onPress={onPress}>
+        <Icon name={icon} size={20} color={FORM_COLORS.text.secondary} style={FORM_STYLES.inputIcon} />
+        <Text style={[FORM_STYLES.input, !value && { color: FORM_COLORS.text.tertiary }]}>
+          {value || placeholder}
+        </Text>
+        <Icon name="chevron-down" size={20} color={FORM_COLORS.text.tertiary} />
+      </TouchableOpacity>
+    </View>
+  );
 
   return (
     <Modal visible={visible} transparent animationType="slide">
@@ -310,159 +396,142 @@ const TransferForm: React.FC<TransferFormProps> = ({
           </View>
 
           <ScrollView style={styles.modalBody} showsVerticalScrollIndicator={false}>
-            {/* Transfer Number */}
-            <View style={styles.formSection}>
-              <Text style={styles.label}>Transfer Number</Text>
-              <TextInput
-                style={[styles.input, styles.disabledInput]}
-                placeholder="Auto-generated"
-                value={form.transfer_number}
-              />
-            </View>
-
-            {/* Warehouses */}
-            <View style={styles.formSection}>
-              <Text style={styles.label}>From Warehouse</Text>
-              <TouchableOpacity
-                style={styles.dropdownInput}
-                onPress={() => setShowFromWarehousePicker(true)}
-              >
-                <Text style={[styles.dropdownText, !form.from_warehouse_id && styles.placeholderText]}>
-                  {form.from_warehouse_id ? getWarehouseName(form.from_warehouse_id) : 'Select Warehouse'}
-                </Text>
-                <Icon name="chevron-down" size={20} color={COLORS.text.secondary} />
-              </TouchableOpacity>
-            </View>
-
-            <View style={styles.formSection}>
-              <Text style={styles.label}>To Warehouse</Text>
-              <TouchableOpacity
-                style={styles.dropdownInput}
-                onPress={() => setShowToWarehousePicker(true)}
-              >
-                <Text style={[styles.dropdownText, !form.to_warehouse_id && styles.placeholderText]}>
-                  {form.to_warehouse_id ? getWarehouseName(form.to_warehouse_id) : 'Select Warehouse'}
-                </Text>
-                <Icon name="chevron-down" size={20} color={COLORS.text.secondary} />
-              </TouchableOpacity>
-            </View>
-
-            {/* Transfer Date */}
-            <View style={styles.formSection}>
-              <Text style={styles.label}>Transfer Date</Text>
-              <TouchableOpacity
-                style={styles.dateInput}
-                onPress={() => setShowDatePicker(true)}
-              >
-                <Text style={styles.dateInputText}>
-                  {new Date(form.transfer_date).toLocaleDateString()}
-                </Text>
-                <Icon name="calendar" size={20} color={COLORS.text.secondary} />
-              </TouchableOpacity>
-            </View>
-
-            {/* Status */}
-            <View style={styles.formSection}>
-              <Text style={styles.label}>Status</Text>
-              <TouchableOpacity
-                style={styles.dropdownInput}
-                onPress={() => setShowStatusPicker(true)}
-              >
-                <Text style={styles.dropdownText}>
-                  {form.status.replace('_', ' ').toUpperCase()}
-                </Text>
-                <Icon name="chevron-down" size={20} color={COLORS.text.secondary} />
-              </TouchableOpacity>
-            </View>
-
-            {/* Notes */}
-            <View style={styles.formSection}>
-              <Text style={styles.label}>Notes</Text>
-              {/* @ts-ignore - multiline prop typing workaround in current RN types */}
-              <TextInput
-                style={[styles.input, styles.textArea]}
-                placeholder="Add notes about this transfer..."
-                value={form.notes}
-                onChangeText={(v) => handleChange('notes', v)}
-                {...({ multiline: true } as any)}
-              />
-            </View>
-
-            {/* Items Section */}
-            <View style={styles.formSection}>
-              <View style={styles.itemsHeader}>
-                <Text style={styles.sectionTitle}>Transfer Items</Text>
-                <TouchableOpacity style={styles.addItemButton} onPress={addItem}>
-                  <Icon name="plus" size={16} color={COLORS.text.light} />
-                  <Text style={styles.addItemText}>Add Item</Text>
-                </TouchableOpacity>
+            {/* Transfer Information Card */}
+            <View style={FORM_STYLES.card}>
+              <View style={FORM_STYLES.cardHeader}>
+                <Icon name="truck-delivery" size={24} color={FORM_COLORS.primary} />
+                <Text style={FORM_STYLES.cardTitle}>Transfer Information</Text>
               </View>
+              
+              {renderInputField('transfer_number', 'Transfer Number', 'Auto-generated', 'hash')}
+              
+              {renderPickerField(
+                'from_warehouse_id',
+                'From Warehouse',
+                'warehouse',
+                form.from_warehouse_id ? getWarehouseName(form.from_warehouse_id) : '',
+                'Select Source Warehouse',
+                () => setShowFromWarehousePicker(true)
+              )}
+              
+              {renderPickerField(
+                'to_warehouse_id',
+                'To Warehouse',
+                'warehouse',
+                form.to_warehouse_id ? getWarehouseName(form.to_warehouse_id) : '',
+                'Select Destination Warehouse',
+                () => setShowToWarehousePicker(true)
+              )}
+              
+              {renderPickerField(
+                'transfer_date',
+                'Transfer Date',
+                'calendar',
+                new Date(form.transfer_date).toLocaleDateString(),
+                'Select Date',
+                () => setShowDatePicker(true)
+              )}
+              
+              {renderPickerField(
+                'status',
+                'Status',
+                'flag',
+                form.status.replace('_', ' ').toUpperCase(),
+                'Select Status',
+                () => setShowStatusPicker(true)
+              )}
+              
+              {renderInputField('notes', 'Notes', 'Add notes about this transfer...', 'text', 'default', true)}
+            </View>
+
+            {/* Transfer Items Card */}
+            <View style={FORM_STYLES.card}>
+              <View style={FORM_STYLES.cardHeader}>
+                <Icon name="package-variant" size={24} color={FORM_COLORS.primary} />
+                <Text style={FORM_STYLES.cardTitle}>Transfer Items</Text>
+              </View>
+              
+              <TouchableOpacity style={FORM_STYLES.accentButton} onPress={addItem}>
+                <Icon name="plus" size={20} color={FORM_COLORS.primary} style={FORM_STYLES.accentButtonIcon} />
+                <Text style={FORM_STYLES.accentButtonText}>Add Item</Text>
+              </TouchableOpacity>
 
               {form.items.map((item, index) => (
-                <View key={index} style={styles.itemCard}>
-                  <View style={styles.itemHeader}>
-                    <Text style={styles.itemTitle}>Item {index + 1}</Text>
+                <View key={index} style={[FORM_STYLES.card, { marginTop: 16, padding: 16 }]}>
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                    <Text style={[FORM_STYLES.inputLabel, { marginBottom: 0 }]}>Item {index + 1}</Text>
                     <TouchableOpacity onPress={() => removeItem(index)}>
-                      <Icon name="trash-2" size={16} color="#EF4444" />
+                      <Icon name="delete" size={20} color="#EF4444" />
                     </TouchableOpacity>
                   </View>
                   
-                  <View style={styles.itemRow}>
-                    <View style={styles.itemInputHalf}>
-                      <Text style={styles.itemLabel}>Product</Text>
+                  <View style={FORM_STYLES.formRow}>
+                    <View style={FORM_STYLES.formRowItem}>
+                      <Text style={FORM_STYLES.inputLabel}>Product</Text>
                       <TouchableOpacity
-                        style={styles.dropdownInput}
+                        style={FORM_STYLES.inputWrapper}
                         onPress={() => {
-                          
                           setSelectedItemIndex(index);
                           setShowProductPicker(true);
                         }}
                       >
-                        <Text style={[styles.dropdownText, !item.product_id && styles.placeholderText]}>
+                        <Icon name="package-variant" size={20} color={FORM_COLORS.text.secondary} style={FORM_STYLES.inputIcon} />
+                        <Text style={[FORM_STYLES.input, !item.product_id && { color: FORM_COLORS.text.tertiary }]}>
                           {item.product_id ? getProductName(item.product_id) : 'Select Product'}
                         </Text>
-                        <Icon name="chevron-down" size={16} color={COLORS.text.secondary} />
+                        <Icon name="chevron-down" size={16} color={FORM_COLORS.text.tertiary} />
                       </TouchableOpacity>
                     </View>
-                    <View style={styles.itemInputHalf}>
-                      <Text style={styles.itemLabel}>Quantity</Text>
-                      <TextInput
-                        style={styles.input}
-                        placeholder="0"
-                        value={item.quantity}
-                        onChangeText={(v) => handleItemChange(index, 'quantity', v)}
-                        keyboardType="numeric"
-                      />
+                    <View style={FORM_STYLES.formRowItem}>
+                      <Text style={FORM_STYLES.inputLabel}>Quantity</Text>
+                      <View style={FORM_STYLES.inputWrapper}>
+                        <Icon name="counter" size={20} color={FORM_COLORS.text.secondary} style={FORM_STYLES.inputIcon} />
+                        <TextInput
+                          style={FORM_STYLES.input}
+                          placeholder="0"
+                          value={item.quantity}
+                          onChangeText={(v) => handleItemChange(index, 'quantity', v)}
+                          keyboardType="numeric"
+                        />
+                      </View>
                     </View>
                   </View>
                 </View>
               ))}
 
               {form.items.length === 0 && (
-                <View style={styles.emptyItems}>
-                  <Icon name="package" size={32} color={COLORS.text.secondary} />
-                  <Text style={styles.emptyItemsText}>No items added</Text>
-                  <Text style={styles.emptyItemsSubtext}>Tap "Add Item" to start</Text>
+                <View style={{ alignItems: 'center', paddingVertical: 32 }}>
+                  <Icon name="package-variant" size={32} color={FORM_COLORS.text.secondary} />
+                  <Text style={[FORM_STYLES.inputLabel, { marginTop: 8, color: FORM_COLORS.text.secondary }]}>No items added</Text>
+                  <Text style={[FORM_STYLES.inputLabel, { fontSize: 12, color: FORM_COLORS.text.tertiary }]}>Tap "Add Item" to start</Text>
                 </View>
               )}
             </View>
           </ScrollView>
 
-          <View style={styles.modalFooter}>
+          <View style={FORM_STYLES.buttonContainer}>
             <TouchableOpacity 
-              style={[styles.footerButton, styles.cancelButton]}
+              style={FORM_STYLES.secondaryButton}
               onPress={!loading ? onClose : undefined}
             >
-              <Text style={styles.cancelButtonText}>Cancel</Text>
+              <Text style={FORM_STYLES.secondaryButtonText}>Cancel</Text>
             </TouchableOpacity>
             
             <TouchableOpacity 
-              style={[styles.footerButton, styles.saveButton]}
+              style={[FORM_STYLES.primaryButton, loading && FORM_STYLES.buttonDisabled]}
               onPress={!loading ? handleSave : undefined}
             >
-              <Text style={styles.saveButtonText}>
-                {loading ? 'Saving...' : (isEditing ? 'Update' : 'Create')}
-              </Text>
+              <View style={FORM_STYLES.primaryButtonContent}>
+                <Icon 
+                  name={isEditing ? 'content-save' : 'plus'} 
+                  size={20} 
+                  color="#fff" 
+                  style={FORM_STYLES.primaryButtonIcon}
+                />
+                <Text style={FORM_STYLES.primaryButtonText}>
+                  {loading ? 'Saving...' : (isEditing ? 'Update Transfer' : 'Create Transfer')}
+                </Text>
+              </View>
             </TouchableOpacity>
           </View>
 
@@ -637,6 +706,44 @@ const TransferForm: React.FC<TransferFormProps> = ({
               onChange={handleDateChange}
             />
           )}
+
+          {/* Success Modal */}
+          <SuccessModal
+            visible={showSuccessModal}
+            title="Success!"
+            message={successMessage}
+            onClose={handleSuccessModalClose}
+            onAction={handleSuccessModalClose}
+            actionText="Continue"
+            iconType="message"
+          />
+
+          {/* Failure Modal */}
+          <FailureModal
+            visible={showFailureModal}
+            title="Update Failed"
+            message={failureMessage}
+            onClose={handleFailureModalClose}
+            onAction={handleFailureModalAction}
+            actionText="Try Again"
+            animationType="shake"
+            iconType="error"
+          />
+
+          {/* Delete Confirmation Modal */}
+          <DeleteModal
+            visible={showDeleteModal}
+            isDeleting={isDeleting}
+            title="Remove Item"
+            message="Are you sure you want to remove this item from the transfer?"
+            itemName={itemToDelete !== null ? `Item ${itemToDelete + 1}` : ''}
+            onClose={() => {
+              setShowDeleteModal(false);
+              setIsDeleting(false);
+              setItemToDelete(null);
+            }}
+            onConfirm={handleConfirmDelete}
+          />
         </View>
       </View>
     </Modal>
@@ -672,166 +779,6 @@ const styles = StyleSheet.create({
   },
   modalBody: {
     padding: SPACING.lg,
-  },
-  formSection: {
-    marginBottom: SPACING.lg,
-  },
-  label: {
-    ...TEXT_STYLES.h4,
-    color: COLORS.text.primary,
-    marginBottom: SPACING.sm,
-  },
-  input: {
-    backgroundColor: '#F9FAFB',
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.sm,
-    borderRadius: BORDER_RADIUS.md,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    fontSize: 14,
-    color: COLORS.text.primary,
-  },
-  disabledInput: {
-    backgroundColor: '#F3F4F6',
-    color: COLORS.text.secondary,
-  },
-  textArea: {
-    height: 80,
-    textAlignVertical: 'top',
-  },
-  dropdownInput: {
-    backgroundColor: '#F9FAFB',
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.sm,
-    borderRadius: BORDER_RADIUS.md,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  dropdownText: {
-    fontSize: 14,
-    color: COLORS.text.primary,
-    flex: 1,
-  },
-  placeholderText: {
-    color: COLORS.text.secondary,
-  },
-  dateInput: {
-    backgroundColor: '#F9FAFB',
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.sm,
-    borderRadius: BORDER_RADIUS.md,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  dateInputText: {
-    fontSize: 14,
-    color: COLORS.text.primary,
-  },
-  sectionTitle: {
-    ...TEXT_STYLES.h4,
-    color: COLORS.text.primary,
-  },
-  itemsHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: SPACING.md,
-  },
-  addItemButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: COLORS.primary,
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.sm,
-    borderRadius: BORDER_RADIUS.md,
-  },
-  addItemText: {
-    color: COLORS.text.light,
-    fontWeight: '600',
-    marginLeft: SPACING.xs,
-    fontSize: 12,
-  },
-  itemCard: {
-    backgroundColor: '#F9FAFB',
-    borderRadius: BORDER_RADIUS.md,
-    padding: SPACING.md,
-    marginBottom: SPACING.sm,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-  },
-  itemHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: SPACING.sm,
-  },
-  itemTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: COLORS.text.primary,
-  },
-  itemRow: {
-    flexDirection: 'row',
-    gap: SPACING.sm,
-  },
-  itemInputHalf: {
-    flex: 1,
-  },
-  itemLabel: {
-    fontSize: 12,
-    color: COLORS.text.secondary,
-    marginBottom: 4,
-  },
-  emptyItems: {
-    alignItems: 'center',
-    paddingVertical: SPACING.xl,
-  },
-  emptyProducts: {
-    alignItems: 'center',
-    paddingVertical: SPACING.xl,
-  },
-  emptyItemsText: {
-    fontSize: 14,
-    color: COLORS.text.secondary,
-    marginTop: SPACING.sm,
-  },
-  emptyItemsSubtext: {
-    fontSize: 12,
-    color: COLORS.text.secondary,
-    marginTop: 4,
-  },
-  modalFooter: {
-    flexDirection: 'row',
-    gap: SPACING.md,
-    padding: SPACING.lg,
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(0, 0, 0, 0.1)',
-  },
-  footerButton: {
-    flex: 1,
-    paddingVertical: SPACING.md,
-    borderRadius: BORDER_RADIUS.md,
-    alignItems: 'center',
-  },
-  cancelButton: {
-    backgroundColor: '#F3F4F6',
-  },
-  saveButton: {
-    backgroundColor: COLORS.primary,
-  },
-  cancelButtonText: {
-    color: COLORS.text.primary,
-    fontWeight: '600',
-  },
-  saveButtonText: {
-    color: COLORS.text.light,
-    fontWeight: '600',
   },
   productList: {
     padding: SPACING.lg,

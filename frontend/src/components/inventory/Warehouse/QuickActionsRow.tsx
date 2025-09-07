@@ -24,7 +24,7 @@ const defaultActions: QuickAction[] = [
     id: 1, 
     iconName: 'repeat', 
     label: 'Create Transfer', 
-    colors: ['#FF9500', '#FF5E3A'],
+    colors: ['#FB7504', '#C2252C'],
     testID: 'create-transfer-btn'
   },
   { 

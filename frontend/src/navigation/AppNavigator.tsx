@@ -5,6 +5,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { View, Text, StyleSheet } from 'react-native';
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
 // Screens
 import { SplashScreen } from '../screens/SplashScreen';
@@ -23,9 +24,8 @@ import WarehouseReportsScreen from '../screens/WarehouseReportsScreen';
 import LowStockInventoryScreen from '../screens/LowStockInventoryScreen/LowStockInventoryScreen';
 import AllWarehouseScreen from '../screens/AllWarehouseScreen';
 import BinManagementScreen from '../screens/BinManagementScreen';
-import BarcodeScanner from '../components/ui/BarcodeScanner';
 import { ProfileScreen } from '../screens/ProfileScreen/ProfileScreen';
-import { BarcodeScannerScreen } from '../components/ui/BarcodeScanner';
+import BarcodeScannerScreen from '../screens/BarcodeScannerScreen';
 import ProfileEditScreen from '../screens/ProfileEditScreen';
 import SalesScreen from '../screens/SalesScreen/SalesScreen';
 import AllSalesScreen from '../screens/SalesScreen/AllSalesScreen';
@@ -35,12 +35,12 @@ import { useAuth } from '../context/AuthContext';
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
-// Temporary Bookings Screen Component
-const BookingsScreen = () => {
+// Temporary Requests Screen Component
+const RequestsScreen = () => {
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Bookings</Text>
-      <Text style={styles.subtitle}>Your bookings will appear here</Text>
+      <Text style={styles.title}>Requests</Text>
+      <Text style={styles.subtitle}>Your requests will appear here</Text>
     </View>
   );
 };
@@ -52,7 +52,7 @@ const MainTabNavigator = () => {
       initialRouteName="Home"
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: '#FF6B35',
+        tabBarActiveTintColor: '#FB7504',
         tabBarInactiveTintColor: '#8E8E93',
         tabBarStyle: {
           backgroundColor: '#FFFFFF',
@@ -82,8 +82,15 @@ const MainTabNavigator = () => {
         component={HomeScreen}
         options={{
           tabBarLabel: 'Home',
-          tabBarIcon: ({ color, size }) => (
-            <Icon name="home" size={size} color={color} />
+          tabBarIcon: ({ color, size, focused }) => (
+            <Icon 
+              name={focused ? "home" : "home"} 
+              size={size} 
+              color={color}
+              style={{ 
+                transform: [{ scale: focused ? 1.1 : 1 }] 
+              }}
+            />
           ),
         }}
       />
@@ -92,29 +99,26 @@ const MainTabNavigator = () => {
         component={InventoryScreen}
         options={{
           tabBarLabel: 'Inventory',
-          tabBarIcon: ({ color, size }) => (
-            <Icon name="inventory" size={size} color={color} />
-          ),
-        }}
-      />
-      <Tab.Screen
-        name="AllWarehouses"
-        component={AllWarehouseScreen}
-        options={{
-          tabBarLabel: 'Warehouses',
-          tabBarIcon: ({ color, size }) => (
-            <Icon name="warehouse" size={size} color={color} />
+          tabBarIcon: ({ color, size, focused }) => (
+            <Icon 
+              name={focused ? "inventory" : "inventory"} 
+              size={size} 
+              color={color}
+              style={{ 
+                transform: [{ scale: focused ? 1.1 : 1 }] 
+              }}
+            />
           ),
         }}
       />
       <Tab.Screen
         name="Scan"
-        component={BarcodeScanner}
+        component={BarcodeScannerScreen}
         options={{
           tabBarLabel: '',
           tabBarIcon: ({ color, size }) => (
             <View style={{
-              backgroundColor: '#FF6B35',
+              backgroundColor: '#FB7504',
               width: 56,
               height: 56,
               borderRadius: 28,
@@ -136,12 +140,19 @@ const MainTabNavigator = () => {
         }}
       />
       <Tab.Screen
-        name="Bookings"
-        component={BookingsScreen}
+        name="Requests"
+        component={RequestsScreen}
         options={{
-          tabBarLabel: 'Bookings',
-          tabBarIcon: ({ color, size }) => (
-            <Icon name="event" size={size} color={color} />
+          tabBarLabel: 'Requests',
+          tabBarIcon: ({ color, size, focused }) => (
+            <Icon 
+              name={focused ? "assignment" : "assignment"} 
+              size={size} 
+              color={color}
+              style={{ 
+                transform: [{ scale: focused ? 1.1 : 1 }] 
+              }}
+            />
           ),
         }}
       />
@@ -150,8 +161,15 @@ const MainTabNavigator = () => {
         component={ProfileScreen}
         options={{
           tabBarLabel: 'Profile',
-          tabBarIcon: ({ color, size }) => (
-            <Icon name="person" size={size} color={color} />
+          tabBarIcon: ({ color, size, focused }) => (
+            <Icon 
+              name={focused ? "person" : "person"} 
+              size={size} 
+              color={color}
+              style={{ 
+                transform: [{ scale: focused ? 1.1 : 1 }] 
+              }}
+            />
           ),
         }}
       />
@@ -163,33 +181,78 @@ const MainTabNavigator = () => {
    Main App Navigator
 ------------------------ */
 export const AppNavigator: React.FC = () => {
-  const { isAuthenticated, isLoading } = useAuth();
-  const [showSplash, setShowSplash] = useState(true);
+  const { isAuthenticated, isLoading, isRegistering, showRegistrationSuccess } = useAuth();
+  const [showInitialSplash, setShowInitialSplash] = useState(true);
+  const [loadingTimeout, setLoadingTimeout] = useState(false);
+
+  // Debug logging
+  console.log('🎯 [AppNavigator] Current state:', { 
+    isAuthenticated, 
+    isLoading, 
+    isRegistering, 
+    showRegistrationSuccess,
+    showInitialSplash, 
+    loadingTimeout 
+  });
 
   useEffect(() => {
-    const timer = setTimeout(() => setShowSplash(false), 3000);
+    // Only show initial splash on app start, not during authentication
+    const timer = setTimeout(() => setShowInitialSplash(false), 3000); // Changed to 3 seconds
     return () => clearTimeout(timer);
   }, []);
 
-  if (showSplash) return <SplashScreen />;
-  if (isLoading) return <SplashScreen />;
+  // Add timeout for loading state to prevent infinite loading
+  useEffect(() => {
+    if (isLoading) {
+      const timeout = setTimeout(() => {
+        setLoadingTimeout(true);
+      }, 15000);
+      
+      return () => clearTimeout(timeout);
+    } else {
+      setLoadingTimeout(false);
+    }
+  }, [isLoading]);
 
-  console.log('🎯 Rendering main navigation - isAuthenticated:', isAuthenticated);
+  // Show initial splash only on app start (not during registration)
+  if (showInitialSplash && !isAuthenticated && !isRegistering) {
+    console.log('🎯 [AppNavigator] Showing initial splash screen');
+    return <SplashScreen />;
+  }
+
+  // Show loading splash during authentication operations
+  if (isLoading && !loadingTimeout) {
+    console.log('🎯 [AppNavigator] Showing loading splash screen');
+    return <SplashScreen />;
+  }
+
+  // Show splash during registration process ONLY if still loading
+  if (isRegistering && isLoading) {
+    console.log('🎯 [AppNavigator] Showing registration splash screen');
+    return <SplashScreen />;
+  }
+
+  // If loading timeout reached, force navigation
+  if (loadingTimeout) {
+    console.log('🎯 [AppNavigator] Loading timeout - forcing navigation');
+    // Force navigation to prevent freeze
+  }
+
+  if (isAuthenticated) {
+    console.log('🎯 [AppNavigator] User authenticated - showing main app');
+  } else {
+    console.log('🎯 [AppNavigator] User not authenticated - showing auth stack');
+  }
   
   return (
+    <SafeAreaProvider>
     <NavigationContainer>
       <Stack.Navigator 
-        initialRouteName={isAuthenticated ? "MainTabs" : "Onboarding"}
+        initialRouteName={isAuthenticated ? "MainTabs" : (showRegistrationSuccess ? "Signup" : "Onboarding")}
         screenOptions={{ headerShown: false }}
       >
-        {!isAuthenticated ? (
-          <>
-            <Stack.Screen name="Onboarding" component={OnboardingScreen} />
-            <Stack.Screen name="Login" component={LoginScreen} />
-            <Stack.Screen name="Signup" component={SignupScreen} />
-            <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
-          </>
-        ) : (
+        {isAuthenticated ? (
+          // Authenticated user screens
           <>
             <Stack.Screen name="MainTabs" component={MainTabNavigator} />
             <Stack.Screen name="AllProducts" component={AllProductsScreen} />
@@ -206,11 +269,19 @@ export const AppNavigator: React.FC = () => {
             <Stack.Screen name="AllWarehouses" component={AllWarehouseScreen} />
             <Stack.Screen name="BinManagement" component={BinManagementScreen} />
             <Stack.Screen name="ProfileEdit" component={ProfileEditScreen} />
-
+          </>
+        ) : (
+          // Unauthenticated user screens
+          <>
+            <Stack.Screen name="Onboarding" component={OnboardingScreen} />
+            <Stack.Screen name="Login" component={LoginScreen} />
+            <Stack.Screen name="Signup" component={SignupScreen} />
+            <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
           </>
         )}
       </Stack.Navigator>
     </NavigationContainer>
+    </SafeAreaProvider>
   );
 };
 

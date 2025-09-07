@@ -90,7 +90,7 @@ const SalesCustomers: React.FC<SalesCustomersProps> = ({ customers }) => {
             
             {/* Rating Badge (Left) */}
             <View style={styles.ratingBadge}>
-              <Icon name="star" size={12} color="#FFD700" />
+              <Icon name="star" size={12} color="#FB7504" />
               <Text style={styles.ratingText}>4.9</Text>
             </View>
 
@@ -127,7 +127,7 @@ const SalesCustomers: React.FC<SalesCustomersProps> = ({ customers }) => {
           </View>
           <TouchableOpacity style={styles.viewAllButton} activeOpacity={0.7}>
             <Text style={styles.viewAllText}>View All</Text>
-            <Icon name="chevron-right" size={16} color="#FF6B35" />
+            <Icon name="chevron-right" size={16} color="#FB7504" />
           </TouchableOpacity>
         </View>
         <View style={styles.emptyContainer}>
@@ -146,7 +146,7 @@ const SalesCustomers: React.FC<SalesCustomersProps> = ({ customers }) => {
         </View>
         <TouchableOpacity style={styles.viewAllButton} activeOpacity={0.7}>
           <Text style={styles.viewAllText}>View All</Text>
-          <Icon name="chevron-right" size={16} color="#FF6B35" />
+          <Icon name="chevron-right" size={16} color="#FB7504" />
         </TouchableOpacity>
       </View>
 
@@ -200,7 +200,7 @@ const styles = StyleSheet.create({
   },
   viewAllText: {
     fontSize: 12,
-    color: '#FF6B35',
+    color: '#FB7504',
     marginRight: SPACING.xs,
     fontWeight: '600',
   },

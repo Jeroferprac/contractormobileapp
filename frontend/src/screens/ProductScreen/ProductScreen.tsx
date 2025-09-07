@@ -18,6 +18,7 @@ import { COLORS } from '../../constants/colors';
 import { SPACING, BORDER_RADIUS, SHADOWS } from '../../constants/spacing';
 import { Product, Stock } from '../../types/inventory';
 import inventoryApiService from '../../api/inventoryApi';
+import DeleteModal from '../../components/DeleteModal';
 
 interface ProductScreenProps {
   navigation: any;
@@ -33,6 +34,8 @@ const ProductScreen: React.FC<ProductScreenProps> = ({ navigation, route }) => {
   const [stock, setStock] = useState<Stock | null>(null);
   const [loading, setLoading] = useState(true);
   const [isFavorite, setIsFavorite] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     loadProductStock();
@@ -97,7 +100,7 @@ const ProductScreen: React.FC<ProductScreenProps> = ({ navigation, route }) => {
     const minStockLevel = parseInt(product.min_stock_level.toString());
     
     if (quantity <= minStockLevel) {
-      return { text: 'Low Stock', color: '#FF9500' };
+      return { text: 'Low Stock', color: '#FB7504' };
     }
     if (quantity === 0) {
       return { text: 'Out of Stock', color: '#FF3B30' };
@@ -110,26 +113,18 @@ const ProductScreen: React.FC<ProductScreenProps> = ({ navigation, route }) => {
   };
 
   const handleDeleteProduct = () => {
-    Alert.alert(
-      'Delete Product',
-      `Are you sure you want to delete "${product.name}"?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await inventoryApiService.deleteProduct(product.id);
-              Alert.alert('Success', 'Product deleted successfully');
-              navigation.goBack();
-            } catch (error) {
-              Alert.alert('Error', 'Failed to delete product');
-            }
-          },
-        },
-      ]
-    );
+    setShowDeleteModal(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    setIsDeleting(true);
+    try {
+      await inventoryApiService.deleteProduct(product.id);
+      // Success will be handled by the modal's success stage
+    } catch (error) {
+      Alert.alert('Error', 'Failed to delete product');
+      setIsDeleting(false);
+    }
   };
 
   const toggleFavorite = () => {
@@ -166,7 +161,7 @@ const ProductScreen: React.FC<ProductScreenProps> = ({ navigation, route }) => {
               <Icon 
                 name={isFavorite ? "heart" : "heart"} 
                 size={24} 
-                color={isFavorite ? "#FF6B35" : COLORS.text.light} 
+                color={isFavorite ? "#FB7504" : COLORS.text.light} 
                 solid={isFavorite}
               />
             </TouchableOpacity>
@@ -187,7 +182,7 @@ const ProductScreen: React.FC<ProductScreenProps> = ({ navigation, route }) => {
               {product.name}
             </Text>
             <View style={styles.ratingContainer}>
-              <Icon name="star" size={16} color="#FFD700" />
+              <Icon name="star" size={16} color="#FB7504" />
               <Text style={styles.ratingText}>4.9</Text>
               <Text style={styles.reviewCount}>(124 reviews)</Text>
             </View>
@@ -335,6 +330,21 @@ const ProductScreen: React.FC<ProductScreenProps> = ({ navigation, route }) => {
           <Text style={styles.actionButtonText}>Delete</Text>
         </TouchableOpacity>
       </View>
+
+      {/* Delete Confirmation Modal */}
+      <DeleteModal
+        visible={showDeleteModal}
+        isDeleting={isDeleting}
+        title="Delete Product"
+        message="Are you sure you want to delete this product? This action cannot be undone."
+        itemName={product.name}
+        onClose={() => {
+          setShowDeleteModal(false);
+          setIsDeleting(false);
+          navigation.goBack();
+        }}
+        onConfirm={handleConfirmDelete}
+      />
     </SafeAreaView>
   );
 };

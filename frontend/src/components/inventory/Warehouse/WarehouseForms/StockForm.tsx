@@ -14,7 +14,9 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { inventoryApiService } from '../../../../api/inventoryApi';
 import { Stock, Warehouse, Product } from '../../../../types/inventory';
 import { COLORS } from '../../../../constants/colors';
+import { FORM_STYLES, FORM_COLORS, INPUT_ICONS } from '../../../../constants/formStyles';
 import SuccessModal from '../../../SuccessModal';
+import FailureModal from '../../../FailureModal';
 import ModalPicker from '../../../ui/ModalPicker';
 
 interface StockFormProps {
@@ -45,6 +47,8 @@ const StockForm: React.FC<StockFormProps> = ({
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
+  const [showFailureModal, setShowFailureModal] = useState(false);
+  const [failureMessage, setFailureMessage] = useState('');
   const [showProductPicker, setShowProductPicker] = useState(false);
   const [showWarehousePicker, setShowWarehousePicker] = useState(false);
   const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
@@ -160,10 +164,8 @@ const StockForm: React.FC<StockFormProps> = ({
       }
     } catch (error: any) {
       console.error('Stock form error:', error);
-      Alert.alert(
-        'Error',
-        error.response?.data?.detail || 'Failed to save stock. Please try again.'
-      );
+      setFailureMessage(error.response?.data?.detail || 'Failed to save stock. Please check your connection and try again.');
+      setShowFailureModal(true);
     } finally {
       setLoading(false);
     }
@@ -172,6 +174,16 @@ const StockForm: React.FC<StockFormProps> = ({
   const handleSuccessModalClose = () => {
     setShowSuccessModal(false);
     onSuccess();
+  };
+
+  const handleFailureModalClose = () => {
+    setShowFailureModal(false);
+  };
+
+  const handleFailureModalAction = () => {
+    setShowFailureModal(false);
+    // Optionally retry the operation
+    // handleSubmit();
   };
 
   const updateField = (field: string, value: string) => {
@@ -200,24 +212,23 @@ const StockForm: React.FC<StockFormProps> = ({
     keyboardType: 'default' | 'numeric' = 'default',
     multiline: boolean = false
   ) => (
-    <View style={styles.inputContainer}>
-      <View style={styles.inputHeader}>
-        <Icon name={icon} size={20} color={COLORS.primary} style={styles.inputIcon} />
-        <Text style={styles.inputLabel}>{label}</Text>
+    <View style={FORM_STYLES.inputContainer}>
+      <Text style={FORM_STYLES.inputLabel}>{label}</Text>
+      <View style={[
+          FORM_STYLES.inputWrapper,
+          errors[field] && FORM_STYLES.inputWrapperError,
+        ]}>
+        <Icon name={icon} size={20} color={FORM_COLORS.text.secondary} style={FORM_STYLES.inputIcon} />
+        <TextInput
+          style={[FORM_STYLES.input, multiline && FORM_STYLES.inputMultiline]}
+          placeholder={placeholder}
+          placeholderTextColor={FORM_COLORS.text.tertiary}
+          value={formData[field as keyof typeof formData]}
+          onChangeText={(value) => updateField(field, value)}
+          keyboardType={keyboardType}
+        />
       </View>
-      <TextInput
-        style={[
-          styles.textInput,
-          multiline && styles.multilineInput,
-          errors[field] && styles.inputError,
-        ]}
-        placeholder={placeholder}
-        placeholderTextColor={COLORS.text.tertiary}
-        value={formData[field as keyof typeof formData]}
-        onChangeText={(value) => updateField(field, value)}
-        keyboardType={keyboardType}
-      />
-      {errors[field] && <Text style={styles.errorText}>{errors[field]}</Text>}
+      {errors[field] && <Text style={FORM_STYLES.errorText}>{errors[field]}</Text>}
     </View>
   );
 
@@ -231,55 +242,54 @@ const StockForm: React.FC<StockFormProps> = ({
     showPicker: boolean,
     setShowPicker: (show: boolean) => void
   ) => (
-    <View style={styles.inputContainer}>
-      <View style={styles.inputHeader}>
-        <Icon name={icon} size={20} color={COLORS.primary} style={styles.inputIcon} />
-        <Text style={styles.inputLabel}>{label}</Text>
-      </View>
+    <View style={FORM_STYLES.inputContainer}>
+      <Text style={FORM_STYLES.inputLabel}>{label}</Text>
       <TouchableOpacity
-        style={[styles.pickerButton, errors[field] && styles.inputError]}
+        style={[
+          FORM_STYLES.inputWrapper,
+          errors[field] && FORM_STYLES.inputWrapperError,
+        ]}
         onPress={() => setShowPicker(true)}
       >
-        <Text style={[styles.pickerText, !selectedItem && styles.placeholderText]}>
+        <Icon name={icon} size={20} color={FORM_COLORS.text.secondary} style={FORM_STYLES.inputIcon} />
+        <Text style={[
+          FORM_STYLES.input,
+          !selectedItem && { color: FORM_COLORS.text.tertiary }
+        ]}>
           {selectedItem ? selectedItem.name : `Select ${label.toLowerCase()}`}
         </Text>
-        <Icon name="chevron-down" size={20} color={COLORS.text.tertiary} />
+        <Icon name="chevron-down" size={20} color={FORM_COLORS.text.tertiary} />
       </TouchableOpacity>
-      {errors[field] && <Text style={styles.errorText}>{errors[field]}</Text>}
+      {errors[field] && <Text style={FORM_STYLES.errorText}>{errors[field]}</Text>}
     </View>
   );
 
   return (
-    <View style={styles.container}>
-      <LinearGradient
-        colors={[COLORS.gradient.primary[0], COLORS.gradient.primary[1]]}
-        style={styles.headerGradient}
-      >
-        <View style={styles.header}>
-          <TouchableOpacity onPress={onCancel} style={styles.backButton}>
-            <Icon name="arrow-left" size={24} color="#fff" />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>
-            {mode === 'create' ? 'Create Stock' : 'Update Stock'}
-          </Text>
-          <View style={styles.placeholder} />
-        </View>
-      </LinearGradient>
+    <View style={FORM_STYLES.container}>
+      <View style={FORM_STYLES.header}>
+        <TouchableOpacity onPress={onCancel} style={FORM_STYLES.backButton}>
+          <Icon name="arrow-left" size={24} color="#000" />
+        </TouchableOpacity>
+        <Text style={FORM_STYLES.headerTitle}>
+          {mode === 'create' ? 'Create Stock' : 'Update Stock'}
+        </Text>
+        <View style={FORM_STYLES.headerSpacer} />
+      </View>
 
-      <ScrollView style={styles.scrollContainer} showsVerticalScrollIndicator={false}>
-        <View style={styles.formContainer}>
+      <ScrollView style={FORM_STYLES.scrollView} showsVerticalScrollIndicator={false}>
+        <View style={FORM_STYLES.scrollContent}>
           {loadingData ? (
-            <View style={styles.loadingContainer}>
-              <ActivityIndicator size="large" color={COLORS.primary} />
-              <Text style={styles.loadingText}>Loading products and warehouses...</Text>
+            <View style={FORM_STYLES.loadingContainer}>
+              <ActivityIndicator size="large" color={FORM_COLORS.primary} />
+              <Text style={FORM_STYLES.loadingText}>Loading products and warehouses...</Text>
             </View>
           ) : (
             <>
               {/* Stock Information Card */}
-              <View style={styles.card}>
-                <View style={styles.cardHeader}>
-                  <Icon name="package-variant" size={24} color={COLORS.primary} />
-                  <Text style={styles.cardTitle}>Stock Information</Text>
+              <View style={FORM_STYLES.card}>
+                <View style={FORM_STYLES.cardHeader}>
+                  <Icon name="package-variant" size={24} color={FORM_COLORS.primary} />
+                  <Text style={FORM_STYLES.cardTitle}>Stock Information</Text>
                 </View>
                 
                 {renderPickerField(
@@ -318,10 +328,10 @@ const StockForm: React.FC<StockFormProps> = ({
               </View>
 
               {/* Quantity Information Card */}
-              <View style={styles.card}>
-                <View style={styles.cardHeader}>
-                  <Icon name="numeric" size={24} color={COLORS.primary} />
-                  <Text style={styles.cardTitle}>Quantity Information</Text>
+              <View style={FORM_STYLES.card}>
+                <View style={FORM_STYLES.cardHeader}>
+                  <Icon name="numeric" size={24} color={FORM_COLORS.primary} />
+                  <Text style={FORM_STYLES.cardTitle}>Quantity Information</Text>
                 </View>
                 
                 {renderInputField('quantity', 'Total Quantity', 'Enter total quantity', 'package-variant-closed', 'numeric')}
@@ -330,34 +340,42 @@ const StockForm: React.FC<StockFormProps> = ({
               </View>
 
               {/* Action Buttons */}
-              <View style={styles.buttonContainer}>
+              <View style={FORM_STYLES.buttonContainer}>
                 <TouchableOpacity
-                  style={styles.cancelButton}
+                  style={FORM_STYLES.secondaryButton}
                   onPress={onCancel}
                 >
-                  <Text style={styles.cancelButtonText}>Cancel</Text>
+                  <Text style={FORM_STYLES.secondaryButtonText}>Cancel</Text>
                 </TouchableOpacity>
                 
-                <TouchableOpacity
-                  style={[styles.submitButton, loading && styles.submitButtonDisabled]}
-                  onPress={handleSubmit}
+                <LinearGradient
+                  colors={FORM_COLORS.primaryGradient}
+                  style={[FORM_STYLES.primaryButton, loading && FORM_STYLES.buttonDisabled]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
                 >
-                  {loading ? (
-                    <ActivityIndicator color="#fff" size="small" />
-                  ) : (
-                    <>
-                      <Icon 
-                        name={mode === 'create' ? 'plus' : 'content-save'} 
-                        size={20} 
-                        color="#fff" 
-                        style={styles.buttonIcon}
-                      />
-                      <Text style={styles.submitButtonText}>
-                        {mode === 'create' ? 'Create Stock' : 'Update Stock'}
-                      </Text>
-                    </>
-                  )}
-                </TouchableOpacity>
+                  <TouchableOpacity
+                    style={FORM_STYLES.primaryButtonContent}
+                    onPress={handleSubmit}
+                    disabled={loading}
+                  >
+                    {loading ? (
+                      <ActivityIndicator color="#fff" size="small" />
+                    ) : (
+                      <>
+                        <Icon 
+                          name={mode === 'create' ? 'plus' : 'content-save'} 
+                          size={20} 
+                          color="#fff" 
+                          style={FORM_STYLES.primaryButtonIcon}
+                        />
+                        <Text style={FORM_STYLES.primaryButtonText}>
+                          {mode === 'create' ? 'Create Stock' : 'Update Stock'}
+                        </Text>
+                      </>
+                    )}
+                  </TouchableOpacity>
+                </LinearGradient>
               </View>
             </>
           )}
@@ -372,6 +390,19 @@ const StockForm: React.FC<StockFormProps> = ({
         onClose={handleSuccessModalClose}
         onAction={handleSuccessModalClose}
         actionText="Continue"
+        iconType="message"
+      />
+
+      {/* Failure Modal */}
+      <FailureModal
+        visible={showFailureModal}
+        title="Update Failed"
+        message={failureMessage}
+        onClose={handleFailureModalClose}
+        onAction={handleFailureModalAction}
+        actionText="Try Again"
+        animationType="shake"
+        iconType="error"
       />
 
       {/* Product Picker Modal */}
@@ -409,173 +440,5 @@ const StockForm: React.FC<StockFormProps> = ({
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-  },
-  headerGradient: {
-    paddingTop: 20,
-    paddingBottom: 20,
-    paddingHorizontal: 20,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  backButton: {
-    padding: 8,
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: COLORS.text.light,
-    textAlign: 'center',
-  },
-  placeholder: {
-    width: 40,
-  },
-  scrollContainer: {
-    flex: 1,
-  },
-  formContainer: {
-    padding: 20,
-  },
-  card: {
-    backgroundColor: COLORS.card,
-    borderRadius: 16,
-    padding: 20,
-    marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  cardHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  cardTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: COLORS.text.primary,
-    marginLeft: 12,
-  },
-  inputContainer: {
-    marginBottom: 16,
-  },
-  inputHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  inputIcon: {
-    marginRight: 8,
-  },
-  inputLabel: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: COLORS.text.primary,
-  },
-  textInput: {
-    borderWidth: 1,
-    borderColor: COLORS.border.medium,
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    fontSize: 16,
-    backgroundColor: COLORS.surface,
-    color: COLORS.text.primary,
-  },
-  multilineInput: {
-    height: 60,
-    textAlignVertical: 'top',
-  },
-  pickerButton: {
-    borderWidth: 1,
-    borderColor: COLORS.border.medium,
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: COLORS.surface,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  pickerText: {
-    fontSize: 16,
-    color: COLORS.text.primary,
-    flex: 1,
-  },
-  placeholderText: {
-    color: COLORS.text.tertiary,
-  },
-  inputError: {
-    borderColor: COLORS.status.error,
-  },
-  errorText: {
-    color: COLORS.status.error,
-    fontSize: 12,
-    marginTop: 4,
-    marginLeft: 4,
-  },
-  buttonContainer: {
-    flexDirection: 'row',
-    gap: 12,
-    marginTop: 20,
-  },
-  cancelButton: {
-    flex: 1,
-    backgroundColor: COLORS.surface,
-    borderRadius: 12,
-    paddingVertical: 16,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: COLORS.border.medium,
-  },
-  cancelButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: COLORS.text.secondary,
-  },
-  submitButton: {
-    flex: 2,
-    backgroundColor: COLORS.primary,
-    borderRadius: 12,
-    paddingVertical: 16,
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'center',
-  },
-  submitButtonDisabled: {
-    backgroundColor: COLORS.text.tertiary,
-  },
-  submitButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: COLORS.text.light,
-  },
-  buttonIcon: {
-    marginRight: 8,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingVertical: 60,
-  },
-  loadingText: {
-    fontSize: 16,
-    color: COLORS.text.secondary,
-    marginTop: 16,
-    textAlign: 'center',
-  },
-});
 
 export default StockForm;

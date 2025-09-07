@@ -22,6 +22,7 @@ import { inventoryApiService } from '../../api/inventoryApi';
 import { Stock, Product, Warehouse } from '../../types/inventory';
 import AddStockModal from '../../components/inventory/Warehouse/LowStockInventory/AddStockModal';
 import FilterModal from '../../components/inventory/Warehouse/LowStockInventory/FilterModal';
+import DeleteModal from '../../components/DeleteModal';
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -46,6 +47,8 @@ const LowStockInventoryScreen = ({ navigation }) => {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedWarehouse, setSelectedWarehouse] = useState('all');
   const [selectedStockLevel, setSelectedStockLevel] = useState('all');
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const chartData = {
     labels: ['', '', '', '', '', ''],
@@ -141,7 +144,7 @@ const LowStockInventoryScreen = ({ navigation }) => {
   const getStockLevelColor = (level: string) => {
     switch (level) {
       case 'critical': return '#FF3B30';
-      case 'low': return '#FF9500';
+      case 'low': return '#FB7504';
       default: return '#34C759';
     }
   };
@@ -205,13 +208,20 @@ const LowStockInventoryScreen = ({ navigation }) => {
     }
   };
 
-  const handleDeleteStock = async (stockId: string) => {
+  const handleDeleteStock = () => {
+    setShowDeleteModal(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!selectedItem) return;
+    
+    setIsDeleting(true);
     try {
-      await inventoryApiService.deleteStock(stockId);
-      Alert.alert('Success', 'Stock deleted successfully');
-      loadLowStockData();
+      await inventoryApiService.deleteStock(selectedItem.stock.id);
+      // Success will be handled by the modal's success stage
     } catch (error) {
       Alert.alert('Error', 'Failed to delete stock');
+      setIsDeleting(false);
     }
   };
 
@@ -234,7 +244,7 @@ const LowStockInventoryScreen = ({ navigation }) => {
       <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
       
       {/* Premium Header - Fixed Alignment */}
-      <LinearGradient colors={['#FF6B35', '#FF8E53']} style={styles.header}>
+      <LinearGradient colors={['#FB7504', '#C2252C']} style={styles.header}>
         <View style={styles.headerContent}>
           <TouchableOpacity 
             style={styles.backButton}
@@ -266,7 +276,7 @@ const LowStockInventoryScreen = ({ navigation }) => {
         {/* Low Stock Items Card with Professional Chart */}
         <View style={styles.section}>
           <LinearGradient 
-            colors={['#FF6B35', '#FF8E53', '#FFA726']} 
+            colors={['#FB7504', '#C2252C', '#FFA726']} 
             style={styles.gradientCard}
           >
             <View style={styles.cardHeader}>
@@ -335,7 +345,7 @@ const LowStockInventoryScreen = ({ navigation }) => {
                 onPress={() => handleItemLongPress(lowStockItems[0])}
               >
                 <LinearGradient
-                  colors={['#FF3B30', '#FF6B35', '#FF9500']}
+                  colors={['#FF3B30', '#FB7504', '#C2252C']}
                   style={styles.storyBorder}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 1 }}
@@ -372,7 +382,7 @@ const LowStockInventoryScreen = ({ navigation }) => {
                 onPress={() => handleItemLongPress(item)}
               >
                 <LinearGradient
-                  colors={['#FF3B30', '#FF6B35', '#FF9500']}
+                  colors={['#FF3B30', '#FB7504', '#C2252C']}
                   style={styles.storyBorder}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 1 }}
@@ -570,10 +580,8 @@ const LowStockInventoryScreen = ({ navigation }) => {
               <TouchableOpacity 
                 style={[styles.modalAction, styles.deleteAction]}
                 onPress={() => {
-                  if (selectedItem) {
-                    handleDeleteStock(selectedItem.stock.id);
-                  }
                   setModalVisible(false);
+                  handleDeleteStock();
                 }}
               >
                 <Icon name="trash-2" size={20} color="#FF3B30" />
@@ -613,6 +621,22 @@ const LowStockInventoryScreen = ({ navigation }) => {
           setAddStockModalVisible(false);
           loadLowStockData();
         }}
+      />
+
+      {/* Delete Confirmation Modal */}
+      <DeleteModal
+        visible={showDeleteModal}
+        isDeleting={isDeleting}
+        title="Delete Stock"
+        message="Are you sure you want to delete this stock entry? This action cannot be undone."
+        itemName={selectedItem?.product.name}
+        onClose={() => {
+          setShowDeleteModal(false);
+          setIsDeleting(false);
+          setModalVisible(false);
+          loadLowStockData();
+        }}
+        onConfirm={handleConfirmDelete}
       />
 
     </SafeAreaView>
@@ -885,7 +909,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFF3E0',
   },
   activeFilterChipText: {
-    color: '#FF6B35',
+    color: '#FB7504',
   },
   productsGrid: {
     flexDirection: 'row',

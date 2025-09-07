@@ -100,7 +100,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   activeTab: {
-    backgroundColor: '#FF6B35',
+    backgroundColor: '#FB7504',
     borderWidth: 0,
   },
 

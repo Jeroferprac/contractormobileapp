@@ -93,7 +93,7 @@ const WarehouseCard: React.FC<WarehouseCardProps> = ({
   // Generate fallback gradient colors based on warehouse name
   const getFallbackGradient = () => {
     const gradients = [
-      ['#FF6B35', '#FF8E53', '#FFB366', '#FFD700', '#FF6B9D', '#8B5CF6'],
+      ['#FB7504', '#C2252C', '#FFB366', '#FFD700', '#FF6B9D', '#8B5CF6'],
       ['#667eea', '#764ba2', '#f093fb', '#f5576c', '#4facfe', '#00f2fe'],
       ['#fa709a', '#fee140', '#ff9a9e', '#fecfef', '#fecfef', '#fad0c4'],
       ['#a8edea', '#fed6e3', '#ffecd2', '#fcb69f', '#ff9a9e', '#fecfef'],
@@ -206,7 +206,7 @@ const WarehouseCard: React.FC<WarehouseCardProps> = ({
           </TouchableOpacity>
         </View>
         
-        {/* Dynamic gradient overlay - orange for main card, black for others */}
+        {/* Dynamic gradient overlay - theme color for main card, black for others */}
         <LinearGradient
           colors={[
             'transparent',
@@ -217,10 +217,10 @@ const WarehouseCard: React.FC<WarehouseCardProps> = ({
           style={styles.gradientOverlay}
         />
         
-                 {/* Orange overlay for main card only - reduced intensity */}
+                 {/* Theme color overlay for main card only - reduced intensity */}
          <Animated.View
            style={[
-             styles.orangeOverlay,
+             styles.themeColorOverlay,
              {
                opacity: scrollX.interpolate({
                  inputRange: [
@@ -237,12 +237,12 @@ const WarehouseCard: React.FC<WarehouseCardProps> = ({
            <LinearGradient
              colors={[
                'transparent',
-               'rgba(255, 107, 53, 0.1)',
-               'rgba(255, 107, 53, 0.3)',
-               'rgba(255, 107, 53, 0.5)',
+               'rgba(251, 117, 4, 0.1)',
+               'rgba(251, 117, 4, 0.3)',
+               'rgba(251, 117, 4, 0.5)',
              ]}
              locations={[0, 0.4, 0.7, 0.9]}
-             style={styles.orangeGradient}
+             style={styles.themeColorGradient}
            />
          </Animated.View>
         
@@ -272,7 +272,7 @@ const WarehouseCard: React.FC<WarehouseCardProps> = ({
                 
                 {/* Stock level indicator */}
                 <View style={styles.stockLevelContainer}>
-                  <Icon name="trending-up" size={20} color="#FF6B35" />
+                  <Icon name="trending-up" size={20} color="#FB7504" />
                   <Text style={styles.stockLevelText}>
                     {warehouse.utilization || 0}%
                   </Text>
@@ -356,14 +356,14 @@ const styles = StyleSheet.create({
     right: 0,
     height: '70%',
   },
-  orangeOverlay: {
+  themeColorOverlay: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
     height: '70%',
   },
-  orangeGradient: {
+  themeColorGradient: {
     flex: 1,
   },
   cardContent: {
@@ -456,7 +456,7 @@ const styles = StyleSheet.create({
   },
   stockLevelText: {
     fontSize: TYPOGRAPHY.sizes.sm,
-    color: '#FF6B35',
+    color: '#FB7504',
     fontWeight: '700',
     marginTop: SPACING.xs,
     textShadowColor: 'rgba(0, 0, 0, 0.5)',

@@ -71,7 +71,7 @@ const AllTransfersScreen: React.FC<AllTransfersScreenProps> = ({ navigation }) =
 
   // Premium gradient colors with 4 colors each
   const gradientColors = [
-    ['#FF6B35', '#FF8C42', '#FFA500', '#FFD700'], // Orange
+    ['#FB7504', '#C2252C', '#FFA500', '#FFD700'], // Theme color
     ['#EF4444', '#F87171', '#DC2626', '#B91C1C'], // Red
     ['#EC4899', '#F472B6', '#DB2777', '#BE185D'], // Pink
     ['#F59E0B', '#FBBF24', '#D97706', '#B45309'], // Yellow
@@ -573,9 +573,18 @@ const AllTransfersScreen: React.FC<AllTransfersScreenProps> = ({ navigation }) =
                   spacing={10}
                   initialSpacing={10}
                   endSpacing={10}
-                  barBorderRadius={4}
-                  frontColor="#FFFFFF"
-                  gradientColor="#FFFFFF"
+                  roundedTop
+                  barBorderRadius={8}
+                  frontColor="transparent"
+                  gradientColor="transparent"
+                  renderGradient={() => (
+                    <LinearGradient
+                      colors={[COLORS.gradient.primary[0], COLORS.gradient.primary[1]]}
+                      start={{ x: 0, y: 1 }}
+                      end={{ x: 0, y: 0 }}
+                      style={{ flex: 1, borderRadius: 8 }}
+                    />
+                  )}
                 />
               </View>
 
@@ -613,9 +622,18 @@ const AllTransfersScreen: React.FC<AllTransfersScreenProps> = ({ navigation }) =
                   spacing={20}
                   initialSpacing={20}
                   endSpacing={20}
-                  barBorderRadius={6}
-                  frontColor="#FFFFFF"
-                  gradientColor="#FFFFFF"
+                  roundedTop
+                  barBorderRadius={8}
+                  frontColor="transparent"
+                  gradientColor="transparent"
+                  renderGradient={() => (
+                    <LinearGradient
+                      colors={[COLORS.gradient.primary[0], COLORS.gradient.primary[1]]}
+                      start={{ x: 0, y: 1 }}
+                      end={{ x: 0, y: 0 }}
+                      style={{ flex: 1, borderRadius: 8 }}
+                    />
+                  )}
                 />
               </View>
 

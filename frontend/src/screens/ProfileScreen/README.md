@@ -73,7 +73,7 @@ Mock data is stored in `src/data/mockProfileData.ts` and includes:
 Uses consistent design system:
 - Colors from `src/constants/colors.ts`
 - Spacing from `src/constants/spacing.ts`
-- Orange primary color theme
+- Theme color gradient (#FB7504 to #C2252C) primary color theme
 - Clean, modern UI design
 
 ## Usage

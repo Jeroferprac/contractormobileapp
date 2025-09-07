@@ -236,14 +236,14 @@ const SalesChart = forwardRef<SalesChartHandle, SalesChartProps>(({ data, timefr
             opacity={0.6}
           />
 
-          {/* Current period line (orange) */}
+          {/* Current period line (theme color) */}
           <Path
             d={chartData.map((item, index) => {
               const x = index * (barWidth + spacing) + barWidth / 2;
               const y = chartHeight - (item.value / maxValue) * chartHeight;
               return `${index === 0 ? 'M' : 'L'} ${x} ${y}`;
             }).join(' ')}
-            stroke="#FF6B35"
+            stroke="#FB7504"
             strokeWidth={3}
             fill="none"
           />
@@ -268,7 +268,7 @@ const SalesChart = forwardRef<SalesChartHandle, SalesChartProps>(({ data, timefr
                   cx={x}
                   cy={y}
                   r={selectedPoint === index ? 6 : 4}
-                  fill={selectedPoint === index ? "#E55A2B" : "#FF6B35"}
+                  fill={selectedPoint === index ? "#C2252C" : "#FB7504"}
                   stroke={selectedPoint === index ? "#FFFFFF" : "none"}
                   strokeWidth={2}
                 />
@@ -369,18 +369,18 @@ const SalesChart = forwardRef<SalesChartHandle, SalesChartProps>(({ data, timefr
                         <Icon 
                           name={isPositive ? "trending-up" : "trending-down"} 
                           size={14} 
-                          color={isPositive ? "#FF6B35" : "#F44336"} 
+                          color={isPositive ? "#FB7504" : "#F44336"} 
                         />
                         <Text style={[
                           styles.tooltipChange,
-                          { color: isPositive ? "#FF6B35" : "#F44336" }
+                          { color: isPositive ? "#FB7504" : "#F44336" }
                         ]}>
                           {isPositive ? '+' : ''}{formatCurrency(change)}
                         </Text>
                       </View>
                       <Text style={[
                         styles.tooltipChangePercent,
-                        { color: isPositive ? "#FF6B35" : "#F44336" }
+                        { color: isPositive ? "#FB7504" : "#F44336" }
                       ]}>
                         {isPositive ? '+' : ''}{changePercent.toFixed(1)}%
                       </Text>
@@ -449,166 +449,102 @@ const SalesChart = forwardRef<SalesChartHandle, SalesChartProps>(({ data, timefr
   };
 
   return (
-    <View style={styles.container}>
-      <View style={[styles.chartSection, !showTitleInside && styles.chartSectionCompact]}>
-        {showTitleInside && (
-          <View style={styles.chartHeader}>
-            <View style={styles.chartTitleContainer}>
-              <Text style={styles.chartTitle}>Sales Performance</Text>
-              <Text style={styles.chartSubtitle}>Track your revenue trends</Text>
-            </View>
-            <View style={styles.headerActions}>
-              <TouchableOpacity style={styles.actionButton} onPress={onZoomIn || handleZoomIn} activeOpacity={0.7}>
-                <Icon name="zoom-in" size={16} color="#FF6B35" />
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.actionButton} onPress={onZoomOut || handleZoomOut} activeOpacity={0.7}>
-                <Icon name="zoom-out" size={16} color="#FF6B35" />
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.shareButton} onPress={onShare || handleShareChart} activeOpacity={0.7}>
-                <Text style={styles.shareButtonText}>SHARE</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        )}
-
-        <View style={styles.timeframeSelector}>
-          {['Week', 'Month', 'Year', 'All Time'].map((timeframe) => (
-            <TouchableOpacity 
-              key={timeframe}
-              style={[
-                styles.timeframeButton, 
-                selectedTimeframe === timeframe && styles.timeframeButtonActive
-              ]} 
-              activeOpacity={0.7}
-              onPress={() => handleTimeframeChangeLocal(timeframe)}
-            >
-              <Text style={[
-                styles.timeframeButtonText,
-                selectedTimeframe === timeframe && styles.timeframeButtonTextActive
-              ]}>
-                {timeframe}
-              </Text>
-            </TouchableOpacity>
-          ))}
+    <View style={styles.page}>
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <Text style={styles.title}>Sales Performance</Text>
+          <TouchableOpacity style={styles.dropdown}>
+            <Text style={styles.dropdownText}>In week</Text>
+            <Text style={styles.dropdownArrow}>▾</Text>
+          </TouchableOpacity>
         </View>
 
-        <Animated.View 
-          style={[
-            styles.chartWrapper,
-            {
-              transform: [{ scale: scaleAnim }]
-            }
-          ]}
-        >
-          <Text style={styles.chartComparison}>{getComparisonText()}</Text>
-          <View style={styles.chartArea}>
-            {renderChart()}
+        <View style={{ paddingHorizontal: 10 }}>
+          {renderChart()}
+        </View>
+
+        <View style={styles.footer}>
+          <View style={styles.footerIndicator}></View>
+          <View>
+            <Text style={styles.footerTitle}>Most Active Time Slots:</Text>
+            <Text style={styles.footerSubtitle}>12:00 to 21:30 (Mon-Fri), with the busiest day on Wednesday</Text>
           </View>
-        </Animated.View>
+        </View>
       </View>
     </View>
   );
 });
 
 const styles = StyleSheet.create({
-  container: {
-    marginBottom: SPACING.lg,
+  page: {
+    backgroundColor: '#f9f9f9',
+    padding: 16,
   },
-  chartSection: {
-    marginHorizontal: SPACING.lg,
-    marginTop: 0,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 24,
-    padding: SPACING.lg,
+  container: {
+    backgroundColor: 'white',
+    paddingVertical: 24,
+    paddingHorizontal: 16,
+    borderRadius: 16,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 5,
   },
-  chartSectionCompact: {
-    paddingTop: SPACING.md,
-  },
-  chartHeader: {
+  header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: SPACING.lg,
+    alignItems: 'center',
+    marginBottom: 32,
+    paddingHorizontal: 8,
   },
-  chartTitleContainer: {
-    flex: 1,
-  },
-  chartTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#212529',
-    marginBottom: SPACING.xs,
-  },
-  chartSubtitle: {
-    fontSize: 14,
-    color: '#6C757D',
-    fontWeight: '400',
-  },
-  shareButton: {
-    backgroundColor: '#FF6B35',
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.sm,
-    borderRadius: 16,
-  },
-  shareButtonText: {
-    fontSize: 12,
+  title: {
+    fontSize: 18,
     fontWeight: '600',
-    color: '#FFFFFF',
+    color: '#222',
   },
-  timeframeSelector: {
+  dropdown: {
     flexDirection: 'row',
-    backgroundColor: '#F8F9FA',
-    borderRadius: 16,
-    padding: 4,
-    marginBottom: SPACING.lg,
-  },
-  timeframeButton: {
-    flex: 1,
-    paddingVertical: SPACING.sm,
-    paddingHorizontal: SPACING.md,
-    borderRadius: 12,
     alignItems: 'center',
+    backgroundColor: '#f6f6f6',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 20,
   },
-  timeframeButtonActive: {
-    backgroundColor: '#FF6B35',
-    shadowColor: '#FF6B35',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 4,
-  },
-  timeframeButtonText: {
-    fontSize: 12,
+  dropdownText: {
+    color: '#555',
     fontWeight: '500',
-    color: '#6C757D',
+    fontSize: 13,
+    marginRight: 6,
   },
-  timeframeButtonTextActive: {
-    fontSize: 12,
+  dropdownArrow: {
+    fontSize: 13,
+    color: '#555',
+  },
+  footer: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginTop: 24,
+    paddingHorizontal: 8,
+  },
+  footerIndicator: {
+    width: 10,
+    height: 10,
+    backgroundColor: '#E7600E',
+    borderRadius: 5,
+    marginRight: 12,
+    marginTop: 4,
+  },
+  footerTitle: {
     fontWeight: '600',
-    color: '#FFFFFF',
-  },
-  chartWrapper: {
-    gap: SPACING.sm,
-  },
-  chartComparison: {
+    color: '#333',
     fontSize: 14,
-    fontWeight: '600',
-    color: '#212529',
-    textAlign: 'center',
   },
-  chartArea: {
-    height: 160,
-    backgroundColor: '#F8F9FA',
-    borderRadius: 16,
-    justifyContent: 'flex-start',
-    alignItems: 'center',
-    paddingVertical: SPACING.sm,
-    paddingHorizontal: SPACING.md,
+  footerSubtitle: {
+    fontSize: 12,
+    color: '#777',
+    marginTop: 4,
+    lineHeight: 18,
   },
   chartContainer: {
     alignItems: 'center',
@@ -721,7 +657,7 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#FF6B35',
+    backgroundColor: '#FB7504',
     marginRight: SPACING.xs,
   },
   tooltipLabel: {

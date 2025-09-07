@@ -86,9 +86,9 @@ const StatsCard: React.FC<StatsCardProps> = ({ title, value, subtitle, icon, pro
           <View style={styles.statsCardInner}>
             <View style={styles.statsCardContent}>
               <View style={styles.statsCardHeader}>
-                {/* Orange-Black Icon Gradient */}
+                {/* Theme Color Icon Gradient */}
                 <LinearGradient
-                  colors={['#FF6B35', '#FF8C42', '#FFA500', '#000000']}
+                  colors={['#FB7504', '#C2252C', '#FFA500', '#000000']}
                   style={styles.statsIconContainer}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 1 }}
@@ -348,7 +348,7 @@ const AnalyticsCharts: React.FC<AnalyticsChartsProps> = ({ navigation }) => {
   };
 
   const getGradientColor = (index: number) => {
-    const colors = ['#FF6B35', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DDA0DD', '#98D8C8'];
+    const colors = ['#FB7504', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DDA0DD', '#98D8C8'];
     return colors[index % colors.length];
   };
 
@@ -797,7 +797,7 @@ const styles = StyleSheet.create({
   },
   progressFill: {
     height: '100%',
-    backgroundColor: '#FF6B35',
+    backgroundColor: '#FB7504',
     borderRadius: 2,
   },
   progressText: {

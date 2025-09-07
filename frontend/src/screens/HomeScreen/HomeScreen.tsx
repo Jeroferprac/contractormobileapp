@@ -7,7 +7,6 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
-  Alert,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Feather';
 import FastImage from 'react-native-fast-image';
@@ -17,7 +16,7 @@ import { HomeScreenNavigationProp } from '../../types/navigation';
 import { useAuth } from '../../context/AuthContext';
 
 // UI Components
-import { SearchBar, FilterChips, HorizontalScroll } from '../../components/ui';
+import { SearchBar, FilterChips, HorizontalScroll, LogoutModal } from '../../components/ui';
 
 // Home Components
 import {
@@ -42,7 +41,9 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
   const [activeFilters, setActiveFilters] = useState(mockFilters || []);
   const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
   const [searchText, setSearchText] = useState('');
-  const { logout } = useAuth();
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const { logout, user } = useAuth();
 
   const handleFilterChange = (filterId: string) => {
     setSelectedFilters(prev => 
@@ -68,28 +69,28 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
     console.log('Professional pressed:', professional.name);
   };
 
-  const handleLogout = async () => {
+  const handleLogout = () => {
     console.log('Logout button pressed');
-    Alert.alert(
-      'Logout',
-      'Are you sure you want to logout?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Logout',
-          style: 'destructive',
-          onPress: async () => {
-            console.log('Logout confirmed, starting logout process...');
-            try {
-              await logout();
-              console.log('Logout successful');
-            } catch (error) {
-              console.error('Logout error:', error);
-            }
-          },
-        },
-      ]
-    );
+    setShowLogoutModal(true);
+  };
+
+  const handleLogoutConfirm = async () => {
+    console.log('Logout confirmed, starting logout process...');
+    setIsLoggingOut(true);
+    
+    try {
+      await logout();
+      console.log('Logout successful');
+    } catch (error) {
+      console.error('Logout error:', error);
+    } finally {
+      setIsLoggingOut(false);
+    }
+  };
+
+  const handleLogoutClose = () => {
+    setShowLogoutModal(false);
+    setIsLoggingOut(false);
   };
 
   // Filter professionals by type with fallback
@@ -369,6 +370,15 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
           </View>
         </View>
       </ScrollView>
+
+      {/* Logout Modal */}
+      <LogoutModal
+        visible={showLogoutModal}
+        isLoggingOut={isLoggingOut}
+        onClose={handleLogoutClose}
+        onConfirm={handleLogoutConfirm}
+        username={user?.full_name || user?.email}
+      />
     </SafeAreaView>
   );
 };

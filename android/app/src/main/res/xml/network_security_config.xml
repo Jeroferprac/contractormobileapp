@@ -4,7 +4,6 @@
         <domain includeSubdomains="true">source.unsplash.com</domain>
         <domain includeSubdomains="true">images.unsplash.com</domain>
         <domain includeSubdomains="true">picsum.photos</domain>
-        <domain includeSubdomains="true">unsplash.com</domain>
     </domain-config>
     <base-config cleartextTrafficPermitted="true">
         <trust-anchors>

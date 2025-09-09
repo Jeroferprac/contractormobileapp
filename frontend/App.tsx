@@ -1,6 +1,4 @@
 import React, { useEffect } from 'react';
-import { StatusBar, useColorScheme } from 'react-native';
-import React from 'react';
 import { StatusBar, useColorScheme, LogBox } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { AppNavigator } from './src/navigation/AppNavigator';

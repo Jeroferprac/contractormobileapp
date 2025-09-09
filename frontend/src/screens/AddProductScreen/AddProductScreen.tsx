@@ -1,26 +1,19 @@
 import React, { useState, useRef, useEffect } from 'react';
-import React, { useState, useRef, useEffect } from 'react';
 import inventoryApiService from '../../api/inventoryApi';
-// import LottieView from 'lottie-react-native';
 // import LottieView from 'lottie-react-native';
 import {
   View,
   Text,
   ScrollView,
-  ScrollView,
   TouchableOpacity,
   StyleSheet,
   Alert,
   TextInput,
-  Alert,
-  TextInput,
   Platform,
-  Switch,
   Modal,
-  Switch,
-  Modal,
+  StatusBar,
+  SafeAreaView,
 } from 'react-native';
-import { Switch } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import LinearGradient from 'react-native-linear-gradient';
 import { COLORS } from '../../constants/colors';

@@ -495,7 +495,7 @@ const BinManagementTab: React.FC<BinManagementTabProps> = ({
                 <View style={styles.expandedCardActions}>
                   <TouchableOpacity style={styles.expandedCardBookButton}>
                     <LinearGradient
-                      colors={COLORS.gradient.primary}
+                      colors={COLORS.gradient.primary || ['#FB7504', '#C2252C']}
                       style={styles.expandedCardBookButtonGradient}
                     >
                       <Text style={styles.expandedCardBookButtonText}>BOOK</Text>

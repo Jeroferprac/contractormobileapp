@@ -1,5 +1,6 @@
 export { default as Badge } from './Badge';
 export { default as BarcodeScanner } from './BarcodeScanner';
+export { default as BarChart } from './BarChart';
 export { default as Card } from './Card';
 export { default as Chart } from './Chart';
 export { default as FadeSlideInView } from './FadeSlideInView';

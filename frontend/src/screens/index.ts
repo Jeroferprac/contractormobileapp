@@ -11,9 +11,6 @@ export { default as LowStockInventoryScreen } from './LowStockInventoryScreen/Lo
 export { default as WarehouseReportsScreen } from './WarehouseReportsScreen';
 export { default as AllWarehouseScreen } from './AllWarehouseScreen';
 export { default as BinManagementScreen } from './BinManagementScreen';
-export { default as BarcodeScannerScreen } from './BarcodeScannerScreen';
-export { default as SplashScreen } from './SplashScreen';
-export { default as OnboardingScreen } from './OnboardingScreen';
 export { default as LoginScreen } from './LoginScreen';
 export { default as SignupScreen } from './SignupScreen';
 export { default as InventoryScreen } from './InventoryScreen/InventoryScreen';

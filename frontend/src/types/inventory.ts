@@ -256,6 +256,14 @@ export type ChartDataPoint = {
   dataPointText: string;
 };
 
+export type BarChartData = {
+  value: number;
+  label?: string;
+  fullLabel?: string; // Full name for tooltip
+  colorStart?: string;
+  colorEnd?: string;
+};
+
 // Inventory summary structure
 export interface InventorySummary {
   total_products: number;

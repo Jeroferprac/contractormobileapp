@@ -1,13 +1,12 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Platform, ActivityIndicator, TouchableOpacity, Dimensions } from 'react-native';
-import { BarChart } from 'react-native-gifted-charts';
-import LinearGradient from 'react-native-linear-gradient';
+import React, { useState, useEffect, useMemo } from 'react';
+import { View, Text, StyleSheet, Platform, ActivityIndicator, TouchableOpacity, Animated } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { COLORS } from '../../../constants/colors';
 import { SPACING, BORDER_RADIUS } from '../../../constants/spacing';
 import { TYPOGRAPHY } from '../../../constants/typography';
 import { inventoryApiService } from '../../../api/inventoryApi';
 import { Stock, Warehouse } from '../../../types/inventory';
+import BarChart, { BarChartData } from '../../ui/BarChart';
 
 interface StockData {
   warehouse: string;
@@ -18,7 +17,7 @@ interface StockByWarehouseChartProps {
   title: string;
 }
 
-const { width: screenWidth } = Dimensions.get('window');
+// Removed Dimensions import as it's not needed with the new BarChart
 
 // --- Reusable Internal Components ---
 
@@ -29,21 +28,41 @@ const Tooltip = ({ warehouse, quantity }: { warehouse: string; quantity: number 
   </View>
 );
 
-const TimeframePicker = () => (
-  <TouchableOpacity style={styles.pickerContainer}>
-    <Text style={styles.pickerText}>This Month</Text>
-    <Icon name="chevron-down" size={16} color="#333" />
+const TimeframePicker = ({ timeframe, onTimeframeChange }: { timeframe: string; onTimeframeChange: (timeframe: string) => void }) => {
+  const timeframes = ['This Week', 'This Month', 'This Quarter', 'This Year'];
+  const [currentIndex, setCurrentIndex] = useState(timeframes.indexOf(timeframe));
+
+  const handlePress = () => {
+    const nextIndex = (currentIndex + 1) % timeframes.length;
+    setCurrentIndex(nextIndex);
+    onTimeframeChange(timeframes[nextIndex]);
+  };
+
+  return (
+    <TouchableOpacity style={styles.timeframeButton} onPress={handlePress} activeOpacity={0.85}>
+      <Text style={styles.timeframeText}>{timeframe}</Text>
   </TouchableOpacity>
 );
+};
 
 const StockByWarehouseChart: React.FC<StockByWarehouseChartProps> = ({ title }) => {
   const [stockData, setStockData] = useState<StockData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [timeframe, setTimeframe] = useState<string>('This Month');
+  const entry = React.useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     fetchStockByWarehouseData();
-  }, []);
+  }, [timeframe]); // Refetch when timeframe changes
+
+  React.useEffect(() => {
+    Animated.timing(entry, {
+      toValue: 1,
+      duration: 500,
+      useNativeDriver: true,
+    }).start();
+  }, [entry]);
 
   const fetchStockByWarehouseData = async () => {
     setLoading(true);
@@ -57,8 +76,8 @@ const StockByWarehouseChart: React.FC<StockByWarehouseChartProps> = ({ title }) 
       const stockResponse = await inventoryApiService.getCurrentStockLevels();
       const stockLevels = stockResponse.data;
       
-      // Process data to get stock by warehouse
-      const warehouseStockData = processStockByWarehouse(warehouses, stockLevels);
+      // Process data to get stock by warehouse based on timeframe
+      const warehouseStockData = processStockByWarehouse(warehouses, stockLevels, timeframe);
       setStockData(warehouseStockData);
     } catch (err) {
       console.error('Error fetching stock by warehouse data:', err);
@@ -68,7 +87,35 @@ const StockByWarehouseChart: React.FC<StockByWarehouseChartProps> = ({ title }) 
     }
   };
 
-  const processStockByWarehouse = (warehouses: Warehouse[], stockLevels: Stock[]): StockData[] => {
+  const filterStockByTimeframe = (stockLevels: Stock[], timeframe: string): Stock[] => {
+    const now = new Date();
+    let startDate: Date;
+    
+    switch (timeframe) {
+      case 'This Week':
+        startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        break;
+      case 'This Month':
+        startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+        break;
+      case 'This Quarter':
+        startDate = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+        break;
+      case 'This Year':
+        startDate = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
+        break;
+      default:
+        return stockLevels; // Return all data if timeframe not recognized
+    }
+    
+    return stockLevels.filter(stock => {
+      if (!stock.updated_at) return true; // Include if no date
+      const stockDate = new Date(stock.updated_at);
+      return stockDate >= startDate;
+    });
+  };
+
+  const processStockByWarehouse = (warehouses: Warehouse[], stockLevels: Stock[], timeframe: string): StockData[] => {
     // Create a map of warehouse ID to name
     const warehouseMap = new Map<string, string>();
     warehouses.forEach(warehouse => {
@@ -83,8 +130,11 @@ const StockByWarehouseChart: React.FC<StockByWarehouseChartProps> = ({ title }) 
       warehouseStocks[warehouse.id] = 0;
     });
     
+    // Filter stock levels based on timeframe
+    const filteredStockLevels = filterStockByTimeframe(stockLevels, timeframe);
+    
     // Sum up quantities for each warehouse
-    stockLevels.forEach(stock => {
+    filteredStockLevels.forEach(stock => {
       if (stock.warehouse_id && warehouseStocks[stock.warehouse_id] !== undefined) {
         warehouseStocks[stock.warehouse_id] += Number(stock.quantity);
       }
@@ -100,192 +150,257 @@ const StockByWarehouseChart: React.FC<StockByWarehouseChartProps> = ({ title }) 
     // Sort by quantity (highest first)
     result.sort((a, b) => b.quantity - a.quantity);
     
-    // Take top 5 warehouses for better visualization
-    const topWarehouses = result.slice(0, 5);
-    
-    // If no data, provide fallback
-    if (topWarehouses.length === 0) {
+    // Show all warehouses from API data
+    if (result.length === 0) {
       return [{ warehouse: 'No Data', quantity: 0 }];
     }
     
-    return topWarehouses;
+    // Add some sample data to test scroll functionality (remove in production)
+    const sampleData = [
+      { warehouse: 'Warehouse A', quantity: 150, warehouseId: 'sample1' },
+      { warehouse: 'Warehouse B', quantity: 200, warehouseId: 'sample2' },
+      { warehouse: 'Warehouse C', quantity: 180, warehouseId: 'sample3' },
+      { warehouse: 'Warehouse D', quantity: 120, warehouseId: 'sample4' },
+      { warehouse: 'Warehouse E', quantity: 90, warehouseId: 'sample5' },
+      { warehouse: 'Warehouse F', quantity: 160, warehouseId: 'sample6' },
+      { warehouse: 'Warehouse G', quantity: 140, warehouseId: 'sample7' },
+      { warehouse: 'Warehouse H', quantity: 110, warehouseId: 'sample8' },
+      { warehouse: 'Warehouse I', quantity: 95, warehouseId: 'sample9' },
+    ];
+    
+    // Combine real data with sample data for testing scroll
+    const combinedData = [...result, ...sampleData];
+    combinedData.sort((a, b) => b.quantity - a.quantity);
+    
+    return combinedData; // Show all warehouses including samples for testing
   };
 
   const totalStock = stockData.reduce((sum, item) => sum + item.quantity, 0);
-  const maxValueItem = stockData.length > 0 ? stockData.reduce((prev, current) =>
-    prev.quantity > current.quantity ? prev : current
-  ) : { warehouse: '', quantity: 0 };
 
-  // Format data for the chart
-  const chartData = stockData.map((item, index) => ({
+  // Format data for the new BarChart component with StockReportChart gradient colors
+  const chartData: BarChartData[] = stockData.map((item) => ({
     value: item.quantity,
     label: item.warehouse.substring(0, 3), // Use abbreviated warehouse names
-    warehouse: item.warehouse,
-    quantity: item.quantity,
-    topLabelComponent: item.warehouse === maxValueItem.warehouse 
-      ? () => <Tooltip warehouse={item.warehouse} quantity={item.quantity} />
-      : undefined
+    fullLabel: item.warehouse, // Full warehouse name for tooltip
+    colorStart: '#EDA071', // Same as StockReportChart
+    colorEnd: '#F5F5F7', // Same as StockReportChart
   }));
 
+  // Debug: Log the number of bars
+  console.log('StockByWarehouseChart - Number of bars:', chartData.length);
+
+  const translateY = entry.interpolate({ inputRange: [0, 1], outputRange: [14, 0] });
+  const opacity = entry;
+
   if (loading) {
-    return (
-      <View style={styles.card}>
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={COLORS.primary} />
-          <Text style={styles.loadingText}>Loading warehouse data...</Text>
+  return (
+      <View style={styles.wrapper}>
+        <View style={styles.pageHeader}>
+          <View>
+            <Text style={styles.pageTitle}>Stock by Warehouse</Text>
+            <Text style={styles.pageSubtitle}>Overview of stock levels across warehouses</Text>
+          </View>
+          <TimeframePicker timeframe={timeframe} onTimeframeChange={setTimeframe} />
         </View>
-      </View>
+      <View style={styles.card}>
+          <View style={styles.chartContainer}>
+            <BarChart 
+              data={[]} 
+              height={220}
+              onBarPress={(i, item) => console.log('Bar pressed:', i, item)} 
+            />
+          </View>
+        </View>
+          </View>
     );
   }
-
+          
   if (error) {
     return (
-      <View style={styles.card}>
-        <View style={styles.errorContainer}>
-          <Text style={styles.errorText}>{error}</Text>
-          <TouchableOpacity style={styles.retryButton} onPress={fetchStockByWarehouseData}>
-            <Text style={styles.retryButtonText}>Retry</Text>
-          </TouchableOpacity>
+      <View style={styles.wrapper}>
+        <View style={styles.pageHeader}>
+          <View>
+            <Text style={styles.pageTitle}>Stock by Warehouse</Text>
+            <Text style={styles.pageSubtitle}>Overview of stock levels across warehouses</Text>
+          </View>
+          <TimeframePicker timeframe={timeframe} onTimeframeChange={setTimeframe} />
         </View>
+      <View style={styles.card}>
+          <View style={styles.chartContainer}>
+            <BarChart 
+              data={[]} 
+              height={220}
+              onBarPress={(i, item) => console.log('Bar pressed:', i, item)} 
+            />
+          </View>
+            </View>
       </View>
     );
   }
 
   if (stockData.length === 0) {
     return (
-      <View style={styles.card}>
-        <View style={styles.emptyContainer}>
-          <Text style={styles.emptyText}>No warehouse stock data available</Text>
+      <View style={styles.wrapper}>
+        <View style={styles.pageHeader}>
+          <View>
+            <Text style={styles.pageTitle}>Stock by Warehouse</Text>
+            <Text style={styles.pageSubtitle}>Overview of stock levels across warehouses</Text>
+          </View>
+          <TimeframePicker timeframe={timeframe} onTimeframeChange={setTimeframe} />
         </View>
+      <View style={styles.card}>
+          <View style={styles.chartContainer}>
+            <BarChart 
+              data={[]} 
+              height={220}
+              onBarPress={(i, item) => console.log('Bar pressed:', i, item)} 
+            />
+          </View>
+            </View>
       </View>
     );
   }
 
   return (
-    <View style={styles.card}>
-      <View style={styles.header}>
-        <Text style={styles.title}>{title}</Text>
-        <TimeframePicker />
-      </View>
-      <View style={styles.chartContainer}>
-        <BarChart
-          data={chartData}
-          barWidth={35}
-          spacing={20}
-          roundedTop
-          hideRules
-          xAxisThickness={0}
-          yAxisThickness={0}
-          yAxisTextStyle={styles.axisLabel}
-          xAxisLabelTextStyle={styles.axisLabel}
-          noOfSections={4}
-          maxValue={Math.max(...stockData.map(item => item.quantity)) * 1.2 || 100}
-          isAnimated
-          animationDuration={800}
-          showGradient
-          gradientColor={COLORS.gradient.primary[1]}
-          frontColor={COLORS.gradient.primary[0]}
+    <View style={styles.wrapper}>
+      {/* Page title + timeframe (OUTSIDE the white card as requested) */}
+      <View style={styles.pageHeader}>
+        <View>
+          <Text style={styles.pageTitle}>{title}</Text>
+          <Text style={styles.pageSubtitle}>Overview of stock levels across warehouses</Text>
+        </View>
+
+        <TimeframePicker 
+          timeframe={timeframe}
+          onTimeframeChange={setTimeframe}
         />
       </View>
-      <View style={styles.summaryContainer}>
-        <View style={styles.summaryDot} />
-        <Text style={styles.summaryText}>
-          <Text style={styles.summaryValue}>Total Stock: {totalStock.toLocaleString()}</Text> units across {stockData.length} warehouses.
-        </Text>
+
+      {/* Card containing chart and footer */}
+      <Animated.View style={[styles.card, { transform: [{ translateY }], opacity }]}>
+        <View style={styles.chartContainer}>
+        <BarChart 
+          data={chartData} 
+          height={220} 
+          onBarPress={(i, item) => console.log('bar', i, item)} 
+        />
       </View>
-    </View>
+
+        {/* Footer: left description; right total items with value */}
+        <View style={styles.footerContainer}>
+          <View style={styles.footerLeft}>
+            <Text style={styles.summaryText}>
+              {stockData.length > 0 
+                ? `Most warehouses have healthy stock levels. ${stockData.length} warehouses tracked.`
+                : 'No warehouse data available.'
+              }
+            </Text>
+          </View>
+
+          <View style={styles.footerRight}>
+            <View style={styles.totalItemsContainer}>
+              <View style={[styles.legendDot, { backgroundColor: '#FF8A65' }]} />
+          <Text style={styles.legendText}>Total items</Text>
+        </View>
+            <Text style={styles.totalValue}>{Math.round(totalStock).toLocaleString()}</Text>
+        </View>
+      </View>
+      </Animated.View>
+      </View>
   );
 };
 
 const styles = StyleSheet.create({
-  card: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    paddingVertical: 20,
-    paddingHorizontal: 15,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 10,
-    elevation: 5,
-    marginVertical: SPACING.md,
+  wrapper: {
+    paddingHorizontal: 0, // Full width
+    paddingTop: 10,
   },
-  header: {
+  pageHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 30,
-    paddingHorizontal: 10,
+    alignItems: 'flex-start',
+    marginBottom: 10,
+    paddingHorizontal: 16, // Add padding back to header
   },
-  title: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: '#2C2C2C',
+  pageTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#222',
   },
-  pickerContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    paddingHorizontal: 15,
-    paddingVertical: 10,
+  pageSubtitle: {
+    fontSize: 12,
+    color: '#7a7a7a',
+    marginTop: 4,
+  },
+  timeframeButton: {
+    backgroundColor: '#f2f2f4',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
     borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#F0F0F0',
+    alignSelf: 'flex-start',
   },
-  pickerText: {
-    fontSize: 14,
+  timeframeText: {
     color: '#333',
-    marginRight: 8,
-    fontWeight: '500',
+    fontWeight: '600',
+    fontSize: 12,
+  },
+  card: {
+    backgroundColor: '#f8f9fa',
+    borderRadius: 14,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: '#e9ecef',
+    overflow: 'hidden',
   },
   chartContainer: {
-    height: 250,
-    paddingLeft: 10,
+    marginBottom: 16,
   },
-  axisLabel: {
-    color: '#A0A0A0',
-    fontSize: 12,
+  footerContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginTop: 5,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#e9ecef',
   },
-  tooltipContainer: {
-    backgroundColor: '#3D3D3D',
-    borderRadius: 6,
-    paddingVertical: 6,
-    paddingHorizontal: 10,
-    alignItems: 'center',
-    marginBottom: 4,
+  footerLeft: {
+    flex: 1,
+    paddingRight: 10,
+  },
+  footerRight: {
     minWidth: 100,
+    alignItems: 'flex-end',
+    justifyContent: 'center',
   },
-  tooltipTitle: {
-    color: '#FFFFFF',
-    fontSize: 12,
-    fontWeight: 'bold',
-  },
-  tooltipValue: {
-    color: '#E0E0E0',
-    fontSize: 11,
-  },
-  summaryContainer: {
+  totalItemsContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 25,
-    paddingHorizontal: 10,
+    marginBottom: 1,
   },
-  summaryDot: {
-    width: 12,
-    height: 12,
+  legendDot: {
+    width: 5,
+    height: 5,
     borderRadius: 6,
-    backgroundColor: COLORS.primary,
-    marginRight: 12,
+    marginRight: 8,
+  },
+  legendText: {
+    fontSize: 12,
+    color: '#555',
+    fontWeight: '400',
+    marginLeft: 6,
+  },
+  totalValue: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#222',
+    textAlign: 'left',
   },
   summaryText: {
-    fontSize: 14,
     color: '#666',
+    fontSize: 13,
     flex: 1,
-    lineHeight: 20,
-  },
-  summaryValue: {
-    fontWeight: 'bold',
-    color: '#333',
+    textAlign: 'left',
   },
   loadingContainer: {
     height: 250,
@@ -328,6 +443,25 @@ const styles = StyleSheet.create({
     color: COLORS.text.secondary,
     textAlign: 'center',
   },
+  tooltipContainer: {
+    backgroundColor: '#3D3D3D',
+    borderRadius: 6,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    alignItems: 'center',
+    marginBottom: 4,
+    minWidth: 100,
+  },
+  tooltipTitle: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  tooltipValue: {
+    color: '#E0E0E0',
+    fontSize: 11,
+  },
 });
 
 export default StockByWarehouseChart;
+

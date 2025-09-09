@@ -12,7 +12,9 @@ import {
   Modal,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
-import { LineChart, BarChart, PieChart } from 'react-native-gifted-charts';
+import { PieChart } from 'react-native-gifted-charts';
+import AreaLineChart, { Point } from '../../../ui/AreaChart';
+import BarChart, { BarChartData } from '../../../ui/BarChart';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { COLORS } from '../../../../constants/colors';
 import { SPACING, BORDER_RADIUS, SHADOWS } from '../../../../constants/spacing';
@@ -88,7 +90,7 @@ const StatsCard: React.FC<StatsCardProps> = ({ title, value, subtitle, icon, pro
               <View style={styles.statsCardHeader}>
                 {/* Theme Color Icon Gradient */}
                 <LinearGradient
-                  colors={['#FB7504', '#C2252C', '#FFA500', '#000000']}
+                  colors={['#FB7504', '#C2252C', '#FFA500', '#1A1A1A']}
                   style={styles.statsIconContainer}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 1 }}
@@ -283,27 +285,26 @@ const AnalyticsCharts: React.FC<AnalyticsChartsProps> = ({ navigation }) => {
     };
   }, [containerLayout, transferFilter]);
 
-  const generateStockData = (period: '7d' | '30d' | '90d') => {
+  const generateStockData = (period: '7d' | '30d' | '90d'): Point[] => {
     const days = period === '7d' ? 7 : period === '30d' ? 30 : 90;
     const dates = generateDates(days);
     
     return dates.map((date, index) => ({
       value: Math.floor(Math.random() * 200) + 100,
-      dataPointText: `${Math.floor(Math.random() * 200) + 100}`,
-      label: '',
-      onPress: (item: any) => showTooltipData(item, 'Stock', date),
+      label: index % 5 === 0 ? date : '', // Show label every 5th point
     }));
   };
 
-  const generateTransferData = (period: '7d' | '30d' | '90d') => {
+  const generateTransferData = (period: '7d' | '30d' | '90d'): BarChartData[] => {
     const days = period === '7d' ? 7 : period === '30d' ? 30 : 90;
     const dates = generateDates(days);
     
     return dates.map((date, index) => ({
       value: Math.floor(Math.random() * 30) + 5,
-      label: '',
-      frontColor: getGradientColor(index),
-      onPress: (item: any) => showTooltipData(item, 'Transfer', date),
+      label: date,
+      fullLabel: date, // Full date for tooltip
+      colorStart: '#EDA071', // Same as StockReportChart
+      colorEnd: '#F5F5F7', // Same as StockReportChart
     }));
   };
 
@@ -452,12 +453,12 @@ const AnalyticsCharts: React.FC<AnalyticsChartsProps> = ({ navigation }) => {
           />
         </View>
 
-        {/* Stock Trend Chart */}
-        <View style={styles.chartContainer}>
-          <View style={styles.chartHeader}>
-            <View style={styles.chartTitleContainer}>
-              <Icon name="chart-line" size={20} color="#667eea" />
-              <Text style={styles.chartTitle}>Stock Trend</Text>
+        {/* Stock Trend Chart - StockReportChart Style */}
+        <View style={styles.stockReportWrapper}>
+          <View style={styles.pageHeader}>
+            <View>
+              <Text style={styles.pageTitle}>Stock Trend</Text>
+              <Text style={styles.pageSubtitle}>Overview of stock level trends over time</Text>
             </View>
             <View style={styles.filterContainerRight}>
               {periods.map((period) => (
@@ -482,149 +483,65 @@ const AnalyticsCharts: React.FC<AnalyticsChartsProps> = ({ navigation }) => {
             </View>
           </View>
           
-          <View style={styles.chartWrapper}>
-            {containerLayout && (
-              <LineChart
-                data={generateStockData(stockFilter)}
-                width={getStockChartConfig.width}
-                height={getStockChartConfig.height}
-                color="#667eea"
-                thickness={3}
-                startFillColor="rgba(102, 126, 234, 0.6)"
-                endFillColor="rgba(102, 126, 234, 0.1)"
-                startOpacity={1}
-                endOpacity={0.3}
-                initialSpacing={0}
-                endSpacing={0}
-                spacing={getStockChartConfig.spacing}
-                backgroundColor="transparent"
-                rulesType="solid"
-                rulesColor="transparent"
-                yAxisColor="transparent"
-                xAxisColor="transparent"
-                yAxisTextStyle={{ color: '#9CA3AF', fontSize: getStockChartConfig.fontSize }}
-                xAxisLabelTextStyle={{ 
-                  color: '#6B7280', 
-                  fontSize: getStockChartConfig.fontSize,
-                  textAlign: 'center' 
-                }}
-                curved
-                showVerticalLines={false}
-                dataPointsColor="#667eea"
-                dataPointsRadius={4}
-                dataPointsShape="circle"
-                hideDataPoints={false}
-                hideRules={true}
-                hideYAxisText={true}
-                isAnimated
-                animationDuration={1200}
-                disableScroll={!getStockChartConfig.enableScroll}
-                pointerConfig={{
-                  pointerStripHeight: getStockChartConfig.height - 40,
-                  pointerStripColor: '#667eea',
-                  pointerStripWidth: 2,
-                  pointerColor: '#667eea',
-                  radius: 6,
-                  pointerLabelWidth: 80,
-                  pointerLabelHeight: 40,
-                  activatePointersOnLongPress: false,
-                  autoAdjustPointerLabelPosition: true,
-                  pointerLabelComponent: (items: any) => {
-                    return (
-                      <View style={styles.inlineTooltip}>
-                        <Text style={styles.inlineTooltipValue}>{items[0].value}</Text>
-                        <Text style={styles.inlineTooltipLabel}>{items[0].label}</Text>
-                      </View>
-                    );
-                  },
-                }}
-              />
-            )}
-          </View>
-          
-          {/* Total Data Text */}
-          <View style={styles.totalDataContainer}>
-            <Text style={styles.totalDataText}>
-              Total Stock: {generateStockData(stockFilter).reduce((sum, item) => sum + item.value, 0).toLocaleString()}
-            </Text>
+          <View style={styles.stockReportCard}>
+            <View style={styles.stockReportChartContainer}>
+              {containerLayout && (
+                <AreaLineChart
+                  data={generateStockData(stockFilter)}
+                  height={220}
+                  pointSpacing={34}
+                  minPointsToSample={10}
+                  maxPointsNoScroll={27}
+                  gradientFrom={'#FF8A65'}
+                  gradientTo={'rgba(255,138,101,0.06)'}
+                  strokeColor={'#E7600E'}
+                  onPointPress={(i, pt) => console.log('Stock trend point', i, pt)}
+                />
+              )}
+            </View>
           </View>
         </View>
 
-        {/* Transfer Activity Chart */}
-        <View style={styles.chartContainer}>
-          <View style={styles.chartHeader}>
-            <View style={styles.chartTitleContainer}>
-              <Icon name="chart-bar" size={20} color="#f093fb" />
-              <Text style={styles.chartTitle}>Transfer Activity</Text>
+        {/* Transfer Activity Chart - StockReportChart Style */}
+        <View style={styles.stockReportWrapper}>
+          <View style={styles.pageHeader}>
+            <View>
+              <Text style={styles.pageTitle}>Transfer Activity</Text>
+              <Text style={styles.pageSubtitle}>Overview of transfer activity over time</Text>
             </View>
-            <View style={styles.filterContainerRight}>
-              {periods.map((period) => (
-                <TouchableOpacity
-                  key={period.key}
-                  style={[
-                    styles.filterChipCompact,
-                    transferFilter === period.key && styles.activeFilterChipCompact,
-                  ]}
-                  onPress={() => setTransferFilter(period.key)}
-                >
-                  <Text
-                    style={[
-                      styles.filterChipTextCompact,
-                      transferFilter === period.key && styles.activeFilterChipTextCompact,
-                    ]}
-                  >
-                    {period.label}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
+            <TouchableOpacity style={styles.timeframeButton} activeOpacity={0.85}>
+              <Text style={styles.timeframeText}>
+                {transferFilter === '7d' ? '7 days' : transferFilter === '30d' ? '30 days' : '90 days'}
+              </Text>
+            </TouchableOpacity>
           </View>
           
-          <View style={styles.chartWrapper}>
-            {containerLayout && (
-              <BarChart
-                data={generateTransferData(transferFilter)}
-                width={getTransferChartConfig.width}
-                height={getTransferChartConfig.height}
-                barWidth={getTransferChartConfig.barWidth}
-                spacing={getTransferChartConfig.spacing}
-                hideRules={true}
-                xAxisColor="transparent"
-                yAxisColor="transparent"
-                yAxisTextStyle={{ color: '#9CA3AF', fontSize: getTransferChartConfig.fontSize }}
-                xAxisLabelTextStyle={{ 
-                  color: '#6B7280', 
-                  fontSize: getTransferChartConfig.fontSize,
-                  textAlign: 'center' 
-                }}
-                noOfSections={4}
-                maxValue={35}
-                backgroundColor="transparent"
-                showGradient
-                gradientColor="#f093fb"
-                barBorderRadius={6}
-                showVerticalLines={false}
-                initialSpacing={0}
-                endSpacing={0}
-                isAnimated
-                animationDuration={1200}
-                hideYAxisText={true}
-                disableScroll={!getTransferChartConfig.enableScroll}
-                renderTooltip={(item: any) => (
-                  <View style={styles.inlineTooltip}>
-                    <Text style={styles.inlineTooltipValue}>{item.value}</Text>
-                    <Text style={styles.inlineTooltipLabel}>{item.label}</Text>
-                  </View>
-                )}
-              />
-            )}
+          <View style={styles.stockReportCard}>
+            <View style={styles.stockReportChartContainer}>
+            <BarChart 
+              data={generateTransferData(transferFilter)} 
+              height={220}
+              onBarPress={(i, item) => console.log('Transfer bar pressed:', i, item)}
+            />
           </View>
           
-          {/* Total Data Text */}
-          <View style={styles.totalDataContainer}>
-            <Text style={styles.totalDataText}>
-              Total Transfers: {generateTransferData(transferFilter).reduce((sum, item) => sum + item.value, 0).toLocaleString()}
-            </Text>
+            <View style={styles.stockReportFooterContainer}>
+              <View style={styles.stockReportFooterLeft}>
+                <Text style={styles.summaryText}>
+                  Most warehouses have healthy transfer activity. Monitor peak transfer periods.
+                </Text>
+            </View>
+              
+              <View style={styles.stockReportFooterRight}>
+                <View style={styles.stockReportTotalItemsContainer}>
+                  <View style={[styles.stockReportLegendDot, { backgroundColor: '#FF8A65' }]} />
+                  <Text style={styles.stockReportLegendText}>Total transfers</Text>
+                </View>
+                <Text style={styles.stockReportTotalValue}>
+                {generateTransferData(transferFilter).reduce((sum, item) => sum + item.value, 0)}
+              </Text>
+            </View>
+          </View>
           </View>
         </View>
 
@@ -979,6 +896,163 @@ const styles = StyleSheet.create({
     color: COLORS.text.secondary,
     marginTop: SPACING.xs,
     textAlign: 'center',
+  },
+  // Professional Chart Styles
+  professionalChartCard: {
+    backgroundColor: '#fff',
+    borderRadius: 14,
+    padding: 16,
+    margin: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.06,
+    shadowRadius: 30,
+    elevation: 8,
+    overflow: 'hidden',
+  },
+  professionalChartHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+  },
+  professionalChartTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#222',
+  },
+  professionalChartSubtitle: {
+    fontSize: 12,
+    color: '#7a7a7a',
+    marginTop: 4,
+  },
+  timeframeButton: {
+    backgroundColor: '#f2f2f4',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 10,
+  },
+  timeframeText: {
+    color: '#333',
+    fontWeight: '600',
+    fontSize: 12,
+  },
+  professionalChartFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 14,
+  },
+  legendDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 6,
+    marginRight: 8,
+  },
+  legendText: {
+    fontSize: 13,
+    color: '#555',
+    fontWeight: '600',
+  },
+  totalLabel: {
+    fontSize: 12,
+    color: '#888',
+  },
+  totalValue: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#222',
+  },
+  summaryRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginTop: 14,
+  },
+  bullet: {
+    width: 8,
+    height: 8,
+    backgroundColor: COLORS.primary,
+    borderRadius: 6,
+    marginRight: 8,
+    marginTop: 6,
+  },
+  summaryText: {
+    color: '#666',
+    fontSize: 13,
+    flex: 1,
+  },
+  // StockReportChart Style
+  stockReportWrapper: {
+    paddingHorizontal: 0, // Full width
+    paddingTop: 10,
+  },
+  pageHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 10,
+    paddingHorizontal: 16, // Add padding back to header
+  },
+  pageTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#222',
+  },
+  pageSubtitle: {
+    fontSize: 12,
+    color: '#7a7a7a',
+    marginTop: 4,
+  },
+  stockReportCard: {
+    backgroundColor: '#f8f9fa',
+    borderRadius: 14,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: '#e9ecef',
+    overflow: 'hidden',
+  },
+  stockReportChartContainer: {
+    marginBottom: 16,
+  },
+  stockReportFooterContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginTop: 5,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#e9ecef',
+  },
+  stockReportFooterLeft: {
+    flex: 1,
+    paddingRight: 10,
+  },
+  stockReportFooterRight: {
+    minWidth: 100,
+    alignItems: 'flex-end',
+    justifyContent: 'center',
+  },
+  stockReportTotalItemsContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 1,
+  },
+  stockReportLegendDot: {
+    width: 5,
+    height: 5,
+    borderRadius: 6,
+    marginRight: 8,
+  },
+  stockReportLegendText: {
+    fontSize: 12,
+    color: '#555',
+    fontWeight: '400',
+    marginLeft: 6,
+  },
+  stockReportTotalValue: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#222',
+    textAlign: 'left',
   },
 });
 

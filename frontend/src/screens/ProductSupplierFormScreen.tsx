@@ -225,7 +225,7 @@ const ProductSupplierFormScreen: React.FC<ProductSupplierFormScreenProps> = ({ n
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
       <LinearGradient 
-        colors={COLORS.gradient.primary} 
+        colors={COLORS.gradient.primary || ['#FB7504', '#C2252C']} 
         style={styles.headerGradient}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}

@@ -18,15 +18,43 @@ const MenuItem: React.FC<{
   icon: string;
   onPress: () => void;
 }> = ({ id, label, icon, onPress }) => {
+  const [isHovered, setIsHovered] = useState(false);
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+  
+  const handleHoverIn = () => {
+    setIsHovered(true);
+    Animated.timing(scaleAnim, {
+      toValue: 1.03,
+      duration: 200,
+      useNativeDriver: true,
+    }).start();
+  };
+  
+  const handleHoverOut = () => {
+    setIsHovered(false);
+    Animated.timing(scaleAnim, {
+      toValue: 1,
+      duration: 200,
+      useNativeDriver: true,
+    }).start();
+  };
+  
   return (
-    <TouchableOpacity
-      style={styles.menuItem}
-      onPress={onPress}
-      activeOpacity={0.7}
+    <Animated.View
+      style={{
+        transform: [{ scale: scaleAnim }],
+      }}
     >
-      <Icon name={icon as any} size={20} color="#FFFFFF" />
-      <Text style={styles.menuText}>{label}</Text>
-    </TouchableOpacity>
+      <TouchableOpacity
+        style={[styles.menuItem, isHovered && styles.menuItemHovered]}
+        onPress={onPress}
+        onPressIn={handleHoverIn}
+        onPressOut={handleHoverOut}
+      >
+        <Icon name={icon as any} size={20} color="#FFFFFF" />
+        <Text style={styles.menuText}>{label}</Text>
+      </TouchableOpacity>
+    </Animated.View>
   );
 };
 
@@ -66,46 +94,19 @@ const Sidebar: React.FC<SidebarProps> = ({ visible, onClose, onNavigate }) => {
         })
       ]).start();
     }
-
-    return () => {
-      // Cleanup animations when component unmounts
-      slideAnim.stopAnimation();
-      fadeAnim.stopAnimation();
-    };
-
-    return () => {
-      // Cleanup animations when component unmounts
-      slideAnim.stopAnimation();
-      fadeAnim.stopAnimation();
-    };
   }, [visible, slideAnim, fadeAnim]);
 
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: 'grid', screen: 'Dashboard' },
     { id: 'products', label: 'Products', icon: 'box', screen: 'AllProducts' },
     { id: 'warehouse', label: 'Warehouse', icon: 'home', screen: 'Warehouse' },
-    { id: 'suppliers', label: 'Suppliers', icon: 'users', screen: 'Suppliers' },
-    { id: 'suppliers', label: 'Suppliers', icon: 'users', screen: 'Suppliers' },
+    { id: 'sales', label: 'Sales', icon: 'trending-up', screen: 'Sales' },
     { id: 'purchaseorders', label: 'Purchase Orders', icon: 'shopping-cart', screen: 'PurchaseOrders' },
-    { id: 'reports', label: 'Reports', icon: 'bar-chart-2', screen: 'InventoryReports' },
-    { id: 'reports', label: 'Reports', icon: 'bar-chart-2', screen: 'InventoryReports' },
+    { id: 'report', label: 'Report', icon: 'bar-chart-2', screen: 'Report' },
   ];
 
   const handleMenuItemPress = (screen: string) => {
-    console.log('🔧 [DEBUG] Sidebar: Attempting to navigate to screen:', screen);
-    try {
-      onNavigate(screen);
-      console.log('✅ [DEBUG] Sidebar: Navigation successful to:', screen);
-    } catch (error) {
-      console.error('❌ [DEBUG] Sidebar: Navigation failed to:', screen, error);
-    }
-    console.log('🔧 [DEBUG] Sidebar: Attempting to navigate to screen:', screen);
-    try {
-      onNavigate(screen);
-      console.log('✅ [DEBUG] Sidebar: Navigation successful to:', screen);
-    } catch (error) {
-      console.error('❌ [DEBUG] Sidebar: Navigation failed to:', screen, error);
-    }
+    onNavigate(screen);
     onClose();
   };
 

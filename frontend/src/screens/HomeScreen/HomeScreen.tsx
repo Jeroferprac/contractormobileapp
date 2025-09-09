@@ -26,14 +26,12 @@ import {
   ProfessionalCard,
   ProjectCard,
   PriceListCard,
-  PriceListCard,
 } from '../../components/home';
 
 // Layout Components
 import { SectionHeader } from '../../components/layout';
 
 // Mock Data
-import { mockServices, mockProjects, mockProfessionals, mockDiscounts, mockFilters, mockBeforeAfterProject, mockReviews, mockPriceLists } from '../../data/mockData';
 import { mockServices, mockProjects, mockProfessionals, mockDiscounts, mockFilters, mockBeforeAfterProject, mockReviews, mockPriceLists } from '../../data/mockData';
 
 interface HomeScreenProps {
@@ -96,6 +94,10 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
     setIsLoggingOut(false);
   };
 
+  const handlePriceListPress = (priceList: any) => {
+    console.log('Price list pressed:', priceList.name);
+  };
+
   // Filter professionals by type with fallback
   const mockProfessionalsSafe = mockProfessionals || [];
   const contractors = mockProfessionalsSafe.filter(p => p.type === 'contractor');
@@ -142,14 +144,6 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
             filters={activeFilters}
             selectedFilters={selectedFilters}
             onFilterChange={handleFilterChange}
-
-            onRemoveFilter={handleRemoveFilter}
-            style={styles.filterChips}
-
-
-            onRemoveFilter={handleRemoveFilter}
-            style={styles.filterChips}
-
           />
         )}
 
@@ -380,25 +374,6 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
             ))}
           </View>
         </View>
-
-        {/* Price Lists Section */}
-        <View style={styles.section}>
-          <SectionHeader
-            title="Price Lists"
-            subtitle="Manage and view your pricing strategies for different customer segments."
-            onViewAllPress={() => navigation.navigate('PriceLists')}
-          />
-          <View style={styles.horizontalScrollContent}>
-            {mockPriceLists.map((priceList) => (
-              <PriceListCard
-                key={priceList.id}
-                priceList={priceList}
-                onPress={() => handlePriceListPress(priceList)}
-                style={styles.priceListCard}
-              />
-            ))}
-          </View>
-        </View>
       </ScrollView>
 
       {/* Logout Modal */}
@@ -441,9 +416,6 @@ const styles = StyleSheet.create({
     marginRight: SPACING.md,
   },
   professionalCard: {
-    marginRight: SPACING.md,
-  },
-  priceListCard: {
     marginRight: SPACING.md,
   },
   priceListCard: {

@@ -86,6 +86,7 @@ const styles = StyleSheet.create({
   },
   checked: {
     backgroundColor: '#007AFF',
+    
     borderColor: '#007AFF',
   },
   optionLabel: { fontSize: 16 },

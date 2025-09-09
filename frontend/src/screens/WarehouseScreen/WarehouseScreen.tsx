@@ -241,7 +241,69 @@ const WarehouseDashboard: React.FC<WarehouseScreenProps> = ({ navigation }) => {
     }
   }, [navigation]);
 
-  // Loading state with professional skeleton - keep header functional
+  // Professional Loading Skeleton Components
+
+
+  const TransferActivityChartSkeleton: React.FC = () => (
+    <View style={styles.skeletonSection}>
+      <LoadingSkeleton width="100%" height={200} borderRadius={BORDER_RADIUS.lg} />
+    </View>
+  );
+
+  const StockTrendChartSkeleton: React.FC = () => (
+    <View style={styles.skeletonSection}>
+      <LoadingSkeleton width="100%" height={200} borderRadius={BORDER_RADIUS.lg} />
+    </View>
+  );
+
+  const StockByWarehouseChartSkeleton: React.FC = () => (
+    <View style={styles.skeletonSection}>
+      <LoadingSkeleton width="100%" height={200} borderRadius={BORDER_RADIUS.lg} />
+    </View>
+  );
+
+  const RecentTransfersSkeleton: React.FC = () => (
+    <View style={styles.skeletonSection}>
+      <View style={styles.transfersSkeletonList}>
+        {[...Array(3)].map((_, i) => (
+          <View key={`transfer-skeleton-${i}`} style={styles.transferSkeletonItem}>
+            <LoadingSkeleton width={40} height={40} borderRadius={20} />
+            <View style={styles.transferSkeletonContent}>
+              <LoadingSkeleton width="70%" height={16} />
+              <LoadingSkeleton width="50%" height={12} style={{ marginTop: SPACING.xs }} />
+            </View>
+            <LoadingSkeleton width={60} height={16} />
+          </View>
+        ))}
+      </View>
+    </View>
+  );
+
+  const LowStockInventorySkeleton: React.FC = () => (
+    <View style={styles.skeletonSection}>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.inventorySkeletonScroll}>
+        {[...Array(3)].map((_, i) => (
+          <View key={`inventory-skeleton-${i}`} style={styles.inventorySkeletonCard}>
+            <LoadingSkeleton width={120} height={100} borderRadius={BORDER_RADIUS.md} />
+          </View>
+        ))}
+      </ScrollView>
+    </View>
+  );
+
+  const WarehousesSkeleton: React.FC = () => (
+    <View style={styles.skeletonSection}>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.warehousesSkeletonScroll}>
+        {[...Array(3)].map((_, i) => (
+          <View key={`warehouse-skeleton-${i}`} style={styles.warehouseSkeletonCard}>
+            <LoadingSkeleton width={280} height={200} borderRadius={BORDER_RADIUS.lg} />
+          </View>
+        ))}
+      </ScrollView>
+    </View>
+  );
+
+  // Professional Loading State - Keep header functional
   if (loading && !refreshing) {
     return (
       <SafeAreaView style={styles.container}>
@@ -278,98 +340,15 @@ const WarehouseDashboard: React.FC<WarehouseScreenProps> = ({ navigation }) => {
           contentContainerStyle={styles.scrollContent}
         >
           <View style={styles.content}>
-            {/* Header Card Skeleton */}
-            <View style={styles.skeletonSection}>
-              <LoadingSkeleton width="100%" height={120} borderRadius={BORDER_RADIUS.lg} />
-            </View>
-            
-            {/* Stats Row Skeleton */}
-            <View style={styles.skeletonSection}>
-              <View style={styles.statsSkeletonContainer}>
-                {[...Array(4)].map((_, i) => (
-                  <View key={i} style={styles.statsSkeletonCard}>
-                    <LoadingSkeleton width="100%" height={100} borderRadius={BORDER_RADIUS.md} />
-                  </View>
-                ))}
-              </View>
-            </View>
-            
-            {/* Transfer Activity Chart Skeleton */}
-            <View style={styles.skeletonSection}>
-              <View style={styles.chartSkeletonHeader}>
-                <LoadingSkeleton width={150} height={20} borderRadius={BORDER_RADIUS.sm} />
-                <LoadingSkeleton width={80} height={32} borderRadius={BORDER_RADIUS.md} />
-              </View>
-              <LoadingSkeleton width="100%" height={200} borderRadius={BORDER_RADIUS.lg} />
-            </View>
-            
-            {/* Stock Trend Chart Skeleton */}
-            <View style={styles.skeletonSection}>
-              <View style={styles.chartSkeletonHeader}>
-                <LoadingSkeleton width={120} height={20} borderRadius={BORDER_RADIUS.sm} />
-                <LoadingSkeleton width={60} height={32} borderRadius={BORDER_RADIUS.md} />
-              </View>
-              <LoadingSkeleton width="100%" height={200} borderRadius={BORDER_RADIUS.lg} />
-            </View>
-            
-            {/* Stock by Warehouse Chart Skeleton */}
-            <View style={styles.skeletonSection}>
-              <View style={styles.chartSkeletonHeader}>
-                <LoadingSkeleton width={140} height={20} borderRadius={BORDER_RADIUS.sm} />
-                <LoadingSkeleton width={70} height={32} borderRadius={BORDER_RADIUS.md} />
-              </View>
-              <LoadingSkeleton width="100%" height={200} borderRadius={BORDER_RADIUS.lg} />
-            </View>
-            
-            {/* Recent Transfers Skeleton */}
-            <View style={styles.skeletonSection}>
-              <View style={styles.sectionSkeletonHeader}>
-                <LoadingSkeleton width={120} height={20} borderRadius={BORDER_RADIUS.sm} />
-                <LoadingSkeleton width={60} height={16} borderRadius={BORDER_RADIUS.sm} />
-              </View>
-              <View style={styles.transfersSkeletonList}>
-                {[...Array(3)].map((_, i) => (
-                  <View key={i} style={styles.transferSkeletonItem}>
-                    <LoadingSkeleton width={40} height={40} borderRadius={20} />
-                    <View style={styles.transferSkeletonContent}>
-                      <LoadingSkeleton width="70%" height={16} />
-                      <LoadingSkeleton width="50%" height={12} style={{ marginTop: SPACING.xs }} />
-                    </View>
-                    <LoadingSkeleton width={60} height={16} />
-                  </View>
-                ))}
-              </View>
-            </View>
-            
-            {/* Low Stock Inventory Skeleton */}
-            <View style={styles.skeletonSection}>
-              <View style={styles.sectionSkeletonHeader}>
-                <LoadingSkeleton width={140} height={20} borderRadius={BORDER_RADIUS.sm} />
-                <LoadingSkeleton width={60} height={16} borderRadius={BORDER_RADIUS.sm} />
-              </View>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.inventorySkeletonScroll}>
-                {[...Array(3)].map((_, i) => (
-                  <View key={i} style={styles.inventorySkeletonCard}>
-                    <LoadingSkeleton width={120} height={100} borderRadius={BORDER_RADIUS.md} />
-                  </View>
-                ))}
-              </ScrollView>
-            </View>
-            
-            {/* Warehouses Skeleton */}
-            <View style={styles.skeletonSection}>
-              <View style={styles.sectionSkeletonHeader}>
-                <LoadingSkeleton width={100} height={20} borderRadius={BORDER_RADIUS.sm} />
-                <LoadingSkeleton width={60} height={16} borderRadius={BORDER_RADIUS.sm} />
-              </View>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.warehousesSkeletonScroll}>
-                {[...Array(3)].map((_, i) => (
-                  <View key={i} style={styles.warehouseSkeletonCard}>
-                    <LoadingSkeleton width={280} height={200} borderRadius={BORDER_RADIUS.lg} />
-                  </View>
-                ))}
-              </ScrollView>
-            </View>
+            {/* Keep HeaderCard functional during loading */}
+            <HeaderCard username="Alex" />
+            <StatsRow loading={loading} />
+            <TransferActivityChartSkeleton />
+            <StockTrendChartSkeleton />
+            <StockByWarehouseChartSkeleton />
+            <RecentTransfersSkeleton />
+            <LowStockInventorySkeleton />
+            <WarehousesSkeleton />
           </View>
         </ScrollView>
       </SafeAreaView>
@@ -449,22 +428,16 @@ const WarehouseDashboard: React.FC<WarehouseScreenProps> = ({ navigation }) => {
           <HeaderCard username="Alex" />
           
           {/* Stats Row */}
-          <StatsRow />
+          <StatsRow loading={loading} />
           
           {/* Transfer Activity Chart */}
           <TransferActivityChart />
           
           {/* Stock Trend Chart */}
-          <StockTrendChart 
-            title="Stock Trend"
-            timeRange="6m"
-          />
+          <StockTrendChart />
           
           {/* Stock by Warehouse Chart */}
-          <StockByWarehouseChart 
-            title="Stock by Warehouse"
-            data={processedWarehouseData}
-          />
+          <StockByWarehouseChart title="Stock by Warehouse" />
           
           {/* Recent Transfers */}
           <RecentTransfers 
@@ -684,18 +657,6 @@ const styles = StyleSheet.create({
   },
   statsSkeletonCard: {
     width: '48%',
-  },
-  chartSkeletonHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: SPACING.md,
-  },
-  sectionSkeletonHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: SPACING.md,
   },
   transfersSkeletonList: {
     gap: SPACING.sm,

@@ -1,26 +1,23 @@
 import React, { useState, useEffect } from 'react';
-import { TouchableOpacity, StyleSheet, Text, View, Animated } from "react-native";
-import FastImage from 'react-native-fast-image';
-import LinearGradient from 'react-native-linear-gradient';
-import MaterialCommunityIcons from "react-native-vector-icons/MaterialCommunityIcons";
-import { COLORS } from "../../constants/colors";
-import { SPACING, BORDER_RADIUS, SHADOWS } from "../../constants/spacing";
-import { TEXT_STYLES, TYPOGRAPHY } from "../../constants/typography";
-import LoadingSkeleton from '../../components/ui/LoadingSkeleton';
-
-// Using the Warehouse interface from types/inventory.ts
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Animated,
+  Image as RNImage,
+} from 'react-native';
+import { LinearGradient } from 'react-native-linear-gradient';
+import { Image } from 'react-native';
 import { Warehouse } from '../../types/inventory';
-import Feather from "react-native-vector-icons/Feather";
-import Ionicons from "react-native-vector-icons/Ionicons";
+import Icon from 'react-native-vector-icons/Feather';
+import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
+import LoadingSkeleton from '../../components/ui/LoadingSkeleton';
+import UnsplashImage from '../../components/ui/UnsplashImage';
 
-// Fallback images for different warehouse types
-const WAREHOUSE_IMAGES = [
-  'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=400&h=300&fit=crop',
-  'https://images.unsplash.com/photo-1553413077-190dd305871c?w=400&h=300&fit=crop',
-  'https://images.unsplash.com/photo-1566576912321-d58ddd7a6088?w=400&h=300&fit=crop',
-  'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=300&fit=crop',
-  'https://images.unsplash.com/photo-1587293852726-70cdb56c2866?w=400&h=300&fit=crop'
-];
+const CARD_WIDTH = 340;
+const CARD_HEIGHT = 220;
+const HEADER_HEIGHT = 110;
 
 interface WarehouseCardProps {
   warehouse: Warehouse;
@@ -32,188 +29,120 @@ const WarehouseCard: React.FC<WarehouseCardProps> = ({ warehouse, onPress, isLoa
   const [hasError, setHasError] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
-  const animatedScale = useState(new Animated.Value(1))[0];
-  const animatedShadowOpacity = useState(new Animated.Value(0.15))[0];
+  const scale = React.useRef(new Animated.Value(1)).current;
 
-  // Get warehouse image - use random Unsplash image based on warehouse ID
-  const getWarehouseImage = (warehouse: Warehouse) => {
-    // Use warehouse ID to consistently pick the same image
-    const imageIndex = parseInt(warehouse.id) % WAREHOUSE_IMAGES.length;
-    return WAREHOUSE_IMAGES[imageIndex];
-  };
+  // Unsplash image seeded by id for consistency
+  const imageUrl = `https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=1400&q=80&auto=format&fit=crop&ixlib=rb-4.0.3&seed=${encodeURIComponent(
+    warehouse.id
+  )}`;
 
-  const imageUri = getWarehouseImage(warehouse);
+  // Derive some display values (assumptions to match visual)
+  const rating = '4.9';
+  const ratingCount = '100';
+  const locationShort = warehouse.address ? warehouse.address.split(',')[0] : warehouse.address;
+  const category = warehouse.code || 'General';
   
   // Loading skeleton
   if (isLoading) {
     return (
-      <View style={styles.cardWrapper}>
-        <LoadingSkeleton height={200} width={280} borderRadius={BORDER_RADIUS.lg} />
+      <View style={styles.wrapper}>
+        <LoadingSkeleton height={CARD_HEIGHT} width={CARD_WIDTH} borderRadius={14} />
       </View>
     );
   }
   
-  // Handle hover effect
   const handlePressIn = () => {
-    setIsHovered(true);
-    Animated.parallel([
-      Animated.timing(animatedScale, {
-        toValue: 1.03,
-        duration: 150,
-        useNativeDriver: false,
-      }),
-      Animated.timing(animatedShadowOpacity, {
-        toValue: 0.4,
-        duration: 150,
-        useNativeDriver: true,
-      }),
-    ]).start();
+    Animated.timing(scale, { 
+      toValue: 0.98, 
+      duration: 150, 
+      useNativeDriver: true 
+    }).start();
   };
-
   const handlePressOut = () => {
-    setIsHovered(false);
-    Animated.parallel([
-      Animated.timing(animatedScale, {
-        toValue: 1,
-        duration: 150,
-        useNativeDriver: false,
-      }),
-      Animated.timing(animatedShadowOpacity, {
-        toValue: 0.15,
-        duration: 150,
-        useNativeDriver: true,
-      }),
-    ]).start();
+    Animated.timing(scale, { 
+      toValue: 1, 
+      duration: 150, 
+      useNativeDriver: true 
+    }).start();
   };
-
-  // Get first letter of warehouse name for logo
-  const logoLetter = warehouse?.name?.charAt(0).toUpperCase() || 'W';
 
   return (
     <TouchableOpacity
       onPress={onPress}
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
+      style={styles.wrapper}
       activeOpacity={0.9}
     >
-      <Animated.View
-        style={[
-          styles.cardWrapper,
-          {
-            transform: [{ scale: animatedScale }],
-            shadowOpacity: animatedShadowOpacity,
-            shadowColor: isHovered ? COLORS.primary : '#000',
-          },
-        ]}
-      >
-        <View style={styles.card}>
-          {/* Background Image */}
-          <FastImage
-            source={{ uri: imageUri }}
-            style={styles.backgroundImage}
-            onLoadEnd={() => setImageLoaded(true)}
+      <Animated.View style={[styles.card, { transform: [{ scale }] }]}>
+        {/* Header Image */}
+        <View style={styles.headerContainer}>
+          <UnsplashImage
+            uri={imageUrl}
+            style={styles.headerImage}
+            resizeMode="cover"
+            onLoad={() => setImageLoaded(true)}
             onError={() => setHasError(true)}
+            fallbackUri="https://images.unsplash.com/photo-1553413077-190dd305871c?w=400&h=300&fit=crop"
           />
-          
-          {/* Gradient Overlay */}
           <LinearGradient
-            colors={['rgba(0,0,0,0.7)', 'rgba(0,0,0,0.5)', 'rgba(0,0,0,0.8)']}
-            style={styles.gradientOverlay}
+            colors={["rgba(0,0,0,0.0)", "rgba(0,0,0,0.25)"]}
+            style={styles.headerGradient}
           />
-        
-        <View style={styles.cardContent}>
-          <View style={styles.topRow}>
-            <View style={styles.logoContainer}>
-              {/* Logo with Gradient */}
-              <LinearGradient
-                colors={[COLORS.primary, COLORS.accent]}
-                style={styles.logoCircle}
-              >
-                <Text style={styles.logoText}>{logoLetter}</Text>
-              </LinearGradient>
+
+          {/* Category badge top-left over image */}
+          <View style={styles.categoryBadge}>
+            <Text style={styles.categoryBadgeText}>{category}</Text>
+          </View>
             </View>
 
-            {/* Badge */}
-            <View style={styles.badgeContainer}>
-              <Text style={styles.badgeText}>{warehouse.contact_person || 'Contractors'}</Text>
-            </View>
+        {/* Card Body */}
+        <View style={styles.body}>
+          <View style={styles.titleRow}>
+            {/* Avatar overlapping */}
+            <View style={styles.avatarWrap}>
+              <RNImage
+                source={{ uri: `https://ui-avatars.com/api/?name=${encodeURIComponent(warehouse.name)}&background=ffffff&color=333333&rounded=true&size=128` }}
+                style={styles.avatar}
+              />
+              <View style={styles.onlineDot} />
           </View>
 
-          {/* Company Name with Verified Badge */}
-          <View style={styles.nameContainer}>
-            <Text style={styles.name} numberOfLines={1}>{warehouse.name}</Text>
-            <Ionicons
-              name="checkmark-circle"
-              size={16}
-              color={COLORS.status.verified}
-              style={styles.verifiedIcon}
-            />
-          </View>
-
-          {/* Divider */}
-          <View style={styles.divider} />
-
-          {/* Info Section */}
-          <View style={styles.infoContainer}>
-            <View style={styles.infoRow}>
-              {/* Rating */}
-              <View style={styles.ratingContainer}>
-                <Text style={styles.ratingLabel}>Rating</Text>
-                <View style={styles.ratingValue}>
-                  <Ionicons
-                    name="star"
-                    size={14}
-                    color="#FB7504"
-                  />
-                  <Text style={styles.ratingText}>4.9 (100)</Text>
+            <View style={styles.titleTextWrap}>
+              <View style={styles.titleRowTop}>
+                <Text numberOfLines={1} style={styles.title}>
+                  {warehouse.name}
+                </Text>
+                <View style={styles.verified}> 
+                  <Icon name="check" size={12} color="#fff" />
                 </View>
               </View>
 
-              {/* Location */}
-              <View style={styles.locationContainer}>
-                <Text style={styles.locationLabel}>Location</Text>
-                <View style={styles.locationValue}>
-                  <Feather
-                    name="map-pin"
-                    size={14}
-                    color={COLORS.status.info}
-                  />
-                  <Text style={styles.locationText} numberOfLines={1}>
-                    {warehouse.address ? warehouse.address.split(',')[0] : 'N/A'}
+              <Text numberOfLines={1} style={styles.subtitle}>
+                {warehouse.address}
                   </Text>
                 </View>
               </View>
 
-              {/* Contact */}
-              <View style={styles.categoryContainer}>
-                <Text style={styles.categoryLabel}>Contact</Text>
-                <View style={styles.categoryValue}>
-                  <Feather
-                    name="phone"
-                    size={14}
-                    color={COLORS.status.success}
-                  />
-                  <Text style={styles.categoryText} numberOfLines={1}>
-                    {warehouse.phone ? warehouse.phone.substring(0, 10) : 'N/A'}
-                  </Text>
-                </View>
+          {/* Info chips row */}
+          <View style={styles.infoRow}>
+            <View style={styles.infoCard}>
+              <Text style={styles.infoLabel}>Location</Text>
+              <View style={styles.infoValueRow}>
+                <Icon name="map-pin" size={14} color="#6b7280" />
+                <Text style={styles.infoValueText}>{locationShort}</Text>
               </View>
             </View>
 
-            {/* Tags */}
-            <View style={styles.tagsContainer}>
-              <View style={styles.tag}>
-                <Text style={styles.tagText}>Premium</Text>
+            <View style={styles.infoCard}>
+              <Text style={styles.infoLabel}>Category</Text>
+              <View style={styles.infoValueRow}>
+                <Text style={styles.infoValueText}>{category}</Text>
               </View>
-              <View style={styles.tag}>
-                <Text style={styles.tagText}>{warehouse.code || 'Warehouse'}</Text>
-              </View>
-              <TouchableOpacity style={styles.tagCount}>
-                <Text style={styles.tagCountText}>+3</Text>
-              </TouchableOpacity>
             </View>
           </View>
-        </View>
+
+          {/* No tag pills by default (removed unwanted tags) */}
         </View>
       </Animated.View>
     </TouchableOpacity>
@@ -221,191 +150,172 @@ const WarehouseCard: React.FC<WarehouseCardProps> = ({ warehouse, onPress, isLoa
 };
 
 const styles = StyleSheet.create({
-  cardWrapper: {
-    width: 280,
-    height: 200,
-    borderRadius: BORDER_RADIUS.lg,
-    marginRight: SPACING.md,
-    ...SHADOWS.lg,
+  wrapper: {
+    width: CARD_WIDTH,
+    marginRight: 16,
+    marginHorizontal: 8,
+    marginVertical: 8,
   },
   card: {
-    width: '100%',
-    height: '100%',
-    borderRadius: BORDER_RADIUS.lg,
+    backgroundColor: '#fff',
+    borderRadius: 14,
     overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.15)',
-  },
-  backgroundImage: {
-    position: 'absolute',
-    width: '100%',
-    height: '100%',
-    borderRadius: BORDER_RADIUS.lg,
-  },
-  gradientOverlay: {
-    position: 'absolute',
-    width: '100%',
-    height: '100%',
-    borderRadius: BORDER_RADIUS.lg,
-  },
-  cardContent: {
-    padding: SPACING.md,
-    height: '100%',
-    justifyContent: 'space-between',
-    zIndex: 1,
-  },
-  topRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-  },
-  logoContainer: {
-    alignItems: 'flex-start',
-  },
-  logoCircle: {
-    width: 40,
-    height: 40,
-    borderRadius: BORDER_RADIUS.round,
-    justifyContent: 'center',
-    alignItems: 'center',
+    // Enhanced border
     borderWidth: 2,
-    borderColor: 'rgba(255,255,255,0.3)',
+    borderColor: 'rgba(15,23,42,0.1)',
+    shadowColor: '#000',
+    shadowOpacity: 0.08,
+    shadowRadius: 20,
+    shadowOffset: { width: 0, height: 8 },
   },
-  logoText: {
-    ...TEXT_STYLES.bodyLarge,
-    fontWeight: TYPOGRAPHY.weights.bold,
-    color: COLORS.text.light,
+  headerContainer: {
+    height: HEADER_HEIGHT,
+    width: '100%',
+    position: 'relative',
+    overflow: 'hidden',
+    // ensure top corners match card so image reaches edge with no gaps
+    borderTopLeftRadius: 14,
+    borderTopRightRadius: 14,
   },
-  badgeContainer: {
-    backgroundColor: COLORS.secondary,
-    paddingHorizontal: SPACING.xs,
-    paddingVertical: 3,
-    borderRadius: BORDER_RADIUS.xs,
-    borderWidth: 1,
-    borderColor: 'rgba(0,0,0,0.1)',
+  headerImage: {
+    width: '100%',
+    height: '100%',
+    // round only top corners so the image fills header without white gaps
+    borderTopLeftRadius: 12,
+    borderTopRightRadius: 12,
+    margin: 2,
   },
-  badgeText: {
-    ...TEXT_STYLES.caption,
-    fontWeight: TYPOGRAPHY.weights.semibold,
-    color: COLORS.text.dark,
+  headerGradient: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    height: 64,
   },
-  nameContainer: {
+  categoryBadge: {
+    position: 'absolute',
+    left: 14,
+    top: 14,
+    backgroundColor: '#FDE68A',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 999,
+    elevation: 2,
+    margin: 2,
+  },
+  categoryBadgeText: {
+    color: '#92400E',
+    fontWeight: '700',
+    fontSize: 12,
+  },
+  body: {
+    paddingHorizontal: 12,
+    paddingTop: 8,
+    paddingBottom: 14,
+    marginHorizontal: 4,
+  },
+  titleRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: SPACING.sm,
-    marginBottom: SPACING.xs,
+    marginBottom: 8,
   },
-  name: {
-    ...TEXT_STYLES.bodyLarge,
-    fontWeight: TYPOGRAPHY.weights.bold,
-    color: COLORS.text.light,
-    marginRight: SPACING.xs,
+  avatarWrap: {
+    width: 64,
+    height: 64,
+    borderRadius: 999,
+    marginTop: -32,
+    marginLeft: 6,
+    overflow: 'visible',
+    zIndex: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatar: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    borderWidth: 4,
+    borderColor: '#fff',
+    margin: 2,
+  },
+  onlineDot: {
+    position: 'absolute',
+    right: 6,
+    bottom: 6,
+    width: 12,
+    height: 12,
+    borderRadius: 999,
+    backgroundColor: '#16A34A',
+    borderWidth: 2,
+    borderColor: '#fff',
+  },
+  titleTextWrap: {
+    flex: 1,
+    marginLeft: 12,
+  },
+  titleRowTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  title: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#0F172A',
     flex: 1,
   },
-  verifiedIcon: {
-    marginLeft: 2,
+  verified: {
+    marginLeft: 8,
+    backgroundColor: '#0369A1',
+    padding: 6,
+    borderRadius: 6,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  divider: {
-    height: 1,
-    backgroundColor: 'rgba(255,255,255,0.15)',
-    marginVertical: SPACING.xs,
-  },
-  infoContainer: {
-    marginTop: SPACING.xs,
+  subtitle: {
+    color: '#6B7280',
+    marginTop: 4,
+    fontSize: 13,
   },
   infoRow: {
     flexDirection: 'row',
+    marginTop: 6,
     justifyContent: 'space-between',
-    marginBottom: SPACING.sm,
+    marginHorizontal: 4,
   },
-  ratingContainer: {
+  infoCard: {
     flex: 1,
-  },
-  locationContainer: {
-    flex: 1,
-  },
-  categoryContainer: {
-    flex: 1,
-  },
-  ratingLabel: {
-    ...TEXT_STYLES.caption,
-    color: 'rgba(255,255,255,0.7)',
-    marginBottom: 2,
-  },
-  locationLabel: {
-    ...TEXT_STYLES.caption,
-    color: 'rgba(255,255,255,0.7)',
-    marginBottom: 2,
-  },
-  categoryLabel: {
-    ...TEXT_STYLES.caption,
-    color: 'rgba(255,255,255,0.7)',
-    marginBottom: 2,
-  },
-  ratingValue: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  locationValue: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  categoryValue: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  ratingText: {
-    ...TEXT_STYLES.bodySmall,
-    color: COLORS.text.light,
-    fontWeight: TYPOGRAPHY.weights.medium,
-    marginLeft: 2,
-  },
-  locationText: {
-    ...TEXT_STYLES.bodySmall,
-    color: COLORS.text.light,
-    fontWeight: TYPOGRAPHY.weights.medium,
-    marginLeft: 2,
-    flex: 1,
-  },
-  categoryText: {
-    ...TEXT_STYLES.bodySmall,
-    color: COLORS.text.light,
-    fontWeight: TYPOGRAPHY.weights.medium,
-    marginLeft: 2,
-  },
-  tagsContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-  },
-  tag: {
-    backgroundColor: 'rgba(255,255,255,0.15)',
-    paddingHorizontal: SPACING.xs,
-    paddingVertical: 3,
-    borderRadius: BORDER_RADIUS.xs,
-    marginRight: SPACING.xs,
-    marginBottom: SPACING.xs,
+    backgroundColor: '#F3F4F6',
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+    marginRight: 8,
+    marginHorizontal: 2,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
+    borderColor: 'rgba(0,0,0,0.05)',
   },
-  tagText: {
-    ...TEXT_STYLES.caption,
-    color: COLORS.text.light,
+  infoLabel: {
+    color: '#F97316',
+    fontSize: 11,
+    fontWeight: '700',
+    marginBottom: 4,
   },
-  tagCount: {
-    backgroundColor: 'rgba(255,255,255,0.15)',
-    paddingHorizontal: SPACING.xs,
-    paddingVertical: 3,
-    borderRadius: BORDER_RADIUS.xs,
-    marginRight: SPACING.xs,
-    marginBottom: SPACING.xs,
-    borderWidth: 1,
-    borderColor: COLORS.border.light,
+  infoValueRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
-  tagCountText: {
-    ...TEXT_STYLES.caption,
-    color: COLORS.primary,
-    fontWeight: TYPOGRAPHY.weights.medium,
-  }
+  infoValueText: {
+    fontWeight: '700',
+    color: '#111827',
+    marginLeft: 6,
+    fontSize: 13,
+  },
+  infoMuted: {
+    color: '#9CA3AF',
+    fontWeight: '600',
+    marginLeft: 6,
+    fontSize: 12,
+  },
+  // tag pills removed — styles cleaned up
 });
 
 export default WarehouseCard;

@@ -16,7 +16,7 @@ import {
 
 import LinearGradient from 'react-native-linear-gradient';
 import Icon from 'react-native-vector-icons/Feather';
-import { BarChart } from 'react-native-gifted-charts';
+import BarChart, { BarChartData } from '../../components/ui/BarChart';
 import Svg, { Circle, Polygon } from 'react-native-svg';
 // import RNFS from 'react-native-fs';
 // import Share from 'react-native-share';
@@ -136,6 +136,15 @@ const AllTransfersScreen: React.FC<AllTransfersScreenProps> = ({ navigation }) =
     // Safety check - ensure gradientColors is available
     if (!gradientColors || gradientColors.length === 0) {
       return ['#3B82F6', '#60A5FA', '#2563EB', '#1D4ED8']; // Default blue gradient
+    }
+    
+    // Additional safety: filter out any null/undefined values
+    const safeColors = gradientColors.filter(color => 
+      color && typeof color === 'string' && /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/.test(color)
+    );
+    
+    if (safeColors.length === 0) {
+      return ['#3B82F6', '#60A5FA', '#2563EB', '#1D4ED8'];
     }
     
     if (selectedTransfer) {
@@ -519,7 +528,10 @@ const AllTransfersScreen: React.FC<AllTransfersScreenProps> = ({ navigation }) =
     const renderCard1 = () => (
     <View style={styles.card1}>
       <LinearGradient
-        colors={getCurrentGradient()}
+        colors={(() => {
+          const gradient = getCurrentGradient();
+          return gradient.length > 0 ? gradient : ['#3B82F6', '#60A5FA', '#2563EB', '#1D4ED8'];
+        })()}
         style={styles.card1Gradient}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
@@ -545,37 +557,46 @@ const AllTransfersScreen: React.FC<AllTransfersScreenProps> = ({ navigation }) =
                 <Text style={styles.productName}>{getProductName(selectedTransfer.items[0]?.product_id)}</Text>
               </View>
 
-              <View style={styles.chartContainer}>
-                <BarChart
-                  data={[
-                    { value: Math.floor(Math.random() * 20) + 10, label: '' },
-                    { value: Math.floor(Math.random() * 20) + 10, label: '' },
-                    { value: Math.floor(Math.random() * 20) + 10, label: '' },
-                    { value: Math.floor(Math.random() * 20) + 10, label: '' },
-                  ]}
-                  width={responsiveSpacing.chartWidth}
-                  height={responsiveSpacing.chartHeight}
-                  hideAxesAndRules
-                  showVerticalLines={false}
-                  disableScroll
-                  hideOrigin
-                  barWidth={20}
-                  spacing={10}
-                  initialSpacing={10}
-                  endSpacing={10}
-                  roundedTop
-                  barBorderRadius={8}
-                  frontColor="transparent"
-                  gradientColor="transparent"
-                  renderGradient={() => (
-                    <LinearGradient
-                      colors={[COLORS.gradient.primary[0], COLORS.gradient.primary[1]]}
-                      start={{ x: 0, y: 1 }}
-                      end={{ x: 0, y: 0 }}
-                      style={{ flex: 1, borderRadius: 8 }}
-                    />
-                  )}
-                />
+              <View style={styles.chartCard}>
+                <View style={styles.chartHeader}>
+                  <View>
+                    <Text style={styles.chartTitle}>Transfer Volume</Text>
+                    <Text style={styles.chartSubtitle}>Daily transfer activity</Text>
+                  </View>
+                </View>
+                
+                <View style={{ marginTop: 12 }}>
+                  <BarChart
+                    data={[
+                      { value: Math.floor(Math.random() * 20) + 10, label: 'Mon', colorStart: COLORS.primary, colorEnd: COLORS.accent },
+                      { value: Math.floor(Math.random() * 20) + 10, label: 'Tue', colorStart: COLORS.primary, colorEnd: COLORS.accent },
+                      { value: Math.floor(Math.random() * 20) + 10, label: 'Wed', colorStart: COLORS.primary, colorEnd: COLORS.accent },
+                      { value: Math.floor(Math.random() * 20) + 10, label: 'Thu', colorStart: COLORS.primary, colorEnd: COLORS.accent },
+                    ]}
+                    height={180}
+                    onBarPress={(i, item) => console.log('Transfer volume bar pressed:', i, item)}
+                  />
+                </View>
+                
+                <View style={styles.chartFooter}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                    <View style={[styles.legendDot, { backgroundColor: COLORS.primary }]} />
+                    <Text style={styles.legendText}>Daily transfers</Text>
+                  </View>
+                  <View style={{ alignItems: 'flex-end' }}>
+                    <Text style={styles.totalLabel}>Total</Text>
+                    <Text style={styles.totalValue}>
+                      {Math.floor(Math.random() * 80) + 40}
+                    </Text>
+                  </View>
+                </View>
+                
+                <View style={styles.summaryRow}>
+                  <View style={styles.bullet} />
+                  <Text style={styles.summaryText}>
+                    Transfer activity shows consistent daily patterns. Monitor peak periods.
+                  </Text>
+                </View>
               </View>
 
               <View style={styles.dateContainer}>
@@ -594,37 +615,44 @@ const AllTransfersScreen: React.FC<AllTransfersScreenProps> = ({ navigation }) =
                 <Text style={styles.productName}>Total Transfers</Text>
               </View>
               
-              <View style={styles.chartContainer}>
-                <BarChart
-                  data={[
-                    { value: transfers.filter(t => t.status === 'pending').length, label: '' },
-                    { value: transfers.filter(t => t.status === 'in_transit').length, label: '' },
-                    { value: transfers.filter(t => t.status === 'completed').length, label: '' },
-                    { value: transfers.filter(t => t.status === 'cancelled').length, label: '' },
-                  ]}
-                  width={responsiveSpacing.chartWidth}
-                  height={responsiveSpacing.chartHeight}
-                  hideAxesAndRules
-                  showVerticalLines={false}
-                  disableScroll
-                  hideOrigin
-                  barWidth={30}
-                  spacing={20}
-                  initialSpacing={20}
-                  endSpacing={20}
-                  roundedTop
-                  barBorderRadius={8}
-                  frontColor="transparent"
-                  gradientColor="transparent"
-                  renderGradient={() => (
-                    <LinearGradient
-                      colors={[COLORS.gradient.primary[0], COLORS.gradient.primary[1]]}
-                      start={{ x: 0, y: 1 }}
-                      end={{ x: 0, y: 0 }}
-                      style={{ flex: 1, borderRadius: 8 }}
-                    />
-                  )}
-                />
+              <View style={styles.chartCard}>
+                <View style={styles.chartHeader}>
+                  <View>
+                    <Text style={styles.chartTitle}>Transfer Status</Text>
+                    <Text style={styles.chartSubtitle}>Distribution by status</Text>
+                  </View>
+                </View>
+                
+                <View style={{ marginTop: 12 }}>
+                  <BarChart
+                    data={[
+                      { value: transfers.filter(t => t.status === 'pending').length, label: 'Pending', colorStart: COLORS.primary, colorEnd: COLORS.accent },
+                      { value: transfers.filter(t => t.status === 'in_transit').length, label: 'In Transit', colorStart: COLORS.primary, colorEnd: COLORS.accent },
+                      { value: transfers.filter(t => t.status === 'completed').length, label: 'Completed', colorStart: COLORS.primary, colorEnd: COLORS.accent },
+                      { value: transfers.filter(t => t.status === 'cancelled').length, label: 'Cancelled', colorStart: COLORS.primary, colorEnd: COLORS.accent },
+                    ]}
+                    height={180}
+                    onBarPress={(i, item) => console.log('Transfer status bar pressed:', i, item)}
+                  />
+                </View>
+                
+                <View style={styles.chartFooter}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                    <View style={[styles.legendDot, { backgroundColor: COLORS.primary }]} />
+                    <Text style={styles.legendText}>Status distribution</Text>
+                  </View>
+                  <View style={{ alignItems: 'flex-end' }}>
+                    <Text style={styles.totalLabel}>Total</Text>
+                    <Text style={styles.totalValue}>{transfers.length}</Text>
+                  </View>
+                </View>
+                
+                <View style={styles.summaryRow}>
+                  <View style={styles.bullet} />
+                  <Text style={styles.summaryText}>
+                    Most transfers are completed successfully. Monitor pending transfers.
+                  </Text>
+                </View>
               </View>
 
               <View style={styles.dateContainer}>
@@ -649,7 +677,10 @@ const AllTransfersScreen: React.FC<AllTransfersScreenProps> = ({ navigation }) =
       <View style={styles.actionButtons}>
         <TouchableOpacity style={styles.actionButton} onPress={handleCreateTransfer}>
           <LinearGradient
-            colors={[getCurrentGradient()[0], getCurrentGradient()[1]]}
+            colors={(() => {
+              const gradient = getCurrentGradient();
+              return gradient.length >= 2 ? [gradient[0], gradient[1]] : ['#3B82F6', '#60A5FA'];
+            })()}
             style={styles.actionButtonGradient}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
@@ -661,7 +692,10 @@ const AllTransfersScreen: React.FC<AllTransfersScreenProps> = ({ navigation }) =
 
         <TouchableOpacity style={styles.actionButton} onPress={handleEditTransfer}>
           <LinearGradient
-            colors={[getCurrentGradient()[1], getCurrentGradient()[2]]}
+            colors={(() => {
+              const gradient = getCurrentGradient();
+              return gradient.length >= 3 ? [gradient[1], gradient[2]] : ['#60A5FA', '#2563EB'];
+            })()}
             style={styles.actionButtonGradient}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
@@ -673,7 +707,10 @@ const AllTransfersScreen: React.FC<AllTransfersScreenProps> = ({ navigation }) =
 
         <TouchableOpacity style={styles.actionButton} onPress={handleExportTransfers}>
           <LinearGradient
-            colors={[getCurrentGradient()[2], getCurrentGradient()[3]]}
+            colors={(() => {
+              const gradient = getCurrentGradient();
+              return gradient.length >= 4 ? [gradient[2], gradient[3]] : ['#2563EB', '#1D4ED8'];
+            })()}
             style={styles.actionButtonGradient}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
@@ -685,7 +722,10 @@ const AllTransfersScreen: React.FC<AllTransfersScreenProps> = ({ navigation }) =
 
         <TouchableOpacity style={styles.actionButton} onPress={handleFilterTransfers}>
           <LinearGradient
-            colors={[getCurrentGradient()[3], getCurrentGradient()[0]]}
+            colors={(() => {
+              const gradient = getCurrentGradient();
+              return gradient.length >= 4 ? [gradient[3], gradient[0]] : ['#1D4ED8', '#3B82F6'];
+            })()}
             style={styles.actionButtonGradient}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
@@ -1572,6 +1612,78 @@ const styles = StyleSheet.create({
   warehouseOptionSubtitle: {
     fontSize: TYPOGRAPHY.sizes.sm,
     color: COLORS.text.secondary,
+  },
+  // Professional Chart Styles
+  chartCard: {
+    backgroundColor: '#fff',
+    borderRadius: 14,
+    padding: 16,
+    margin: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.06,
+    shadowRadius: 30,
+    elevation: 8,
+    overflow: 'hidden',
+  },
+  chartHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+  },
+  chartTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#222',
+  },
+  chartSubtitle: {
+    fontSize: 12,
+    color: '#7a7a7a',
+    marginTop: 4,
+  },
+  chartFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 14,
+  },
+  legendDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 6,
+    marginRight: 8,
+  },
+  legendText: {
+    fontSize: 13,
+    color: '#555',
+    fontWeight: '600',
+  },
+  totalLabel: {
+    fontSize: 12,
+    color: '#888',
+  },
+  totalValue: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#222',
+  },
+  summaryRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginTop: 14,
+  },
+  bullet: {
+    width: 8,
+    height: 8,
+    backgroundColor: COLORS.primary,
+    borderRadius: 6,
+    marginRight: 8,
+    marginTop: 6,
+  },
+  summaryText: {
+    color: '#666',
+    fontSize: 13,
+    flex: 1,
   },
 });
 

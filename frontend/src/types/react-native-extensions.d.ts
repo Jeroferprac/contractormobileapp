@@ -9,6 +9,10 @@ declare module 'react-native' {
   export const Animated: any;
   export const StyleSheet: any;
   export const Platform: any;
+  export const View: any;
+  export const Text: any;
+  export const onLayout: any;
+  export const onScroll: any;
 }
 
 declare module '@react-navigation/native' {

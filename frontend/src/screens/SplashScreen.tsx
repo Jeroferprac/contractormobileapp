@@ -53,7 +53,6 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({ onFinish }) => {
     </View>
   );
 };
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,

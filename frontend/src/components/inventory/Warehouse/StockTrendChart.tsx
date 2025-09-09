@@ -1,92 +1,50 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Platform, ActivityIndicator, Dimensions } from 'react-native';
-import { LineChart } from 'react-native-gifted-charts';
-import LinearGradient from 'react-native-linear-gradient';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, Animated } from 'react-native';
+import AreaLineChart, { Point } from '../../ui/AreaChart';
 import Icon from 'react-native-vector-icons/Ionicons';
-import { COLORS } from '../../../constants/colors';
-import { SPACING, BORDER_RADIUS } from '../../../constants/spacing';
-import { TYPOGRAPHY } from '../../../constants/typography';
 import { inventoryApiService } from '../../../api/inventoryApi';
 import { Stock } from '../../../types/inventory';
 
 interface StockTrendData {
   date: string;
   totalStock: number;
-  availableStock: number;
 }
 
-const { width: screenWidth } = Dimensions.get('window');
+const TimeframePicker = ({ timeframe, onTimeframeChange }: { timeframe: string; onTimeframeChange: (timeframe: string) => void }) => {
+  const timeframes = ['This Week', 'This Month', 'This Quarter', 'This Year'];
+  const [currentIndex, setCurrentIndex] = useState(timeframes.indexOf(timeframe));
 
-// --- Reusable Internal Components ---
+  const handlePress = () => {
+    const nextIndex = (currentIndex + 1) % timeframes.length;
+    setCurrentIndex(nextIndex);
+    onTimeframeChange(timeframes[nextIndex]);
+  };
 
-const Tooltip = ({ date, value }: { date: string; value: number }) => (
-  <View style={styles.tooltipContainer}>
-    <Text style={styles.tooltipDate}>{date}</Text>
-    <Text style={styles.tooltipValue}>{value.toLocaleString()} units</Text>
-  </View>
-);
-
-const TimeframePicker = () => (
-  <TouchableOpacity style={styles.pickerContainer}>
-    <Text style={styles.pickerText}>This Month</Text>
-    <Icon name="chevron-down" size={16} color="#333" />
+  return (
+    <TouchableOpacity style={styles.timeframeButton} onPress={handlePress} activeOpacity={0.85}>
+      <Text style={styles.timeframeText}>{timeframe}</Text>
   </TouchableOpacity>
 );
-
-// Helper function to aggregate data for longer time ranges
-const aggregateData = (data: StockTrendData[], targetPoints: number): StockTrendData[] => {
-  if (data.length <= targetPoints) return data;
-
-  const aggregated: StockTrendData[] = [];
-  const step = Math.ceil(data.length / targetPoints);
-
-  for (let i = 0; i < data.length; i += step) {
-    const chunk = data.slice(i, i + step);
-    const aggregatedItem = {
-      date: chunk[0].date,
-      totalStock: Math.round(chunk.reduce((sum, item) => sum + item.totalStock, 0) / chunk.length),
-      availableStock: Math.round(chunk.reduce((sum, item) => sum + item.availableStock, 0) / chunk.length)
-    };
-    aggregated.push(aggregatedItem);
-  }
-
-  return aggregated;
-};
-
-// Fill missing dates in the range
-const fillMissingDates = (
-  data: StockTrendData[],
-  startDate: Date,
-  endDate: Date
-) => {
-  const filledData: StockTrendData[] = [];
-  const dateMap = new Map(data.map(d => [d.date, d]));
-
-  for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
-    const dateStr = d.toISOString().split('T')[0];
-    if (dateMap.has(dateStr)) {
-      filledData.push(dateMap.get(dateStr)!);
-    } else {
-      filledData.push({
-        date: dateStr,
-        totalStock: 0,
-        availableStock: 0
-      });
-    }
-  }
-
-  return filledData;
 };
 
 const StockTrendChart = () => {
-  const [timeRange, setTimeRange] = useState<'7d' | '1m' | '3m'>('7d');
+  const [timeframe, setTimeframe] = useState<string>('This Month');
   const [stockData, setStockData] = useState<StockTrendData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const entry = React.useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     fetchStockTrendData();
-  }, [timeRange]);
+  }, [timeframe]);
+
+  React.useEffect(() => {
+    Animated.timing(entry, {
+      toValue: 1,
+      duration: 500,
+      useNativeDriver: true,
+    }).start();
+  }, [entry]);
 
   const fetchStockTrendData = async () => {
     setLoading(true);
@@ -111,114 +69,106 @@ const StockTrendChart = () => {
       return generateFallbackData();
     }
 
-    // Get date range based on selected timeRange
+    // Get date range based on selected timeframe
     const today = new Date();
     let startDate = new Date();
     
-    switch (timeRange) {
-      case '7d':
+    switch (timeframe) {
+      case 'This Week':
         startDate.setDate(today.getDate() - 7);
         break;
-      case '1m':
+      case 'This Month':
         startDate.setMonth(today.getMonth() - 1);
         break;
-      case '3m':
+      case 'This Quarter':
         startDate.setMonth(today.getMonth() - 3);
         break;
+      case 'This Year':
+        startDate.setFullYear(today.getFullYear() - 1);
+        break;
       default:
-        startDate.setDate(today.getDate() - 7);
+        startDate.setMonth(today.getMonth() - 1);
     }
 
-    // Group stock by date
-    const stockByDate = stockLevels.reduce((acc, stock) => {
-      const date = new Date(stock.updated_at || stock.created_at).toISOString().split('T')[0];
-      if (!acc[date]) {
-        acc[date] = { totalStock: 0, availableStock: 0 };
-      }
-      acc[date].totalStock += Number(stock.quantity);
-      acc[date].availableStock += Number(stock.available_quantity || stock.quantity);
-      return acc;
-    }, {} as Record<string, { totalStock: number; availableStock: number }>);
+    // Filter stock levels based on timeframe
+    const filteredStock = stockLevels.filter(stock => {
+      if (!stock.updated_at) return true;
+      const stockDate = new Date(stock.updated_at);
+      return stockDate >= startDate;
+    });
 
-    // Convert to array and fill missing dates
-    const dates = Object.keys(stockByDate).sort();
-    if (dates.length === 0) {
-      return generateFallbackData();
-    }
+    // Group by date and sum quantities
+    const groupedData: Record<string, number> = {};
+    filteredStock.forEach(stock => {
+      const date = new Date(stock.updated_at || new Date()).toISOString().split('T')[0];
+      groupedData[date] = (groupedData[date] || 0) + Number(stock.quantity);
+    });
 
-    let processedData = dates.map(date => ({
-      date,
-      totalStock: stockByDate[date].totalStock,
-      availableStock: stockByDate[date].availableStock
-    }));
+    // Convert to array and sort by date
+    const result = Object.entries(groupedData)
+      .map(([date, totalStock]) => ({ date, totalStock }))
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
-    // Fill missing dates
-    processedData = fillMissingDates(processedData, startDate, today);
-
-    // Aggregate data for longer time ranges
-    if (timeRange === '1m' && processedData.length > 15) {
-      processedData = aggregateData(processedData, 15);
-    } else if (timeRange === '3m' && processedData.length > 20) {
-      processedData = aggregateData(processedData, 20);
-    }
-
-    return processedData;
+    return result.length > 0 ? result : generateFallbackData();
   };
 
-  // Generate fallback data when no API data is available
   const generateFallbackData = (): StockTrendData[] => {
     const data: StockTrendData[] = [];
     const today = new Date();
     
-    let days = 7;
-    let dataPoints = 7;
-    
-    if (timeRange === '1m') {
-      days = 30;
-      dataPoints = 15;
-    }
-    if (timeRange === '3m') {
-      days = 90;
-      dataPoints = 20;
-    }
-
-    for (let i = 0; i < dataPoints; i++) {
+    for (let i = 6; i >= 0; i--) {
       const date = new Date(today);
-      const dayOffset = Math.floor((days - 1) * (i / (dataPoints - 1)));
-      date.setDate(date.getDate() - dayOffset);
+      date.setDate(date.getDate() - i);
       const dateStr = date.toISOString().split('T')[0];
+      
+      // Generate realistic stock trend data
+      const baseStock = 1000;
+      const variation = Math.sin(i * 0.5) * 200 + Math.random() * 100;
+      const totalStock = Math.max(100, Math.round(baseStock + variation));
       
       data.push({
         date: dateStr,
-        totalStock: Math.floor(Math.random() * 1000) + 500,
-        availableStock: Math.floor(Math.random() * 800) + 400,
+        totalStock
       });
     }
     
-    return data.reverse();
+    return data;
   };
 
   const totalStock = stockData.reduce((sum, item) => sum + item.totalStock, 0);
-  const maxValueItem = stockData.length > 0 ? stockData.reduce((prev, current) =>
-    prev.totalStock > current.totalStock ? prev : current
-  ) : { date: '', totalStock: 0, availableStock: 0 };
 
-  const lineData = stockData.map((item, index) => ({
+  // Convert to Point format for AreaLineChart
+  const chartData: Point[] = stockData.map((item) => ({
     value: item.totalStock,
     label: new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-    date: new Date(item.date).toLocaleDateString('en-US', { day: 'numeric', month: 'long' }),
-    dataPointText: item.totalStock.toString(),
-    topLabelComponent: item.date === maxValueItem.date 
-      ? () => <Tooltip date={new Date(item.date).toLocaleDateString('en-US', { day: 'numeric', month: 'long' })} value={item.totalStock} />
-      : undefined
   }));
+
+  const translateY = entry.interpolate({ inputRange: [0, 1], outputRange: [14, 0] });
+  const opacity = entry;
 
   if (loading) {
     return (
+      <View style={styles.wrapper}>
+        <View style={styles.pageHeader}>
+          <View>
+            <Text style={styles.pageTitle}>Stock Trends</Text>
+            <Text style={styles.pageSubtitle}>Overview of stock level trends over time</Text>
+          </View>
+          <TimeframePicker timeframe={timeframe} onTimeframeChange={setTimeframe} />
+        </View>
       <View style={styles.card}>
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={COLORS.primary} />
-          <Text style={styles.loadingText}>Loading stock trend data...</Text>
+          <View style={styles.chartContainer}>
+            <AreaLineChart
+              data={[]}
+              height={200}
+              pointSpacing={34}
+              minPointsToSample={10}
+              maxPointsNoScroll={27}
+              gradientFrom={'#FF8A65'}
+              gradientTo={'rgba(255,138,101,0.06)'}
+              strokeColor={'#E7600E'}
+            />
+          </View>
         </View>
       </View>
     );
@@ -226,12 +176,27 @@ const StockTrendChart = () => {
 
   if (error) {
     return (
+      <View style={styles.wrapper}>
+        <View style={styles.pageHeader}>
+          <View>
+            <Text style={styles.pageTitle}>Stock Trends</Text>
+            <Text style={styles.pageSubtitle}>Overview of stock level trends over time</Text>
+          </View>
+          <TimeframePicker timeframe={timeframe} onTimeframeChange={setTimeframe} />
+        </View>
       <View style={styles.card}>
-        <View style={styles.errorContainer}>
-          <Text style={styles.errorText}>{error}</Text>
-          <TouchableOpacity style={styles.retryButton} onPress={fetchStockTrendData}>
-            <Text style={styles.retryButtonText}>Retry</Text>
-          </TouchableOpacity>
+          <View style={styles.chartContainer}>
+            <AreaLineChart
+              data={[]}
+              height={200}
+              pointSpacing={34}
+              minPointsToSample={10}
+              maxPointsNoScroll={27}
+              gradientFrom={'#FF8A65'}
+              gradientTo={'rgba(255,138,101,0.06)'}
+              strokeColor={'#E7600E'}
+            />
+          </View>
         </View>
       </View>
     );
@@ -239,193 +204,110 @@ const StockTrendChart = () => {
 
   if (stockData.length === 0) {
     return (
+      <View style={styles.wrapper}>
+        <View style={styles.pageHeader}>
+          <View>
+            <Text style={styles.pageTitle}>Stock Trends</Text>
+            <Text style={styles.pageSubtitle}>Overview of stock level trends over time</Text>
+          </View>
+          <TimeframePicker timeframe={timeframe} onTimeframeChange={setTimeframe} />
+        </View>
       <View style={styles.card}>
-        <View style={styles.emptyContainer}>
-          <Text style={styles.emptyText}>No stock trend data available</Text>
+          <View style={styles.chartContainer}>
+            <AreaLineChart
+              data={[]}
+              height={200}
+              pointSpacing={34}
+              minPointsToSample={10}
+              maxPointsNoScroll={27}
+              gradientFrom={'#FF8A65'}
+              gradientTo={'rgba(255,138,101,0.06)'}
+              strokeColor={'#E7600E'}
+            />
+          </View>
         </View>
       </View>
     );
   }
 
   return (
-    <View style={styles.card}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Stock Trends (This Month)</Text>
-        <TimeframePicker />
+    <View style={styles.wrapper}>
+      {/* Page title + timeframe (OUTSIDE the white card as requested) */}
+      <View style={styles.pageHeader}>
+        <View>
+          <Text style={styles.pageTitle}>Stock Trends</Text>
+          <Text style={styles.pageSubtitle}>Overview of stock level trends over time</Text>
       </View>
-      <View style={styles.chartContainer}>
-        <LineChart
-          data={lineData}
-          areaChart
-          curved
-          height={200}
-          width={screenWidth - 90}
-          noOfSections={4}
-          spacing={40}
-          color={COLORS.primary}
-          thickness={3}
-          startFillColor={COLORS.primary}
-          endFillColor={COLORS.accent}
-          startOpacity={0.4}
-          endOpacity={0.1}
-          initialSpacing={20}
-          yAxisTextStyle={{ color: '#A0A0A0', fontSize: 12 }}
-          xAxisColor="#E5E7EB"
-          yAxisColor="#E5E7EB"
-          rulesType="dashed"
-          rulesColor="#E5E7EB"
-          isAnimated
-          animationDuration={1200}
-          dataPointsColor={COLORS.primary}
-          dataPointsRadius={5}
-          hideDataPoints={false}
+
+        <TimeframePicker 
+          timeframe={timeframe}
+          onTimeframeChange={setTimeframe}
         />
       </View>
-      <View style={styles.summaryContainer}>
-        <View style={styles.summaryDot} />
-        <Text style={styles.summaryText}>
-          <Text style={styles.summaryValue}>{totalStock.toLocaleString()}</Text> Total Stock Units This Month
-        </Text>
+
+      {/* Card containing chart and footer */}
+      <Animated.View style={[styles.card, { transform: [{ translateY }], opacity }]}>
+        <View style={styles.chartContainer}>
+          <AreaLineChart
+            data={chartData}
+            height={200}
+            pointSpacing={34}
+            minPointsToSample={10}
+            gradientFrom={'#FF8A65'}
+            gradientTo={'rgba(255,138,101,0.06)'}
+            strokeColor={'#E7600E'}
+            onPointPress={(i, pt) => console.log('Stock trend point', i, pt)}
+          />
       </View>
-      <Text style={styles.summarySubtitle}>
-        Monthly stock level trends over the last 30 days.
-      </Text>
+      </Animated.View>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  card: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    paddingVertical: 20,
-    paddingHorizontal: 15,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 10,
-    elevation: 5,
-    marginVertical: SPACING.md,
+  wrapper: {
+    paddingHorizontal: 0, // Full width
+    paddingTop: 10,
   },
-  header: {
+  pageHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 30,
-    paddingHorizontal: 10,
+    alignItems: 'flex-start',
+    marginBottom: 10,
+    paddingHorizontal: 16, // Add padding back to header
   },
-  title: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: '#2C2C2C',
+  pageTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#222',
   },
-  pickerContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    paddingHorizontal: 15,
-    paddingVertical: 10,
+  pageSubtitle: {
+    fontSize: 12,
+    color: '#7a7a7a',
+    marginTop: 4,
+  },
+  timeframeButton: {
+    backgroundColor: '#f2f2f4',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
     borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#F0F0F0',
+    alignSelf: 'flex-start',
   },
-  pickerText: {
-    fontSize: 14,
+  timeframeText: {
     color: '#333',
-    marginRight: 8,
-    fontWeight: '500',
+    fontWeight: '600',
+    fontSize: 12,
+  },
+  card: {
+    backgroundColor: '#f8f9fa',
+    borderRadius: 14,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: '#e9ecef',
+    overflow: 'hidden',
   },
   chartContainer: {
-    height: 250,
-    paddingLeft: 10,
-  },
-  tooltipContainer: {
-    backgroundColor: '#3D3D3D',
-    borderRadius: 6,
-    paddingVertical: 6,
-    paddingHorizontal: 10,
-    alignItems: 'center',
-    marginBottom: 4,
-    minWidth: 100,
-  },
-  tooltipDate: {
-    color: '#FFFFFF',
-    fontSize: 12,
-    fontWeight: 'bold',
-  },
-  tooltipValue: {
-    color: '#E0E0E0',
-    fontSize: 11,
-  },
-  summaryContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 25,
-    paddingHorizontal: 10,
-  },
-  summaryDot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: COLORS.primary,
-    marginRight: 12,
-  },
-  summaryText: {
-    fontSize: 14,
-    color: '#666',
-    flex: 1,
-    lineHeight: 20,
-  },
-  summaryValue: {
-    fontWeight: 'bold',
-    color: '#333',
-  },
-  summarySubtitle: {
-    fontSize: 12,
-    color: '#A0A0A0',
-    marginTop: 8,
-    paddingHorizontal: 10,
-  },
-  loadingContainer: {
-    height: 250,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  loadingText: {
-    marginTop: SPACING.sm,
-    fontSize: TYPOGRAPHY.sizes.sm,
-    color: COLORS.text.secondary,
-  },
-  errorContainer: {
-    height: 250,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  errorText: {
-    fontSize: TYPOGRAPHY.sizes.sm,
-    color: COLORS.status.error,
-    marginBottom: SPACING.md,
-    textAlign: 'center',
-  },
-  retryButton: {
-    backgroundColor: COLORS.primary,
-    paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.sm,
-    borderRadius: BORDER_RADIUS.pill,
-  },
-  retryButtonText: {
-    color: COLORS.white,
-    fontWeight: TYPOGRAPHY.weights.bold,
-  },
-  emptyContainer: {
-    height: 250,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  emptyText: {
-    fontSize: TYPOGRAPHY.sizes.sm,
-    color: COLORS.text.secondary,
-    textAlign: 'center',
+    marginBottom: 16,
   },
 });
 

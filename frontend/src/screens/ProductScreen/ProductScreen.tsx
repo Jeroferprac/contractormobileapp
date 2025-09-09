@@ -2,16 +2,13 @@ import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
-  Text,
   ScrollView,
   TouchableOpacity,
   StyleSheet,
   Alert,
   Platform,
   SafeAreaView,
-  SafeAreaView,
 } from 'react-native';
-import FastImage from 'react-native-fast-image';
 import FastImage from 'react-native-fast-image';
 import Icon from 'react-native-vector-icons/Feather';
 import { COLORS } from '../../constants/colors';
@@ -137,11 +134,10 @@ const ProductScreen: React.FC<ProductScreenProps> = ({ navigation, route }) => {
     <SafeAreaView style={styles.container}>
       {/* Header with Image */}
       <View style={styles.header}>
-        <FastImage
+        
         <FastImage
           source={{ uri: getProductImage(product) }}
           style={styles.headerImage}
-          resizeMode="cover"
           resizeMode="cover"
         >
           <View style={styles.headerOverlay}>
@@ -162,11 +158,9 @@ const ProductScreen: React.FC<ProductScreenProps> = ({ navigation, route }) => {
                 name={isFavorite ? "heart" : "heart"} 
                 size={24} 
                 color={isFavorite ? "#FB7504" : COLORS.text.light} 
-                solid={isFavorite}
               />
             </TouchableOpacity>
           </View>
-        </FastImage>
         </FastImage>
       </View>
       

@@ -1,228 +1,115 @@
-import React, { useMemo, useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  Dimensions,
-  TouchableOpacity,
-} from 'react-native';
-import { BarChart } from 'react-native-gifted-charts';
-import LinearGradient from 'react-native-linear-gradient';
-import Icon from 'react-native-vector-icons/Ionicons';
-import FadeSlideInView from './FadeSlideInView';
-import { ChartSkeleton } from './LoadingSkeleton';
-import { COLORS } from '../../constants/colors';
-import { SPACING, BORDER_RADIUS, SHADOWS } from '../../constants/spacing';
-import { TYPOGRAPHY } from '../../constants/typography';
+import React, { useMemo } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import AreaLineChart, { Point } from './AreaChart';
 
-interface ChartDataPoint {
-  value: number;
-  label: string;
-  dataPointText: string;
-}
+type StockLevelCardProps = {
+  title?: string;
+  timeframe?: string;
+  data?: Point[];
+};
 
-interface ChartProps {
-  title: string;
-  data: ChartDataPoint[];
-  height?: number;
-  showLegend?: boolean;
-  loading?: boolean;
-}
-
-// --- Reusable Internal Components ---
-
-const Tooltip = ({ time }: { time: string }) => (
-  <View style={styles.tooltipContainer}>
-    <Text style={styles.tooltipTitle}>Most Active</Text>
-    <Text style={styles.tooltipTime}>Time - {time}</Text>
-  </View>
-);
-
-const TimeframePicker = () => (
-  <TouchableOpacity style={styles.pickerContainer}>
-    <Text style={styles.pickerText}>In week</Text>
-    <Icon name="chevron-down" size={16} color="#333" />
-  </TouchableOpacity>
-);
-
-const Chart: React.FC<ChartProps> = ({
-  title,
+export default function StockLevelCard({
+  title = 'Stock Level',
+  timeframe = 'Last 30 days',
   data,
-  height = 220,
-  showLegend = true,
-  loading = false,
-}) => {
-  const [selectedDataPoint, setSelectedDataPoint] = useState<number | null>(null);
-  const screenWidth = Dimensions.get('window').width;
-  const chartWidth = screenWidth - SPACING.lg * 2;
+}: StockLevelCardProps) {
+  // generate fallback dummy dataset if none provided
+  const defaultData = useMemo(() => {
+    // deterministic pseudo-random pattern with peaks and dips for visualization
+    const base = 420;
+    const points: Point[] = [];
+    for (let i = 1; i <= 30; i++) {
+      const seasonal = Math.round(120 * Math.sin((i / 30) * Math.PI * 2));
+      const weekly = Math.round(60 * Math.cos((i / 7) * Math.PI * 2));
+      const noise = Math.round((Math.sin(i * 1.3) + Math.cos(i * 0.7)) * 12);
+      const value = Math.max(12, base + seasonal + weekly + noise + (i % 5 === 0 ? 200 : 0));
+      const label = i % 5 === 0 ? `${i}` : `${i}`;
+      points.push({ label, value });
+    }
+    return points;
+  }, []);
 
-  const maxValueItem = data.length > 0 ? data.reduce((prev, current) =>
-    prev.value > current.value ? prev : current
-  ) : { value: 0, label: '', dataPointText: '' };
+  const chartData = data ?? defaultData;
 
-  const chartData = useMemo(
-    () =>
-      data.map((item, index) => ({
-        ...item,
-        topLabelComponent: item.label === maxValueItem.label
-          ? () => <Tooltip time={`${item.value}:09`} />
-          : undefined
-      })),
-    [data, maxValueItem]
-  );
-
-  const handleDataPointPress = (_: any, index: number) => {
-    setSelectedDataPoint((prev) => (prev === index ? null : index));
-  };
+  const total = useMemo(() => chartData.reduce((s, p) => s + p.value, 0), [chartData]);
+  const latest = chartData[chartData.length - 1]?.value ?? 0;
 
   return (
-    <View style={styles.card}>
-      <View style={styles.header}>
+    <View style={styles.wrapper}>
+      <View style={styles.headerRow}>
+        <View>
         <Text style={styles.title}>{title}</Text>
-        <TimeframePicker />
+          <Text style={styles.subtitle}>Compact, responsive area + line view</Text>
+        </View>
+
+        <TouchableOpacity activeOpacity={0.85} style={styles.viewAllButton}>
+          <Text style={styles.viewAllText}>View All</Text>
+        </TouchableOpacity>
       </View>
-      <View style={styles.chartContainer}>
-        {loading ? (
-          <ChartSkeleton />
-        ) : data.length === 0 ? (
-          <FadeSlideInView delay={400}>
-            <View style={styles.noDataContainer}>
-              <Text style={styles.noDataText}>No data available</Text>
-            </View>
-          </FadeSlideInView>
-        ) : (
-          <BarChart
-            data={chartData}
-            barWidth={35}
-            spacing={20}
-            roundedTop
-            hideRules
-            xAxisThickness={0}
-            yAxisThickness={0}
-            yAxisTextStyle={styles.axisLabel}
-            xAxisLabelTextStyle={styles.axisLabel}
-            noOfSections={4}
-            maxValue={1440}
-            yAxisLabelTexts={['00:00', '06:00', '12:00', '18:00', '24:00']}
-            isAnimated
-            animationDuration={800}
-            showGradient
-            gradientColor={COLORS.gradient.primary[1]}
-            frontColor={COLORS.gradient.primary[0]}
-          />
-        )}
+
+      <View style={{ marginTop: 10 }}>
+        <AreaLineChart
+          data={chartData}
+          height={220}
+          pointSpacing={34}
+          minPointsToSample={10}
+          maxPointsNoScroll={27}
+          gradientFrom={'#FF8A65'}
+          gradientTo={'rgba(255,138,101,0.06)'}
+          strokeColor={'#E7600E'}
+          onPointPress={(i, pt) => console.log('point', i, pt)}
+        />
       </View>
-      <View style={styles.summaryContainer}>
-        <View style={styles.summaryDot} />
-        <Text style={styles.summaryText}>
-          <Text style={styles.summaryValue}>Most Active Time Slots: </Text>
-          12:00 to 21:30 (Mon-Fri), with the busiest day on Wednesday
-        </Text>
+
+      <View style={styles.footerRow}>
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <View style={styles.dot} />
+          <Text style={styles.footerText}>{`${(total).toLocaleString()} units across warehouses`}</Text>
+        </View>
+
+        <View style={{ alignItems: 'flex-end' }}>
+          <Text style={styles.smallLabel}>{timeframe}</Text>
+          <Text style={styles.bigValue}>{latest.toLocaleString()}</Text>
+        </View>
       </View>
     </View>
   );
-};
+}
 
 const styles = StyleSheet.create({
-  card: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    paddingVertical: 20,
-    paddingHorizontal: 15,
+  wrapper: {
+    backgroundColor: '#fff',
+    borderRadius: 14,
+    padding: 14,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 10,
-    elevation: 5,
-    marginVertical: SPACING.md,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.06,
+    shadowRadius: 30,
+    elevation: 8,
+    marginVertical: 10,
   },
-  header: {
+  headerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 30,
-    paddingHorizontal: 10,
   },
-  title: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: '#2C2C2C',
-  },
-  pickerContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    paddingHorizontal: 15,
-    paddingVertical: 10,
+  title: { fontSize: 16, fontWeight: '800', color: '#222' },
+  subtitle: { fontSize: 12, color: '#8b8b8b', marginTop: 4 },
+  viewAllButton: {
+    backgroundColor: '#FFF7F3',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
     borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#F0F0F0',
   },
-  pickerText: {
-    fontSize: 14,
-    color: '#333',
-    marginRight: 8,
-    fontWeight: '500',
-  },
-  chartContainer: {
-    height: 250,
-    paddingLeft: 10,
-  },
-  axisLabel: {
-    color: '#A0A0A0',
-    fontSize: 12,
-  },
-  tooltipContainer: {
-    backgroundColor: '#3D3D3D',
-    borderRadius: 6,
-    paddingVertical: 6,
-    paddingHorizontal: 10,
-    alignItems: 'center',
-    marginBottom: 4,
-    minWidth: 100,
-  },
-  tooltipTitle: {
-    color: '#FFFFFF',
-    fontSize: 12,
-    fontWeight: 'bold',
-  },
-  tooltipTime: {
-    color: '#E0E0E0',
-    fontSize: 11,
-  },
-  summaryContainer: {
+  viewAllText: { color: '#E7600E', fontWeight: '700' },
+  footerRow: {
+    marginTop: 12,
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: 25,
-    paddingHorizontal: 10,
   },
-  summaryDot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: COLORS.primary,
-    marginRight: 12,
-  },
-  summaryText: {
-    fontSize: 14,
-    color: '#666',
-    flex: 1,
-    lineHeight: 20,
-  },
-  summaryValue: {
-    fontWeight: 'bold',
-    color: '#333',
-  },
-  noDataContainer: {
-    padding: SPACING.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  noDataText: {
-    color: COLORS.text.secondary,
-    fontSize: TYPOGRAPHY.sizes.md,
-    fontWeight: TYPOGRAPHY.weights.medium,
-  },
+  dot: { width: 10, height: 10, borderRadius: 6, backgroundColor: '#FF8A65', marginRight: 8 },
+  footerText: { color: '#6b6b6b', fontSize: 13 },
+  smallLabel: { color: '#9b9b9b', fontSize: 12 },
+  bigValue: { fontSize: 18, fontWeight: '900', color: '#222', marginTop: 4 },
 });
-
-export default Chart;

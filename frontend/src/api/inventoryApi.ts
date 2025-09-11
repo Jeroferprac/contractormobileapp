@@ -55,7 +55,7 @@ import {
 
 class InventoryApiService {
   private api: AxiosInstance;
-  private basePath: string = '/inventory';
+  private basePath: string = '/inventory/inventory';
 
   constructor() {
     this.api = axios.create({
@@ -744,17 +744,6 @@ class InventoryApiService {
     return this.api.get(`${this.basePath}/sales/overdue`, { params });
   }
 
-  async confirmSale(id: string): Promise<AxiosResponse<SaleResponse>> {
-    return this.api.post(`${this.basePath}/sales/${id}/confirm`);
-  }
-
-  async shipSale(id: string): Promise<AxiosResponse<SaleResponse>> {
-    return this.api.post(`${this.basePath}/sales/${id}/ship`);
-  }
-
-  async getSaleInvoice(id: string): Promise<AxiosResponse<InvoiceResponse>> {
-    return this.api.get(`${this.basePath}/sales/${id}/invoice`);
-  }
 
 
   // ===== PURCHASE ORDERS ENDPOINTS =====
@@ -1196,19 +1185,6 @@ class InventoryApiService {
   }
 
 
-  // ===== SALES OPERATIONS =====
-
-  async confirmSale(saleId: string): Promise<AxiosResponse<Sale>> {
-    return this.api.post(`${this.basePath}/sales/${saleId}/confirm`);
-  }
-
-  async shipSale(saleId: string): Promise<AxiosResponse<Sale>> {
-    return this.api.post(`${this.basePath}/sales/${saleId}/ship`);
-  }
-
-  async getSaleInvoice(saleId: string): Promise<AxiosResponse<any>> {
-    return this.api.get(`${this.basePath}/sales/${saleId}/invoice`);
-  }
 
   // ===== PROFIT/LOSS ANALYSIS =====
 
@@ -1236,7 +1212,7 @@ class InventoryApiService {
     category_id?: string;
   }): Promise<AxiosResponse<any>> {
     return this.api.get(`${this.basePath}/profit-loss/product`, { params });
-=======
+  }
   async getAllSales(params?: SaleFilters): Promise<AxiosResponse<SalesResponse>> {
     return this.api.get(`${this.basePath}/sales/all`, { params });
   }

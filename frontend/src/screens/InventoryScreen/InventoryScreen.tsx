@@ -30,7 +30,7 @@ import {
   RecentActivityCard,
   RecentActivityList,
   WarehouseList,
-  StockReportChart
+  StockReportChart,
   SupplierList,
   PriceListSection
 } from '../../components/inventory';
@@ -42,6 +42,7 @@ import {
   Transaction,
   Warehouse,
   Stock,
+  Supplier,
 } from '../../types/inventory';
 
 import { InventoryScreenNavigationProp } from '../../types/navigation';
@@ -77,11 +78,11 @@ const InventoryScreen: React.FC<InventoryScreenProps> = ({ navigation }) => {
   const [loading, setLoading] = useState(true);
   const [sidebarVisible, setSidebarVisible] = useState(false);
   const [barcodeScannerVisible, setBarcodeScannerVisible] = useState(false);
+  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
 
   useEffect(() => {
     loadInventoryData();
   }, []);
-
 
   // Debug sidebar state changes
   useEffect(() => {
@@ -147,13 +148,14 @@ const InventoryScreen: React.FC<InventoryScreenProps> = ({ navigation }) => {
         transactionsRes,
         warehouseRes,
         stockLevelsRes,
+        suppliersRes,
       ] = await Promise.all([
         inventoryApiService.getSummary().catch(() => ({ data: null })),
         inventoryApiService.getSalesByProduct().catch(() => ({ data: [] })),
         inventoryApiService.getTransactions({ limit: 3 }).catch(() => ({ data: [] })),
         inventoryApiService.getWarehouses().catch(() => ({ data: [] })),
         inventoryApiService.getCurrentStockLevels().catch(() => ({ data: [] })),
-        suppliersRes,
+        inventoryApiService.getSuppliers().catch(() => ({ data: [] })),
       ]);
 
       setSummary(summaryRes.data);
@@ -214,9 +216,10 @@ const InventoryScreen: React.FC<InventoryScreenProps> = ({ navigation }) => {
       setBarChartData(timeBasedData);
       setIsChartLoading(false);
     }, 300);
+  };
+
   const handleSupplierPress = (supplier: Supplier) => {
-            navigation.navigate('SupplierDetailsScreen', { supplierId: supplier.id });
->
+    navigation.navigate('SupplierDetailsScreen', { supplierId: supplier.id });
   };
 
   const handleBarPress = (index: number, item: BarChartData) => {
@@ -225,7 +228,6 @@ const InventoryScreen: React.FC<InventoryScreenProps> = ({ navigation }) => {
   };
 
   // Professional Loading Skeleton Components
-
   const ChartSkeleton: React.FC = () => (
     <View style={styles.section}>
       <LoadingSkeleton width="100%" height={200} borderRadius={BORDER_RADIUS.lg} />
@@ -342,26 +344,25 @@ const InventoryScreen: React.FC<InventoryScreenProps> = ({ navigation }) => {
           <TopSellingList />
         </View>
 
-      <SectionHeader
-        title="Warehouses"
-        onViewAllPress={() => {
-          console.log('🏢 [InventoryScreen] Pushing to AllWarehouses via SectionHeader View All');
-          navigation.push('AllWarehouses');
-        }}
-
-      />
-      <WarehouseList 
-        warehouses={warehouses} 
-        loading={loading}
-
-        onWarehousePress={(warehouse) => {
-          console.log('🏢 [InventoryScreen] Pushing to AllWarehouses with warehouse:', warehouse.name);
-          navigation.push('AllWarehouses', { selectedWarehouse: warehouse });
-        }}
-        onViewAll={() => {
-          console.log('🏢 [InventoryScreen] Pushing to AllWarehouses via View All');
-          navigation.push('AllWarehouses');
-      />
+        <SectionHeader
+          title="Warehouses"
+          onViewAllPress={() => {
+            console.log('🏢 [InventoryScreen] Pushing to AllWarehouses via SectionHeader View All');
+            navigation.push('AllWarehouses');
+          }}
+        />
+        <WarehouseList 
+          warehouses={warehouses} 
+          loading={loading}
+          onWarehousePress={(warehouse) => {
+            console.log('🏢 [InventoryScreen] Pushing to AllWarehouses with warehouse:', warehouse.name);
+            navigation.push('AllWarehouses', { selectedWarehouse: warehouse });
+          }}
+          onViewAll={() => {
+            console.log('🏢 [InventoryScreen] Pushing to AllWarehouses via View All');
+            navigation.push('AllWarehouses');
+          }}
+        />
 
         <RecentActivityList />
       </ScrollView>

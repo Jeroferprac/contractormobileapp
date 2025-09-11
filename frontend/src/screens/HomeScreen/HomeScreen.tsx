@@ -17,6 +17,7 @@ import { useAuth } from '../../context/AuthContext';
 
 // UI Components
 import { SearchBar, FilterChips, HorizontalScroll, LogoutModal } from '../../components/ui';
+import FailureModal from '../../components/FailureModal';
 
 // Home Components
 import {
@@ -44,6 +45,8 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
   const [searchText, setSearchText] = useState('');
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [showFailureModal, setShowFailureModal] = useState(false);
+  const [failureMessage, setFailureMessage] = useState('');
   const { logout, user } = useAuth();
 
   const handleFilterChange = (filterId: string) => {
@@ -64,7 +67,8 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
         console.log('✅ Navigation successful');
       } catch (error) {
         console.error('❌ Navigation error:', error);
-        Alert.alert('Navigation Error', 'Failed to navigate to Batches screen');
+        setFailureMessage('Failed to navigate to Batches screen');
+        setShowFailureModal(true);
       }
     }
   };
@@ -153,12 +157,8 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
         {activeFilters.length > 0 && FilterChips && (
           <FilterChips
             filters={activeFilters}
-
-            
             selectedFilters={selectedFilters}
             onFilterChange={handleFilterChange}
-            onRemoveFilter={handleRemoveFilter}
-            style={styles.filterChips}
           />
         )}
 
@@ -398,6 +398,18 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
         onClose={handleLogoutClose}
         onConfirm={handleLogoutConfirm}
         username={user?.full_name || user?.email}
+      />
+
+      {/* Failure Modal */}
+      <FailureModal
+        visible={showFailureModal}
+        title="Error"
+        message={failureMessage}
+        onClose={() => setShowFailureModal(false)}
+        onAction={() => setShowFailureModal(false)}
+        actionText="OK"
+        animationType="shake"
+        iconType="error"
       />
     </SafeAreaView>
   );

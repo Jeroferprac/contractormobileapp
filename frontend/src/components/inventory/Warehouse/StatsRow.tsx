@@ -5,6 +5,7 @@ import LinearGradient from 'react-native-linear-gradient';
 import { COLORS } from '../../../constants/colors';
 import { SPACING, BORDER_RADIUS } from '../../../constants/spacing';
 import { TYPOGRAPHY } from '../../../constants/typography';
+import LoadingSkeleton from '../../ui/LoadingSkeleton';
 
 interface StatCard {
   id: number;
@@ -26,9 +27,36 @@ const statCards: StatCard[] = [
 
 interface StatsRowProps {
   data?: StatCard[];
+  loading?: boolean;
 }
 
-const StatsRow: React.FC<StatsRowProps> = ({ data = statCards }) => {
+// Professional Stats Card Skeleton Component
+const StatsCardSkeleton: React.FC = () => (
+  <View style={styles.cardWrapper}>
+    <View style={styles.cardContainer}>
+      <View style={styles.card}>
+        <LoadingSkeleton width={40} height={40} borderRadius={20} style={styles.skeletonIcon} />
+        <View style={styles.textContainer}>
+          <LoadingSkeleton width="70%" height={18} style={styles.skeletonValue} />
+        </View>
+      </View>
+    </View>
+  </View>
+);
+
+const StatsRow: React.FC<StatsRowProps> = ({ data = statCards, loading = false }) => {
+  if (loading) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.row}>
+          {[...Array(6)].map((_, index) => (
+            <StatsCardSkeleton key={`stats-skeleton-${index}`} />
+          ))}
+        </View>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
       <View style={styles.row}>
@@ -126,6 +154,13 @@ const styles = StyleSheet.create({
   },
   normalText: {
     color: COLORS.text.primary,
+  },
+  // Skeleton Styles
+  skeletonIcon: {
+    marginBottom: SPACING.sm,
+  },
+  skeletonValue: {
+    // No margin needed for last element
   },
 });
 

@@ -15,28 +15,52 @@ import {
   Modal,
   ScrollView,
 } from 'react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import FastImage from 'react-native-fast-image';
+import LinearGradient from 'react-native-linear-gradient';
+import Svg, { Path, Rect, Line } from 'react-native-svg';
 
 import Icon from 'react-native-vector-icons/Feather';
 import { COLORS } from '../../constants/colors';
 import { SPACING, BORDER_RADIUS, SHADOWS } from '../../constants/spacing';
 import { TYPOGRAPHY } from '../../constants/typography';
 
-import { Warehouse, WarehouseStats, Stock } from '../../types/inventory';
+import { Warehouse, WarehouseStats, Stock, WarehouseFilterOptions } from '../../types/inventory';
 import inventoryApiService from '../../api/inventoryApi';
 import stockNotificationService from '../../utils/stockNotifications';
+import searchHistoryService from '../../utils/searchHistory';
 
 // Import modular components
 import HeaderSection from '../../components/inventory/Warehouse/AllWarehouse/HeaderSection';
 import WarehouseCard from '../../components/inventory/Warehouse/AllWarehouse/WarehouseCard';
 import WarehouseDetails from '../../components/inventory/Warehouse/AllWarehouse/DetailsCard';
 import BinManagementTab from '../../components/inventory/Warehouse/AllWarehouse/BinManagementTab';
-import FilterModal from '../../components/ui/FilterModal';
+import WarehouseFilterModal from '../../components/ui/WarehouseFilterModal';
+import { SearchModal } from '../../components/ui';
 
 // Import warehouse forms
 import { WarehouseForm, StockForm } from '../../components/inventory/Warehouse/WarehouseForms';
 
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
+
+// SVG Components
+const VerifiedIcon: React.FC<{ size?: number }> = ({ size = 15 }) => (
+  <Svg width={size} height={size} viewBox="0 0 15 14" fill="none">
+    <Path d="M13.5931 5.42601C13.3574 5.17976 13.1137 4.92601 13.0218 4.70288C12.9368 4.49851 12.9318 4.15976 12.9268 3.83163C12.9174 3.22163 12.9074 2.53038 12.4268 2.04976C11.9462 1.56913 11.2549 1.55913 10.6449 1.54976C10.3168 1.54476 9.97806 1.53976 9.77368 1.45476C9.55118 1.36288 9.29681 1.11913 9.05056 0.883506C8.61931 0.469131 8.12931 -0.000244141 7.47681 -0.000244141C6.82431 -0.000244141 6.33493 0.469131 5.90306 0.883506C5.65681 1.11913 5.40306 1.36288 5.17993 1.45476C4.97681 1.53976 4.63681 1.54476 4.30868 1.54976C3.69868 1.55913 3.00743 1.56913 2.52681 2.04976C2.04618 2.53038 2.03931 3.22163 2.02681 3.83163C2.02181 4.15976 2.01681 4.49851 1.93181 4.70288C1.83993 4.92538 1.59618 5.17976 1.36056 5.42601C0.946182 5.85726 0.476807 6.34726 0.476807 6.99976C0.476807 7.65226 0.946182 8.14163 1.36056 8.57351C1.59618 8.81976 1.83993 9.07351 1.93181 9.29663C2.01681 9.50101 2.02181 9.83976 2.02681 10.1679C2.03618 10.7779 2.04618 11.4691 2.52681 11.9498C3.00743 12.4304 3.69868 12.4404 4.30868 12.4498C4.63681 12.4548 4.97556 12.4598 5.17993 12.5448C5.40243 12.6366 5.65681 12.8804 5.90306 13.116C6.33431 13.5304 6.82431 13.9998 7.47681 13.9998C8.12931 13.9998 8.61868 13.5304 9.05056 13.116C9.29681 12.8804 9.55056 12.6366 9.77368 12.5448C9.97806 12.4598 10.3168 12.4548 10.6449 12.4498C11.2549 12.4404 11.9462 12.4304 12.4268 11.9498C12.9074 11.4691 12.9174 10.7779 12.9268 10.1679C12.9318 9.83976 12.9368 9.50101 13.0218 9.29663C13.1137 9.07413 13.3574 8.81976 13.5931 8.57351C14.0074 8.14226 14.4768 7.65226 14.4768 6.99976C14.4768 6.34726 14.0074 5.85788 13.5931 5.42601ZM10.3306 5.85351L6.83056 9.35351C6.78412 9.39999 6.72898 9.43687 6.66828 9.46204C6.60758 9.4872 6.54251 9.50015 6.47681 9.50015C6.4111 9.50015 6.34604 9.4872 6.28534 9.46204C6.22464 9.43687 6.16949 9.39999 6.12306 9.35351L4.62306 7.85351C4.52924 7.75969 4.47653 7.63244 4.47653 7.49976C4.47653 7.36707 4.52924 7.23983 4.62306 7.14601C4.71688 7.05219 4.84412 6.99948 4.97681 6.99948C5.10949 6.99948 5.23674 7.05219 5.33056 7.14601L6.47681 8.29288L9.62306 5.14601C9.66951 5.09955 9.72466 5.0627 9.78536 5.03756C9.84606 5.01242 9.91111 4.99948 9.97681 4.99948C10.0425 4.99948 10.1076 5.01242 10.1683 5.03756C10.229 5.0627 10.2841 5.09955 10.3306 5.14601C10.377 5.19246 10.4139 5.24761 10.439 5.30831C10.4641 5.369 10.4771 5.43406 10.4771 5.49976C10.4771 5.56545 10.4641 5.63051 10.439 5.6912C10.4139 5.7519 10.377 5.80705 10.3306 5.85351Z" fill="#00AAFF"/>
+  </Svg>
+);
+
+const WarehouseAvatar: React.FC<{ size?: number }> = ({ size = 42 }) => (
+  <Svg width={size} height={size} viewBox="0 0 42 42" fill="none">
+    <Rect x="1" y="1" width="40" height="40" rx="20" fill="#E7600E"/>
+    <Rect x="1" y="1" width="40" height="40" rx="20" stroke="white" strokeWidth="2"/>
+    <Path d="M12 18.3659V11.3416H30V29.3416H23.8537" stroke="white" strokeWidth="2.63415"/>
+    <Line x1="20.7806" y1="30.6587" x2="20.7806" y2="17.488" stroke="white" strokeWidth="2.63415"/>
+    <Line x1="16.3902" y1="28.9026" x2="16.3902" y2="15.7319" stroke="white" strokeWidth="2.63415"/>
+    <Line x1="12.0001" y1="30.6587" x2="12.0001" y2="20.1221" stroke="white" strokeWidth="2.63415"/>
+  </Svg>
+);
 
 // Unsplash warehouse images for variety
 const WAREHOUSE_IMAGES = [
@@ -88,10 +112,17 @@ const AllWarehouseScreen: React.FC<AllWarehouseScreenProps> = ({ navigation, rou
   const [selectedWarehouseForAction, setSelectedWarehouseForAction] = useState<Warehouse | null>(null);
   const [selectedStockForAction, setSelectedStockForAction] = useState<Stock | null>(null);
   const [showFilterModal, setShowFilterModal] = useState(false);
-  const [filterOptions, setFilterOptions] = useState({
+  const [showSearchModal, setShowSearchModal] = useState(false);
+  const [recentSearches, setRecentSearches] = useState<string[]>([]);
+  const [showMenuDropdown, setShowMenuDropdown] = useState(false);
+  const [selectedWarehouseForMenu, setSelectedWarehouseForMenu] = useState<WarehouseWithDetails | null>(null);
+  const [filterOptions, setFilterOptions] = useState<WarehouseFilterOptions>({
     status: 'all',
+    location: [],
+    contactInfo: 'all',
     sortBy: 'name',
     sortOrder: 'asc',
+    searchText: '',
   });
 
   const scrollX = useRef(new Animated.Value(0)).current;
@@ -215,6 +246,20 @@ const AllWarehouseScreen: React.FC<AllWarehouseScreenProps> = ({ navigation, rou
     fetchWarehouses();
   }, [fetchWarehouses]);
 
+  // Load recent searches
+  useEffect(() => {
+    const loadRecentSearches = async () => {
+      try {
+        await searchHistoryService.initialize();
+        const searches = searchHistoryService.getRecentSearches('warehouse');
+        setRecentSearches(searches);
+      } catch (error) {
+        console.error('Failed to load recent searches:', error);
+      }
+    };
+    loadRecentSearches();
+  }, []);
+
   // Cleanup timer on unmount
   useEffect(() => {
     return () => {
@@ -246,20 +291,40 @@ const AllWarehouseScreen: React.FC<AllWarehouseScreenProps> = ({ navigation, rou
   const CARD_SPACING = SPACING.lg;
   const SIDE_SPACING = (screenWidth - CARD_WIDTH) / 2;
 
-  // Filter and sort warehouses based on search text and filter options
+  // Filter and sort warehouses based on comprehensive filter options
   const filteredWarehouses = warehouses
     .filter(warehouse => {
       // Search filter
-      const matchesSearch = warehouse.name.toLowerCase().includes(searchText.toLowerCase()) ||
-        warehouse.code.toLowerCase().includes(searchText.toLowerCase()) ||
-        warehouse.address.toLowerCase().includes(searchText.toLowerCase());
+      const searchQuery = filterOptions.searchText.toLowerCase();
+      const matchesSearch = searchQuery === '' || 
+        warehouse.name.toLowerCase().includes(searchQuery) ||
+        warehouse.code.toLowerCase().includes(searchQuery) ||
+        warehouse.address.toLowerCase().includes(searchQuery);
       
       // Status filter
       const matchesStatus = filterOptions.status === 'all' || 
         (filterOptions.status === 'active' && warehouse.is_active) ||
         (filterOptions.status === 'inactive' && !warehouse.is_active);
       
-      return matchesSearch && matchesStatus;
+      // Location filter
+      const warehouseLocation = warehouse.address.split(',')[0].trim();
+      const matchesLocation = filterOptions.location.length === 0 || 
+        filterOptions.location.includes(warehouseLocation);
+      
+      // Contact info filter
+      let matchesContactInfo = true;
+      if (filterOptions.contactInfo !== 'all') {
+        switch (filterOptions.contactInfo) {
+          case 'has_contact':
+            matchesContactInfo = !!(warehouse.contact_person || warehouse.phone || warehouse.email);
+            break;
+          case 'complete':
+            matchesContactInfo = !!(warehouse.contact_person && warehouse.phone && warehouse.email);
+            break;
+        }
+      }
+      
+      return matchesSearch && matchesStatus && matchesLocation && matchesContactInfo;
     })
     .sort((a, b) => {
       let aValue: any, bValue: any;
@@ -419,6 +484,27 @@ const AllWarehouseScreen: React.FC<AllWarehouseScreenProps> = ({ navigation, rou
     setSelectedStockForAction(null);
   };
 
+  // Handle menu press for dropdown
+  const handleMenuPress = (warehouse: WarehouseWithDetails) => {
+    setSelectedWarehouseForMenu(warehouse);
+    setShowMenuDropdown(true);
+  };
+
+  // Handle menu dropdown actions
+  const handleMenuAction = (action: 'edit' | 'add_stock') => {
+    if (!selectedWarehouseForMenu) return;
+    
+    setShowMenuDropdown(false);
+    
+    if (action === 'edit') {
+      handleEditWarehouse(selectedWarehouseForMenu);
+    } else if (action === 'add_stock') {
+      handleAddStock(selectedWarehouseForMenu);
+    }
+    
+    setSelectedWarehouseForMenu(null);
+  };
+
   // Function to trigger stock notification check after stock operations
   const triggerStockNotificationCheck = async (stockData: any) => {
     try {
@@ -476,18 +562,73 @@ const AllWarehouseScreen: React.FC<AllWarehouseScreenProps> = ({ navigation, rou
   };
 
   // Filter handlers
-  const handleFilterApply = (newFilterOptions: any) => {
+  const handleFilterApply = (newFilterOptions: WarehouseFilterOptions) => {
     setFilterOptions(newFilterOptions);
+    setSearchText(newFilterOptions.searchText);
     setShowFilterModal(false);
   };
 
   const handleFilterReset = () => {
-    setFilterOptions({
+    const defaultFilters: WarehouseFilterOptions = {
       status: 'all',
+      location: [],
+      contactInfo: 'all',
       sortBy: 'name',
       sortOrder: 'asc',
-    });
+      searchText: '',
+    };
+    setFilterOptions(defaultFilters);
     setSearchText('');
+  };
+
+  // Search modal handlers
+  const handleSearchSubmit = (searchText: string) => {
+    setFilterOptions(prev => ({ ...prev, searchText }));
+    setSearchText(searchText);
+  };
+
+  const handleSearchResultSelect = (result: any) => {
+    // Handle warehouse selection from search results
+    const warehouse = warehouses.find(w => w.id === result.id);
+    if (warehouse) {
+      const index = filteredWarehouses.findIndex(w => w.id === warehouse.id);
+      if (index !== -1) {
+        setCurrentIndex(index);
+      }
+    }
+  };
+
+  const handleRecentSearchPress = (search: string) => {
+    setFilterOptions(prev => ({ ...prev, searchText: search }));
+    setSearchText(search);
+  };
+
+  // Convert warehouses to search results
+  const getSearchResults = () => {
+    if (!filterOptions.searchText) return [];
+    
+    return warehouses
+      .filter(warehouse => {
+        const searchQuery = filterOptions.searchText.toLowerCase();
+        return warehouse.name.toLowerCase().includes(searchQuery) ||
+               warehouse.code.toLowerCase().includes(searchQuery) ||
+               warehouse.address.toLowerCase().includes(searchQuery) ||
+               warehouse.contact_person?.toLowerCase().includes(searchQuery);
+      });
+  };
+
+  // Render warehouse card for search results
+  const renderWarehouseCard = (warehouse: WarehouseWithDetails, index: number) => {
+    return (
+      <WarehouseCard
+        key={warehouse.id}
+        warehouse={warehouse}
+        index={index}
+        scrollX={scrollX}
+        onPress={() => handleSearchResultSelect(warehouse)}
+        onEdit={() => handleEditWarehouse(warehouse)}
+      />
+    );
   };
 
   const handleAddPress = () => {
@@ -614,56 +755,44 @@ const AllWarehouseScreen: React.FC<AllWarehouseScreenProps> = ({ navigation, rou
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="transparent" translucent />
-      
-      {/* Header Card */}
+      <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
+      <LinearGradient colors={COLORS.gradient.primary} style={styles.headerGradient}>
+        {/* Header Card - Like Inventory Header */}
       <View style={styles.headerContainer}>
         <View style={styles.headerContent}>
           <View style={styles.headerTop}>
             <TouchableOpacity 
-              style={styles.backButton} 
-              onPress={handleBackPress}
+                style={styles.headerMenuButton} 
+              onPress={() => navigation.goBack()}
             >
               <Icon name="arrow-left" size={24} color="#FFFFFF" />
             </TouchableOpacity>
-            
             <View style={styles.headerTitleContainer}>
               <Text style={styles.headerTitle}>All Warehouses</Text>
               <Text style={styles.headerSubtitle}>Manage your warehouse inventory</Text>
             </View>
             
             <TouchableOpacity 
-              style={styles.addButton}
+                style={styles.settingsButton}
               onPress={handleAddPress}
             >
               <Icon name="plus" size={20} color="#FFFFFF" />
             </TouchableOpacity>
-      </View>
+          </View>
 
-          {/* Search Bar */}
-        <View style={styles.searchBar}>
-            <Icon name="search" size={18} color={COLORS.text.secondary} />
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Search warehouses..."
-            placeholderTextColor={COLORS.text.secondary}
-            value={searchText}
-            onChangeText={setSearchText}
-          />
-          {searchText.length > 0 ? (
-            <TouchableOpacity onPress={() => setSearchText('')}>
-                <Icon name="x" size={18} color={COLORS.text.secondary} />
-            </TouchableOpacity>
-          ) : (
-            <TouchableOpacity 
-              style={styles.filterButton}
-              onPress={() => setShowFilterModal(true)}
-            >
-                <Icon name="sliders" size={18} color={COLORS.text.secondary} />
-            </TouchableOpacity>
-          )}
+            {/* Search Bar - Like Inventory Header */}
+          <TouchableOpacity style={styles.searchBar} onPress={() => setShowSearchModal(true)}>
+            <Icon name="search" size={20} color="#9CA3AF" />
+            <Text style={styles.searchPlaceholder}>
+              {filterOptions.searchText || "Search warehouses..."}
+            </Text>
+              <TouchableOpacity style={styles.filterButton} onPress={() => setShowFilterModal(true)}>
+                <Icon name="filter" size={20} color="#FFFFFF" />
+              </TouchableOpacity>
+              </TouchableOpacity>
+          </View>
         </View>
-        </View>
+      </LinearGradient>
         
         {/* Error Message */}
         {error && (
@@ -672,28 +801,113 @@ const AllWarehouseScreen: React.FC<AllWarehouseScreenProps> = ({ navigation, rou
             <Text style={styles.errorText}>{error}</Text>
           </View>
         )}
-      </View>
 
       {/* Content based on active tab */}
       {activeTab === 'warehouse' ? (
         <>
-          {/* Horizontal Warehouse Cards */}
+          {/* Warehouses Section Title */}
+          <View style={styles.sectionTitleContainer}>
+            <Text style={styles.sectionTitle}>Warehouses</Text>
+            <Text style={styles.resultsCount}>
+              {filteredWarehouses.length} result{filteredWarehouses.length !== 1 ? 's' : ''} found
+            </Text>
+          </View>
+
+          {/* Vertical Warehouse Cards */}
           <Animated.View style={[styles.cardsContainer, { opacity: fadeAnim }]}>
             <FlatList
-              horizontal
-              showsHorizontalScrollIndicator={false}
+              showsVerticalScrollIndicator={false}
               contentContainerStyle={styles.cardsScrollContainer}
               data={filteredWarehouses}
               keyExtractor={(item) => item.id}
               renderItem={({ item, index }) => (
-                <View style={styles.cardWrapper}>
-                  <WarehouseCard
-                    warehouse={item}
-                    index={index}
-                    scrollX={scrollX}
-                    onEdit={handleEditWarehouse}
-                />
-              </View>
+                <TouchableOpacity 
+                  style={styles.warehouseCard}
+                  onPress={() => handleWarehousePress(item)}
+                  activeOpacity={0.8}
+                >
+                  {/* Hero Image with Margins */}
+                  <View style={styles.cardImageContainer}>
+                    <View style={styles.imageWrapper}>
+                    <FastImage
+                      source={{ uri: item.imageUrl }}
+                      style={styles.cardImage}
+                      resizeMode={FastImage.resizeMode.cover}
+                    />
+                    </View>
+                    <TouchableOpacity 
+                      style={styles.menuButton}
+                      onPress={() => handleMenuPress(item)}
+                    >
+                      <Icon name="more-vertical" size={20} color="#374151" />
+                    </TouchableOpacity>
+                  </View>
+
+                  {/* Company Information */}
+                  <View style={styles.cardContent}>
+                    <View style={styles.companyHeader}>
+                      <View style={styles.companyLogo}>
+                        <WarehouseAvatar size={42} />
+                      </View>
+                      <View style={styles.companyInfo}>
+                        <View style={styles.companyNameRow}>
+                          <Text style={styles.companyName}>{item.name}</Text>
+                          <View style={styles.verificationBadge}>
+                            <VerifiedIcon size={15} />
+                          </View>
+                        </View>
+                        <View style={styles.ratingRow}>
+                          <Icon name="star" size={16} color="#FCD34D" />
+                          <Text style={styles.ratingText}>4.9 ({(item.stats?.total_bins || 0).toString()}+)</Text>
+                        </View>
+                      </View>
+                    </View>
+
+                    {/* Key Details - 2x2 Grid */}
+                    <View style={styles.detailsGrid}>
+                      <View style={styles.detailRow}>
+                      <View style={styles.detailItem}>
+                        <Icon name="award" size={16} color="#FB7504" />
+                          <Text style={styles.detailText}>{(item.stats?.active_bins || 0).toString()}+ Active Bins</Text>
+                      </View>
+                      <View style={styles.detailItem}>
+                        <Icon name="map-pin" size={16} color="#FB7504" />
+                        <Text style={styles.detailText}>{item.address}</Text>
+                      </View>
+                      </View>
+                      <View style={styles.detailRow}>
+                      <View style={styles.detailItem}>
+                        <Icon name="package" size={16} color="#FB7504" />
+                          <Text style={styles.detailText}>{(item.stats?.total_stock || 0).toString()} Items</Text>
+                      </View>
+                      <View style={styles.detailItem}>
+                        <Icon name="activity" size={16} color="#FB7504" />
+                          <Text style={styles.detailText}>Utilization: {(item.utilization || 0).toString()}%</Text>
+                        </View>
+                      </View>
+                    </View>
+
+                    {/* Specialization Tags */}
+                    <View style={styles.specializationSection}>
+                      <Text style={styles.specializationTitle}>Specialization</Text>
+                      <View style={styles.tagsContainer}>
+                        <View style={styles.tag}>
+                          <Icon name="archive" size={14} color="#6B7280" />
+                          <Text style={styles.tagText}>Storage</Text>
+                        </View>
+                        <View style={styles.tag}>
+                          <Icon name="package" size={14} color="#6B7280" />
+                          <Text style={styles.tagText}>Inventory</Text>
+                        </View>
+                        <View style={styles.tag}>
+                          <Icon name="truck" size={14} color="#6B7280" />
+                          <Text style={styles.tagText}>Logistics</Text>
+                        </View>
+                      </View>
+                    </View>
+
+                  </View>
+                </TouchableOpacity>
               )}
               onScroll={(event) => {
                 const offsetX = event.nativeEvent.contentOffset.x;
@@ -703,18 +917,6 @@ const AllWarehouseScreen: React.FC<AllWarehouseScreenProps> = ({ navigation, rou
               scrollEventThrottle={16}
             />
           </Animated.View>
-
-          {/* Warehouse Details */}
-          <View style={styles.bottomCardsContainer}>
-            {selectedWarehouse && (
-              <WarehouseDetails 
-                key={selectedWarehouse.id} 
-                warehouse={selectedWarehouse}
-                  onEdit={handleEditWarehouse}
-                  onAddStock={handleAddStock}
-              />
-            )}
-          </View>
         </>
       ) : (
         /* Bin Management Tab Content */
@@ -736,7 +938,7 @@ const AllWarehouseScreen: React.FC<AllWarehouseScreenProps> = ({ navigation, rou
           <Icon 
             name="home" 
             size={16} 
-            color={activeTab === 'warehouse' ? COLORS.text.light : COLORS.text.secondary} 
+            color={activeTab === 'warehouse' ? COLORS.primary : COLORS.text.secondary} 
           />
           <Text style={[styles.bottomTabText, activeTab === 'warehouse' && styles.activeBottomTabText]}>
             Warehouse
@@ -750,7 +952,7 @@ const AllWarehouseScreen: React.FC<AllWarehouseScreenProps> = ({ navigation, rou
           <Icon 
             name="grid" 
             size={16} 
-            color={activeTab === 'binmanagement' ? COLORS.text.light : COLORS.text.secondary} 
+            color={activeTab === 'binmanagement' ? COLORS.primary : COLORS.text.secondary} 
           />
           <Text style={[styles.bottomTabText, activeTab === 'binmanagement' && styles.activeBottomTabText]}>
             Bin Management
@@ -810,29 +1012,63 @@ const AllWarehouseScreen: React.FC<AllWarehouseScreenProps> = ({ navigation, rou
         />
       </Modal>
 
+      {/* Search Modal */}
+      <SearchModal
+        visible={showSearchModal}
+        onClose={() => setShowSearchModal(false)}
+        onResultSelect={handleSearchResultSelect}
+        onSearchSubmit={handleSearchSubmit}
+        searchResults={getSearchResults()}
+        placeholder="Search warehouses..."
+        title="Search Warehouses"
+        category="warehouse"
+        popularSearches={['Main Warehouse', 'Storage Unit', 'Distribution Center', 'Cold Storage']}
+        showRecentSearches={true}
+        showPopularSearches={true}
+        renderResultItem={renderWarehouseCard}
+      />
+
       {/* Filter Modal */}
-      <FilterModal
+          <WarehouseFilterModal
         visible={showFilterModal}
         onClose={() => setShowFilterModal(false)}
         onApply={() => handleFilterApply(filterOptions)}
         onClear={handleFilterReset}
-        filterStatus={filterOptions.status}
-        setFilterStatus={(status) => setFilterOptions(prev => ({ ...prev, status }))}
-        selectedWarehouse="all"
-        setSelectedWarehouse={() => {}}
-        dateRange={{ start: '', end: '' }}
-        setDateRange={() => {}}
         warehouses={warehouses}
-        getWarehouseName={(id) => warehouses.find(w => w.id === id)?.name || 'Unknown'}
-        filteredTransfersCount={filteredWarehouses.length}
-        getActiveFilterCount={() => {
-          let count = 0;
-          if (filterOptions.status !== 'all') count++;
-          if (filterOptions.sortBy !== 'name') count++;
-          if (filterOptions.sortOrder !== 'asc') count++;
-          return count;
-        }}
-      />
+            currentFilters={filterOptions}
+          />
+
+          {/* Menu Dropdown Modal */}
+          <Modal
+            visible={showMenuDropdown}
+            transparent={true}
+            animationType="fade"
+            onRequestClose={() => setShowMenuDropdown(false)}
+          >
+            <TouchableOpacity 
+              style={styles.dropdownOverlay}
+              activeOpacity={1}
+              onPress={() => setShowMenuDropdown(false)}
+            >
+              <View style={styles.dropdownContainer}>
+                <TouchableOpacity 
+                  style={styles.dropdownItem}
+                  onPress={() => handleMenuAction('edit')}
+                >
+                  <Icon name="edit-2" size={20} color="#374151" />
+                  <Text style={styles.dropdownItemText}>Edit Warehouse</Text>
+                </TouchableOpacity>
+                
+                <TouchableOpacity 
+                  style={styles.dropdownItem}
+                  onPress={() => handleMenuAction('add_stock')}
+                >
+                  <Icon name="plus" size={20} color="#374151" />
+                  <Text style={styles.dropdownItemText}>Add Stock</Text>
+                </TouchableOpacity>
+              </View>
+            </TouchableOpacity>
+          </Modal>
     </SafeAreaView>
   );
 };
@@ -840,19 +1076,24 @@ const AllWarehouseScreen: React.FC<AllWarehouseScreenProps> = ({ navigation, rou
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORS.background,
   },
-  headerContainer: {
-    paddingTop: Platform.OS === 'ios' ? 0 : 24,
-    backgroundColor: '#FF6B35',
+  headerGradient: {
+    paddingTop: SPACING.xxl,
+    paddingBottom: SPACING.xs,
     borderBottomLeftRadius: BORDER_RADIUS.xl,
     borderBottomRightRadius: BORDER_RADIUS.xl,
     ...SHADOWS.lg,
   },
+  headerContainer: {
+    backgroundColor: 'transparent',
+    paddingHorizontal: SPACING.xs,
+    paddingVertical: SPACING.xs,
+  },
   searchContainer: {
     paddingHorizontal: SPACING.lg,
     paddingVertical: SPACING.md,
-    backgroundColor: '#FF6B35',
+    backgroundColor: '#FB7504',
     borderBottomLeftRadius: BORDER_RADIUS.xl,
     borderBottomRightRadius: BORDER_RADIUS.xl,
   },
@@ -860,10 +1101,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#FFFFFF',
-    borderRadius: BORDER_RADIUS.lg,
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.sm,
-    height: 44,
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    height: 48,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
@@ -872,24 +1113,36 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
+    marginHorizontal: 20,
+    marginBottom: 20,
   },
   searchInput: {
     flex: 1,
-    fontSize: TYPOGRAPHY.sizes.md,
-    color: COLORS.text.primary,
-    marginLeft: SPACING.sm,
-    marginRight: SPACING.sm,
+    fontSize: 16,
+    color: '#111827',
+    marginLeft: 12,
+    marginRight: 12,
     paddingVertical: 0,
+  },
+  searchPlaceholder: {
+    flex: 1,
+    fontSize: 16,
+    color: '#9CA3AF',
+    marginLeft: 12,
+    marginRight: 12,
+  },
+  searchResultCard: {
+    marginBottom: SPACING.md,
   },
   filterContainer: {
     flexDirection: 'row',
     gap: SPACING.sm,
   },
   filterButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: 'rgba(255, 107, 53, 0.1)',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: COLORS.primary,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -916,20 +1169,207 @@ const styles = StyleSheet.create({
     marginLeft: SPACING.xs,
     flex: 1,
   },
+  sectionTitleContainer: {
+    paddingHorizontal: 15,
+    paddingVertical: 16,
+  },
+  sectionTitle: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#111827',
+    marginBottom: 4,
+  },
+  resultsCount: {
+    fontSize: 14,
+    color: '#6B7280',
+    fontWeight: '500',
+  },
   cardsContainer: {
-    marginVertical: SPACING.xs,
+    flex: 1,
   },
   cardsScrollContainer: {
-    paddingHorizontal: (screenWidth - 320) / 2,
-    paddingVertical: SPACING.xs,
-    overflow: 'visible',
+    paddingHorizontal: 20,
+    paddingBottom: 100,
   },
-  cardWrapper: {
-    width: 320,
-    marginRight: SPACING.lg,
+  warehouseCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    marginBottom: 20,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+    overflow: 'hidden',
+  },
+  cardImageContainer: {
+    position: 'relative',
+    height: 150,
+    padding: 12, // Add margin around image
+  },
+  imageWrapper: {
+    flex: 1,
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+  cardImage: {
+    width: '100%',
+    height: '100%',
+  },
+  menuButton: {
+    position: 'absolute',
+    top: 20,
+    right: 20,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: SPACING.xs,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  cardContent: {
+    padding: 15,
+  },
+  companyHeader: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: 16,
+  },
+  companyLogo: {
+    width: 48,
+    height: 48,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  companyInfo: {
+    flex: 1,
+  },
+  companyNameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  companyName: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#111827',
+    marginRight: 8,
+  },
+  verificationBadge: {
+    width: 20,
+    height: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  ratingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  ratingText: {
+    fontSize: 14,
+    color: '#111827',
+    marginLeft: 4,
+    fontWeight: '500',
+  },
+  detailsGrid: {
+    marginBottom: 16,
+  },
+  detailRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  detailItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+    marginRight: 8,
+  },
+  detailText: {
+    fontSize: 12,
+    color: '#6B7280',
+    marginLeft: 6,
+    flex: 1,
+  },
+  specializationSection: {
+    marginBottom: 16,
+  },
+  specializationTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#111827',
+    marginBottom: 8,
+  },
+  tagsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  tag: {
+    backgroundColor: '#F3F4F6',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+    minWidth: '30%',
+  },
+  tagText: {
+    fontSize: 12,
+    color: '#6B7280',
+    fontWeight: '500',
+    marginLeft: 4,
+  },
+  actionButtons: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  editButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#fff',
+    backgroundColor: 'transparent',
+  },
+  editButtonText: {
+    fontSize: 14,
+    color: '#fff',
+    fontWeight: '600',
+    marginLeft: 6,
+  },
+  addStockButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    backgroundColor: '#fff',
+  },
+  addStockButtonText: {
+    fontSize: 14,
+    color: '#FFFFFF',
+    fontWeight: '600',
+    marginLeft: 6,
   },
   bottomCardsContainer: {
     flex: 1,
@@ -1048,20 +1488,6 @@ const styles = StyleSheet.create({
   warehouseDetailsContent: {
     gap: SPACING.md,
   },
-  detailRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  detailItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-  },
-  detailText: {
-    fontSize: TYPOGRAPHY.sizes.sm,
-    color: COLORS.text.secondary,
-    marginLeft: SPACING.sm,
-  },
   detailsButton: {
     backgroundColor: COLORS.primary,
     paddingVertical: SPACING.sm,
@@ -1119,8 +1545,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   headerContent: {
-    paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.md,
+    paddingBottom: 20,
   },
   tabContainer: {
     flexDirection: 'row',
@@ -1160,45 +1585,64 @@ const styles = StyleSheet.create({
   },
   bottomTabContainer: {
     flexDirection: 'row',
-    backgroundColor: '#1A1A1A',
-    paddingHorizontal: SPACING.sm,
-    paddingVertical: SPACING.xs,
-    borderRadius: BORDER_RADIUS.xl,
-    marginBottom: SPACING.md,
-    marginHorizontal: SPACING.lg,
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 20,
+    marginBottom: 20,
+    marginHorizontal: 20,
     position: 'absolute',
-    bottom: SPACING.md,
-    left: SPACING.lg,
-    right: SPACING.lg,
+    bottom: 20,
+    left: 20,
+    right: 20,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 8,
+    borderWidth: 1,
+    borderColor: '#F3F4F6',
   },
   bottomTab: {
     flex: 1,
     alignItems: 'center',
-    paddingVertical: SPACING.xs,
-    paddingHorizontal: SPACING.xs,
-    borderRadius: BORDER_RADIUS.lg,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 12,
   },
   activeBottomTab: {
-    backgroundColor: COLORS.primary,
+    backgroundColor: '#fff',
   },
   bottomTabText: {
-    fontSize: TYPOGRAPHY.sizes.xs,
-    color: '#FFFFFF',
-    marginTop: SPACING.xs,
+    fontSize: 12,
+    color: '#6B7280',
+    marginTop: 4,
     fontWeight: '500',
     flexShrink: 0,
   },
   activeBottomTabText: {
-    color: COLORS.text.light,
+    color: COLORS.primary,
     fontWeight: '600',
   },
   headerTop: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: SPACING.md,
+    marginBottom: 20,
+    paddingHorizontal: 20,
   },
-  backButton: {
+  headerMenuButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  settingsButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
@@ -1211,13 +1655,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   headerTitle: {
-    fontSize: TYPOGRAPHY.sizes.xl,
+    fontSize: 20,
     fontWeight: '700',
     color: '#FFFFFF',
     marginBottom: 2,
   },
   headerSubtitle: {
-    fontSize: TYPOGRAPHY.sizes.sm,
+    fontSize: 14,
     color: 'rgba(255, 255, 255, 0.8)',
   },
   addButton: {
@@ -1227,6 +1671,88 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+
+  // Overlay Card Styles - Like Sales Screen
+  overlayContainer: {
+    position: 'absolute',
+    bottom: SPACING.sm,
+    left: SPACING.sm,
+    right: SPACING.sm,
+    height: 80,
+  },
+  glassmorphismOverlay: {
+    flex: 1,
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    borderRadius: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  overlayContent: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.md,
+  },
+  overlayActionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+    minWidth: 100,
+    justifyContent: 'center',
+  },
+  actionIconContainer: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'rgba(251, 117, 4, 0.1)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: SPACING.sm,
+  },
+  overlayActionText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#1F2937',
+  },
+
+  // Dropdown Menu Styles
+  dropdownOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  dropdownContainer: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    paddingVertical: 8,
+    minWidth: 200,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  dropdownItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
+  dropdownItemText: {
+    fontSize: 16,
+    color: '#374151',
+    marginLeft: 12,
+    fontWeight: '500',
   },
 
 });

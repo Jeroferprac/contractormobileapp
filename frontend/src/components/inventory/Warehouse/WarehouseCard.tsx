@@ -1,213 +1,293 @@
-import React, { useRef } from "react";
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
-  Platform,
   Animated,
-  Dimensions,
-} from "react-native";
-import FastImage from 'react-native-fast-image';
-import Icon from 'react-native-vector-icons/MaterialIcons';
-import { Warehouse } from "../../../types/inventory";
+  Image as RNImage,
+} from 'react-native';
+import { LinearGradient } from 'react-native-linear-gradient';
+import { BlurView } from '@react-native-community/blur';
+import { Image } from 'react-native';
+import { Warehouse } from '../../../types/inventory';
+import Icon from 'react-native-vector-icons/Feather';
+import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
+import LoadingSkeleton from '../../../components/ui/LoadingSkeleton';
+import UnsplashImage from '../../../components/ui/UnsplashImage';
 
-const { width: screenWidth } = Dimensions.get('window');
-
-// Fallback images for different warehouse types
-const WAREHOUSE_IMAGES = [
-  'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=400&h=300&fit=crop',
-  'https://images.unsplash.com/photo-1553413077-190dd305871c?w=400&h=300&fit=crop',
-  'https://images.unsplash.com/photo-1566576912321-d58ddd7a6088?w=400&h=300&fit=crop',
-  'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=300&fit=crop',
-  'https://images.unsplash.com/photo-1587293852726-70cdb56c2866?w=400&h=300&fit=crop'
-];
+const CARD_WIDTH = 340;
+const CARD_HEIGHT = 220;
+const HEADER_HEIGHT = 120;
 
 interface WarehouseCardProps {
-  warehouse: Warehouse & {
-    imageUrl?: string;
-    totalItems?: number;
-    totalQuantity?: number;
-    utilization?: number;
-    activeItems?: number;
-  };
-  onPress?: (warehouse: Warehouse) => void;
+  warehouse: Warehouse;
+  onPress?: () => void;
+  isLoading?: boolean;
 }
 
-const WarehouseCard: React.FC<WarehouseCardProps> = ({
-  warehouse,
-  onPress,
-}) => {
-  const scaleAnim = useRef(new Animated.Value(1)).current;
+const WarehouseCard: React.FC<WarehouseCardProps> = ({ warehouse, onPress, isLoading = false }) => {
+  const [hasError, setHasError] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
+  const [imageLoaded, setImageLoaded] = useState(false);
+  const scale = React.useRef(new Animated.Value(1)).current;
 
+  // Unsplash image seeded by id for consistency
+  const imageUrl = `https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=1400&q=80&auto=format&fit=crop&ixlib=rb-4.0.3&seed=${encodeURIComponent(
+    warehouse.id
+  )}`;
+
+  // Derive some display values (assumptions to match visual)
+  const rating = '4.9';
+  const ratingCount = '100';
+  const locationShort = warehouse.address ? warehouse.address.split(',')[0] : warehouse.address;
+  const category = warehouse.code || 'General';
+  
+  // Loading skeleton
+  if (isLoading) {
+    return (
+      <View style={styles.wrapper}>
+        <LoadingSkeleton height={CARD_HEIGHT} width={CARD_WIDTH} borderRadius={14} />
+      </View>
+    );
+  }
+  
   const handlePressIn = () => {
-    Animated.timing(scaleAnim, {
-      toValue: 0.97,
-      duration: 150,
-      useNativeDriver: true,
+    Animated.timing(scale, { 
+      toValue: 0.98, 
+      duration: 150, 
+      useNativeDriver: true 
     }).start();
   };
-
   const handlePressOut = () => {
-    Animated.timing(scaleAnim, {
-      toValue: 1,
-      duration: 150,
-      useNativeDriver: true,
+    Animated.timing(scale, { 
+      toValue: 1, 
+      duration: 150, 
+      useNativeDriver: true 
     }).start();
   };
-
-  // Get warehouse image - use random Unsplash image based on warehouse ID
-  const getWarehouseImage = (warehouse: Warehouse) => {
-    const imageIndex = parseInt(warehouse.id) % WAREHOUSE_IMAGES.length;
-    return WAREHOUSE_IMAGES[imageIndex];
-  };
-
-  const imageUri = getWarehouseImage(warehouse);
 
   return (
-    <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
-      <TouchableOpacity
-        activeOpacity={0.9}
-        onPress={() => onPress?.(warehouse)}
-        onPressIn={handlePressIn}
-        onPressOut={handlePressOut}
-        style={styles.cardContainer}
-      >
-        {/* Header Image with Margin - Like AllSalesScreen */}
-        <View style={styles.imageContainer}>
-          <FastImage
-            source={{ uri: imageUri }}
-            style={styles.warehouseImage}
-            resizeMode={FastImage.resizeMode.cover}
+    <TouchableOpacity
+      onPress={onPress}
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
+      style={styles.wrapper}
+      activeOpacity={0.9}
+    >
+      <Animated.View style={[styles.card, { transform: [{ scale }] }]}>
+        {/* Header Image */}
+        <View style={styles.headerContainer}>
+          <RNImage
+            source={{ 
+              uri: imageUrl,
+              cache: 'force-cache'
+            }}
+            style={styles.headerImage}
+            resizeMode="cover"
+            onLoad={() => setImageLoaded(true)}
+            onError={() => setHasError(true)}
           />
-          
-          {/* Status Badge Overlay - Top Right */}
-          <View style={styles.statusBadge}>
-            <Icon 
-              name="home" 
-              size={14} 
-              color="#FFFFFF" 
-            />
-            <Text style={styles.statusBadgeText}>Active</Text>
-            </View>
+          <LinearGradient
+            colors={["rgba(0,0,0,0.0)", "rgba(0,0,0,0.25)"]}
+            style={styles.headerGradient}
+          />
 
-          {/* Warehouse Name Overlay - Bottom Center (Like SalesDetailsScreen hero) */}
-          <View style={styles.warehouseNameOverlay}>
-            <Text style={styles.warehouseNameText}>{warehouse.name}</Text>
-            <Text style={styles.warehouseSubText}>
-              {warehouse.activeItems || 0} Active • {warehouse.totalItems || 0} Items
-            </Text>
+          {/* Category badge top-left over image */}
+          <View style={styles.categoryBadge}>
+            <Text style={styles.categoryBadgeText}>{category}</Text>
           </View>
-          </View>
+        </View>
 
-        {/* Content Area - White Background */}
-        <View style={styles.cardBody}>
-          {/* Warehouse Details */}
-          <View style={styles.warehouseDetails}>
-            <Icon name="location-on" size={16} color="#666" style={styles.detailsIcon} />
-            <Text style={styles.detailsText}>
-              {warehouse.address ? warehouse.address.split(',')[0] : 'Warehouse Location'}
-                </Text>
+        {/* Card Body with Blur Background */}
+        <View style={styles.body}>
+          <View style={styles.blurCard}>
+            <View style={styles.titleRow}>
+              {/* Avatar overlapping */}
+              <View style={styles.avatarWrap}>
+                <RNImage
+                  source={{ uri: `https://ui-avatars.com/api/?name=${encodeURIComponent(warehouse.name)}&background=ffffff&color=333333&rounded=true&size=128` }}
+                  style={styles.avatar}
+                />
+                <View style={styles.onlineDot} />
               </View>
 
-          
+              <View style={styles.titleTextWrap}>
+                <View style={styles.titleRowTop}>
+                  <Text style={styles.title}>
+                    {warehouse.name}
+                  </Text>
+                  <View style={styles.verified}> 
+                    <Icon name="check" size={12} color="#fff" />
+                  </View>
+                </View>
+
+                <Text style={styles.subtitle}>
+                  {warehouse.address}
+                </Text>
+              </View>
+            </View>
           </View>
-      </TouchableOpacity>
-    </Animated.View>
+        </View>
+      </Animated.View>
+    </TouchableOpacity>
   );
 };
 
 const styles = StyleSheet.create({
-  cardContainer: {
-    width: 310,
-    height: 240,
-    borderRadius: 16,
-    marginRight: 18,
-    backgroundColor: '#FFFFFF',
-    borderWidth: 0.2,
-    borderColor: '#E0E0E0',
+  wrapper: {
+    width: CARD_WIDTH,
+    marginRight: 12,
+    marginVertical: 8,
+  },
+  card: {
+    backgroundColor: '#fff',
+    borderRadius: 14,
     overflow: 'hidden',
+    // Enhanced border
+    borderWidth: 2,
+    borderColor: 'rgba(15,23,42,0.1)',
+    shadowColor: '#000',
+    shadowOpacity: 0.08,
+    shadowRadius: 20,
+    shadowOffset: { width: 0, height: 8 },
+  },
+  headerContainer: {
+    height: HEADER_HEIGHT,
+    width: '100%',
+    position: 'relative',
+    overflow: 'hidden',
+    // ensure top corners match card so image reaches edge with no gaps
+    borderTopLeftRadius: 14,
+    borderTopRightRadius: 14,
+    // Add padding to create margin effect around the image
+    paddingTop: 10,
+    paddingLeft: 10,
+    paddingRight: 10,
+    paddingBottom: 0,
+  },
+  headerImage: {
+    width: '100%',
+    height: '100%',
+    // round only top corners so the image fills header without white gaps
+    borderTopLeftRadius: 12,
+    borderTopRightRadius: 12,
+    objectFit: 'cover',
+  },
+  headerGradient: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    height: 64,
+  },
+  categoryBadge: {
+    position: 'absolute',
+    left: 14,
+    top: 14,
+    backgroundColor: '#FDE68A',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 999,
+    elevation: 2,
+    margin: 2,
+  },
+  categoryBadgeText: {
+    color: '#92400E',
+    fontWeight: '700',
+    fontSize: 12,
+  },
+  body: {
+    paddingHorizontal: 12,
+    paddingTop: 8,
+    paddingBottom: 14,
+    marginHorizontal: 4,
+  },
+  blurCard: {
+    backgroundColor: 'rgba(245, 237, 237, 0.99)',
+    borderRadius: 12,
+    padding: 12,
+    marginTop: -40,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
-      height: 2,
+      height: 4,
     },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4, // Android shadow
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 6,
+    backdropFilter: 'blur(100px)',
   },
-  imageContainer: {
-    height: 180,
-    position: 'relative',
-    margin: 8,
-    borderRadius: 12,
-    overflow: 'hidden',
-  },
-  warehouseImage: {
-    width: '100%',
-    height: '100%',
-  },
-  statusBadge: {
-    position: 'absolute',
-    top: 12,
-    right: 12,
-    backgroundColor: 'rgba(0,0,0,0.7)',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
+  titleRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    marginBottom: 8,
   },
-  statusBadgeText: {
-    color: '#FFFFFF',
-    fontSize: 12,
-    fontWeight: '600',
-    marginLeft: 4,
-  },
-  warehouseNameOverlay: {
-    position: 'absolute',
-    bottom: 12,
-    left: 12,
-    right: 12,
-    backgroundColor: 'rgba(0,0,0,0.7)',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 8,
+  avatarWrap: {
+    width: 64,
+    height: 64,
+    borderRadius: 999,
+    marginTop: -32,
+    marginLeft: 6,
+    overflow: 'visible',
+    zIndex: 2,
     alignItems: 'center',
+    justifyContent: 'center',
   },
-  warehouseNameText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: 'bold',
-    textAlign: 'center',
+  avatar: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    borderWidth: 4,
+    borderColor: '#fff',
+    margin: 2,
   },
-  warehouseSubText: {
-    color: 'rgba(255,255,255,0.8)',
-    fontSize: 12,
-    textAlign: 'center',
-    marginTop: 2,
+  onlineDot: {
+    position: 'absolute',
+    right: 6,
+    bottom: 6,
+    width: 12,
+    height: 12,
+    borderRadius: 999,
+    backgroundColor: '#16A34A',
+    borderWidth: 2,
+    borderColor: '#fff',
   },
-  cardBody: {
+  titleTextWrap: {
     flex: 1,
-    padding: 8,
-    backgroundColor: '#FFFFFF',
+    marginLeft: 12,
     justifyContent: 'center',
   },
-  warehouseDetails: {
+  titleRowTop: {
     flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 2,
+  },
+  title: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#0F172A',
+    flex: 1,
+    lineHeight: 22,
+  },
+  verified: {
+    marginLeft: 8,
+    backgroundColor: '#0369A1',
+    padding: 6,
+    borderRadius: 6,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  detailsIcon: {
-    marginRight: 6,
+  subtitle: {
+    color: '#6B7280',
+    fontSize: 13,
+    lineHeight: 16,
+    flexWrap: 'wrap',
   },
-  detailsText: {
-    fontSize: 18,
-    color: '#666',
-    fontWeight: '700',  
-    
-  },
-
+  // Removed info card styles - no longer needed
+  // tag pills removed — styles cleaned up
 });
 
 export default WarehouseCard;

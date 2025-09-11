@@ -29,7 +29,7 @@ const LowStockStatsCard: React.FC<LowStockStatsCardProps> = ({ stats, onPress })
       activeOpacity={0.9}
     >
       <LinearGradient
-        colors={['#FF6B35', '#FF8E53']}
+        colors={['#FB7504', '#C2252C']}
         style={styles.gradient}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}

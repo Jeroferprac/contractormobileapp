@@ -24,8 +24,8 @@ const HeaderCard: React.FC<HeaderCardProps> = ({
   const userAvatar = user?.avatar_data ? `data:${user.avatar_mimetype};base64,${user.avatar_data}` : null;
   
   const quickActions = [
-    { id: 'transfer', label: 'Create Transfer', icon: 'repeat', color: '#FF6B35' },
-    { id: 'warehouse', label: 'Add Warehouse', icon: 'home', color: '#FFD700' },
+    { id: 'transfer', label: 'Create Transfer', icon: 'repeat', color: '#FB7504' },
+    { id: 'warehouse', label: 'Add Warehouse', icon: 'home', color: '#FB7504' },
     { id: 'stock', label: 'Add Stock', icon: 'package', color: '#28A745' },
   ];
 
@@ -38,7 +38,7 @@ const HeaderCard: React.FC<HeaderCardProps> = ({
   return (
     <View style={styles.container}>
       <LinearGradient
-        colors={['#FF6B35', '#FF8C42', '#1A1A1A']}
+        colors={['#FB7504', '#C2252C', '#1A1A1A']}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={styles.gradientCard}
@@ -62,7 +62,7 @@ const HeaderCard: React.FC<HeaderCardProps> = ({
                 />
               ) : (
                 <View style={styles.avatarPlaceholder}>
-                  <Icon name="user" size={24} color="#FF6B35" />
+                  <Icon name="user" size={24} color="#FB7504" />
                 </View>
               )}
             </View>
@@ -222,7 +222,7 @@ const styles = StyleSheet.create({
     letterSpacing: -0.5,
   },
   highlightedName: {
-    color: '#FFD700',
+    color: '#FB7504',
     fontWeight: Platform.OS === 'ios' ? '800' : 'bold',
     textShadowColor: 'rgba(0, 0, 0, 0.3)',
     textShadowOffset: { width: 1, height: 1 },

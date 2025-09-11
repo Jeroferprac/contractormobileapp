@@ -30,11 +30,11 @@ const LowStockStories: React.FC<LowStockStoriesProps> = ({ items, onItemPress })
       case 'critical':
         return '#FF4444';
       case 'low':
-        return '#FF9500';
+        return '#FB7504';
       case 'medium':
         return '#FFCC00';
       default:
-        return '#FF9500';
+        return '#FB7504';
     }
   };
 

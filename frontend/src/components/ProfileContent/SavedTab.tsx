@@ -68,7 +68,7 @@ export const SavedTab: React.FC<SavedTabProps> = ({ savedItems, onItemPress }) =
         </View>
         {item.rating && (
           <View style={styles.ratingContainer}>
-            <Icon name="star" size={12} color="#FFD700" />
+            <Icon name="star" size={12} color="#FB7504" />
             <Text style={styles.ratingText}>{item.rating}</Text>
           </View>
         )}

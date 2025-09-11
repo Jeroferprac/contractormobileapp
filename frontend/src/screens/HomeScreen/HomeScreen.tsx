@@ -7,7 +7,6 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
-  Alert,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Feather';
 import FastImage from 'react-native-fast-image';
@@ -17,7 +16,7 @@ import { HomeScreenNavigationProp } from '../../types/navigation';
 import { useAuth } from '../../context/AuthContext';
 
 // UI Components
-import { SearchBar, FilterChips, HorizontalScroll } from '../../components/ui';
+import { SearchBar, FilterChips, HorizontalScroll, LogoutModal } from '../../components/ui';
 
 // Home Components
 import {
@@ -43,7 +42,9 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
   const [activeFilters, setActiveFilters] = useState(mockFilters || []);
   const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
   const [searchText, setSearchText] = useState('');
-  const { logout } = useAuth();
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const { logout, user } = useAuth();
 
   const handleFilterChange = (filterId: string) => {
     setSelectedFilters(prev => 
@@ -80,33 +81,32 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
     console.log('Professional pressed:', professional.name);
   };
 
-  const handlePriceListPress = (priceList: any) => {
-    console.log('Price List pressed:', priceList.name);
-    navigation.navigate('PriceLists');
+  const handleLogout = () => {
+    console.log('Logout button pressed');
+    setShowLogoutModal(true);
   };
 
-  const handleLogout = async () => {
-    console.log('Logout button pressed');
-    Alert.alert(
-      'Logout',
-      'Are you sure you want to logout?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Logout',
-          style: 'destructive',
-          onPress: async () => {
-            console.log('Logout confirmed, starting logout process...');
-            try {
-              await logout();
-              console.log('Logout successful');
-            } catch (error) {
-              console.error('Logout error:', error);
-            }
-          },
-        },
-      ]
-    );
+  const handleLogoutConfirm = async () => {
+    console.log('Logout confirmed, starting logout process...');
+    setIsLoggingOut(true);
+    
+    try {
+      await logout();
+      console.log('Logout successful');
+    } catch (error) {
+      console.error('Logout error:', error);
+    } finally {
+      setIsLoggingOut(false);
+    }
+  };
+
+  const handleLogoutClose = () => {
+    setShowLogoutModal(false);
+    setIsLoggingOut(false);
+  };
+
+  const handlePriceListPress = (priceList: any) => {
+    console.log('Price list pressed:', priceList.name);
   };
 
   // Filter professionals by type with fallback
@@ -157,11 +157,8 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
             
             selectedFilters={selectedFilters}
             onFilterChange={handleFilterChange}
-
             onRemoveFilter={handleRemoveFilter}
             style={styles.filterChips}
-
-
           />
         )}
 
@@ -329,6 +326,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
           </View>
 
           
+          
 
           {/* Freelancers */}
           <View style={styles.professionalSection}>
@@ -392,6 +390,15 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
           </View>
         </View>
       </ScrollView>
+
+      {/* Logout Modal */}
+      <LogoutModal
+        visible={showLogoutModal}
+        isLoggingOut={isLoggingOut}
+        onClose={handleLogoutClose}
+        onConfirm={handleLogoutConfirm}
+        username={user?.full_name || user?.email}
+      />
     </SafeAreaView>
   );
 };

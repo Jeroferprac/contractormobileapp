@@ -59,7 +59,7 @@ const SalesList: React.FC<SalesListProps> = ({
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
       case 'completed':
-        return '#FF6B35';
+        return '#FB7504';
       case 'cancelled':
         return '#F87171';
       case 'pending':
@@ -264,7 +264,7 @@ const SalesList: React.FC<SalesListProps> = ({
             activeOpacity={0.8}
           >
             <Text style={styles.viewAllText}>View All</Text>
-            <Icon name="chevron-right" size={16} color="#FF6B35" />
+            <Icon name="chevron-right" size={16} color="#FB7504" />
           </TouchableOpacity>
         )}
       </View>
@@ -299,7 +299,7 @@ const SalesList: React.FC<SalesListProps> = ({
                 onPress={() => handleSwipe('right')}
                 activeOpacity={0.7}
               >
-                <Icon name="chevron-left" size={24} color="#FF6B35" />
+                <Icon name="chevron-left" size={24} color="#FB7504" />
               </TouchableOpacity>
               
               <Text style={styles.swipeText}>
@@ -311,7 +311,7 @@ const SalesList: React.FC<SalesListProps> = ({
                 onPress={() => handleSwipe('left')}
                 activeOpacity={0.7}
               >
-                <Icon name="chevron-right" size={24} color="#FF6B35" />
+                <Icon name="chevron-right" size={24} color="#FB7504" />
               </TouchableOpacity>
             </View>
           </>
@@ -364,7 +364,7 @@ const styles = StyleSheet.create({
   },
   viewAllText: {
     fontSize: 12,
-    color: '#FF6B35',
+    color: '#FB7504',
     marginRight: SPACING.xs,
     fontWeight: '600',
   },
@@ -424,7 +424,7 @@ const styles = StyleSheet.create({
   },
   amountText: {
     fontSize: 18,
-    color: '#FF6B35',
+    color: '#FB7504',
     fontWeight: '700',
   },
   cardMiddle: {
@@ -477,7 +477,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#D1D5DB',
   },
   activeDot: {
-    backgroundColor: '#FF6B35',
+    backgroundColor: '#FB7504',
     width: 24,
   },
   swipeInstructions: {

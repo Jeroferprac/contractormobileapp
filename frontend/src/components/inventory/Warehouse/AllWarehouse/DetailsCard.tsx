@@ -90,7 +90,7 @@ const WarehouseDetails: React.FC<WarehouseDetailsProps> = ({ warehouse, onEdit, 
   const getProgressColor = (percentage: number) => {
     if (percentage >= 80) return '#4CAF50'; // Green
     if (percentage >= 60) return '#2196F3'; // Blue
-    if (percentage >= 40) return '#FF9800'; // Orange
+    if (percentage >= 40) return '#FB7504'; // Theme color
     return '#F44336'; // Red
   };
 

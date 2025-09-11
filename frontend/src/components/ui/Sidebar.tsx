@@ -6,6 +6,7 @@ import { COLORS } from '../../constants/colors';
 import { SPACING } from '../../constants/spacing';
 import { BORDER_RADIUS } from '../../constants/spacing';
 import { useAuth } from '../../context/AuthContext';
+import LogoutModal from './LogoutModal';
 
 interface SidebarProps {
   visible: boolean;
@@ -35,6 +36,8 @@ const MenuItem: React.FC<{
 
 const Sidebar: React.FC<SidebarProps> = ({ visible, onClose, onNavigate, currentScreen }) => {
   const { logout, user } = useAuth();
+  const [isLogoutModalVisible, setLogoutModalVisible] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   // Animation values
   const slideAnim = useRef(new Animated.Value(-300)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -110,6 +113,20 @@ const Sidebar: React.FC<SidebarProps> = ({ visible, onClose, onNavigate, current
     return (names[0].charAt(0) + names[names.length - 1].charAt(0)).toUpperCase();
   };
 
+  const handleLogoutConfirm = async () => {
+    setIsLoggingOut(true);
+    onClose(); // Close the sidebar
+    try {
+      await logout();
+      // The component will unmount here due to auth state change.
+      // The "success" state of the modal might not be shown, but the logout will proceed.
+    } catch (error) {
+      console.error('Logout error:', error);
+      setIsLoggingOut(false);
+      Alert.alert('Logout Failed', 'An error occurred while logging out.');
+    }
+  };
+
   return (
     <Modal
       visible={visible}
@@ -117,6 +134,13 @@ const Sidebar: React.FC<SidebarProps> = ({ visible, onClose, onNavigate, current
       animationType="none"
       onRequestClose={onClose}
     >
+      <LogoutModal
+        visible={isLogoutModalVisible}
+        isLoggingOut={isLoggingOut}
+        onClose={() => setLogoutModalVisible(false)}
+        onConfirm={handleLogoutConfirm}
+        username={user?.full_name}
+      />
       <Animated.View style={[styles.overlay, { opacity: fadeAnim }]}>
         <TouchableOpacity style={styles.backdrop} onPress={onClose} />
         
@@ -231,30 +255,7 @@ const Sidebar: React.FC<SidebarProps> = ({ visible, onClose, onNavigate, current
               <TouchableOpacity 
                 style={styles.logoutIcon}
                 activeOpacity={0.7}
-                onPress={() => {
-                  Alert.alert(
-                    'Logout',
-                    'Are you sure you want to logout?',
-                    [
-                      {
-                        text: 'Cancel',
-                        style: 'cancel',
-                      },
-                      {
-                        text: 'Logout',
-                        style: 'destructive',
-                        onPress: async () => {
-                          onClose();
-                          try {
-                            await logout();
-                          } catch (error) {
-                            console.error('Logout error:', error);
-                          }
-                        },
-                      },
-                    ]
-                  );
-                }}
+                onPress={() => setLogoutModalVisible(true)}
               >
                 <Icon name="power" size={20} color="#FF6B35" />
               </TouchableOpacity>

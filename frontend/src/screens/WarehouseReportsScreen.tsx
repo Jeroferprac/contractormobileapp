@@ -367,15 +367,15 @@ const WarehouseReportsScreen: React.FC<WarehouseReportsScreenProps> = ({ navigat
           <style>
             body { font-family: Arial, sans-serif; margin: 20px; }
             .header { text-align: center; margin-bottom: 30px; }
-            .title { font-size: 28px; font-weight: bold; color: #FF6B35; margin-bottom: 10px; }
+            .title { font-size: 28px; font-weight: bold; color: #FB7504; margin-bottom: 10px; }
             .subtitle { font-size: 16px; color: #6C757D; margin-bottom: 20px; }
             .summary { background-color: #F8F9FA; padding: 20px; border-radius: 8px; margin-bottom: 30px; }
             .summary-grid { display: flex; justify-content: space-around; text-align: center; }
             .summary-item { flex: 1; }
-            .summary-value { font-size: 24px; font-weight: bold; color: #FF6B35; }
+            .summary-value { font-size: 24px; font-weight: bold; color: #FB7504; }
             .summary-label { font-size: 14px; color: #6C757D; margin-top: 5px; }
             .section { margin-bottom: 40px; }
-            .section-title { font-size: 20px; font-weight: bold; color: #1A1A1A; margin-bottom: 15px; border-bottom: 2px solid #FF6B35; padding-bottom: 5px; }
+            .section-title { font-size: 20px; font-weight: bold; color: #1A1A1A; margin-bottom: 15px; border-bottom: 2px solid #FB7504; padding-bottom: 5px; }
             table { width: 100%; border-collapse: collapse; margin-top: 15px; }
             th, td { border: 1px solid #E9ECEF; padding: 8px; text-align: left; font-size: 12px; }
             th { background-color: #F8F9FA; font-weight: bold; color: #1A1A1A; }
@@ -1190,9 +1190,9 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   activeTabIconContainer: {
-    backgroundColor: COLORS.primary + '20', // Orange background for active icon
+    backgroundColor: COLORS.primary + '20', // Theme color background for active icon
     borderWidth: 1,
-    borderColor: COLORS.primary, // Orange border
+    borderColor: COLORS.primary, // Theme color border
   },
   bottomTabText: {
     fontSize: 9, // Reduced from 10

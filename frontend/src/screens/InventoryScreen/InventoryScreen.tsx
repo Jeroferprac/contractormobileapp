@@ -28,7 +28,9 @@ import {
   InventoryStats,
   TopSellingList,
   RecentActivityCard,
+  RecentActivityList,
   WarehouseList,
+  StockReportChart
   SupplierList,
   PriceListSection
 } from '../../components/inventory';
@@ -39,11 +41,13 @@ import {
   InventorySummary,
   Transaction,
   Warehouse,
-  Supplier,
+  Stock,
 } from '../../types/inventory';
 
 import { InventoryScreenNavigationProp } from '../../types/navigation';
 import inventoryApiService from '../../api/inventoryApi';
+import { transformWarehouseStockToChartData, generateTimeBasedChartData } from '../../utils/chartDataUtils';
+import { BarChartData } from '../../types/inventory';
 
 // Fallback Unsplash images for warehouses
 const UNSPLASH_IMAGES = [
@@ -64,26 +68,20 @@ const InventoryScreen: React.FC<InventoryScreenProps> = ({ navigation }) => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [summary, setSummary] = useState<InventorySummary | null>(null);
   const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
-  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [chartData, setChartData] = useState<
     { value: number; label: string; dataPointText: string }[]
   >([]);
+  const [barChartData, setBarChartData] = useState<BarChartData[]>([]);
+  const [timeframe, setTimeframe] = useState<string>('In week');
+  const [isChartLoading, setIsChartLoading] = useState(true);
   const [loading, setLoading] = useState(true);
   const [sidebarVisible, setSidebarVisible] = useState(false);
-  
-
   const [barcodeScannerVisible, setBarcodeScannerVisible] = useState(false);
-  const [hasError, setHasError] = useState(false);
 
   useEffect(() => {
-    try {
-      loadInventoryData();
-    } catch (error) {
-      console.error('Error in useEffect:', error);
-      setHasError(true);
-      setLoading(false);
-    }
+    loadInventoryData();
   }, []);
+
 
   // Debug sidebar state changes
   useEffect(() => {
@@ -102,10 +100,44 @@ const InventoryScreen: React.FC<InventoryScreenProps> = ({ navigation }) => {
   const getMonthName = (monthNumber: number): string =>
     new Date(2000, monthNumber - 1).toLocaleString('default', { month: 'short' });
 
+  const processStockDataForChart = (warehouses: Warehouse[], stockLevels: Stock[]) => {
+    // Create a map of warehouse ID to name
+    const warehouseMap = new Map<string, string>();
+    warehouses.forEach(warehouse => {
+      warehouseMap.set(warehouse.id, warehouse.name);
+    });
+    
+    // Group stock by warehouse
+    const warehouseStocks: Record<string, number> = {};
+    
+    // Initialize with all warehouses at 0
+    warehouses.forEach(warehouse => {
+      warehouseStocks[warehouse.id] = 0;
+    });
+    
+    // Sum up quantities for each warehouse
+    stockLevels.forEach(stock => {
+      if (stock.warehouse_id && warehouseStocks[stock.warehouse_id] !== undefined) {
+        const quantity = typeof stock.quantity === 'string' ? parseFloat(stock.quantity || '0') : (stock.quantity || 0);
+        warehouseStocks[stock.warehouse_id] += isNaN(quantity) ? 0 : quantity;
+      }
+    });
+    
+    // Convert to array format for chart
+    const result = Object.entries(warehouseStocks).map(([warehouseId, quantity]) => ({
+      value: quantity,
+      label: warehouseMap.get(warehouseId) || 'Unknown',
+      dataPointText: `${quantity} units`,
+    }));
+    
+    // Sort by quantity (highest first) and limit to top 6 warehouses
+    result.sort((a, b) => b.value - a.value);
+    
+    return result.slice(0, 6);
+  };
+
   const loadInventoryData = async () => {
     try {
-      console.log('🔄 [InventoryScreen] Starting to load inventory data...');
-      console.log('🌐 [InventoryScreen] API Base URL:', inventoryApiService['api'].defaults.baseURL);
       setLoading(true);
       
       // Add individual error handling for each API call
@@ -113,29 +145,15 @@ const InventoryScreen: React.FC<InventoryScreenProps> = ({ navigation }) => {
         summaryRes,
         topSellingRes,
         transactionsRes,
-        suppliersRes,
         warehouseRes,
+        stockLevelsRes,
       ] = await Promise.all([
-        inventoryApiService.getSummary().catch((error) => {
-          console.error('❌ [InventoryScreen] Summary API error:', error);
-          return { data: null };
-        }),
-        inventoryApiService.getSalesByProduct().catch((error) => {
-          console.error('❌ [InventoryScreen] Products API error:', error);
-          return { data: [] };
-        }),
-        inventoryApiService.getTransactions({ limit: 3 }).catch((error) => {
-          console.error('❌ [InventoryScreen] Transactions API error:', error);
-          return { data: [] };
-        }),
-        inventoryApiService.getSuppliers().catch((error) => {
-          console.error('❌ [InventoryScreen] Suppliers API error:', error);
-          return { data: [] };
-        }),
-        inventoryApiService.getWarehouses().catch((error) => {
-          console.error('❌ [InventoryScreen] Warehouses API error:', error);
-          return { data: [] };
-        }),
+        inventoryApiService.getSummary().catch(() => ({ data: null })),
+        inventoryApiService.getSalesByProduct().catch(() => ({ data: [] })),
+        inventoryApiService.getTransactions({ limit: 3 }).catch(() => ({ data: [] })),
+        inventoryApiService.getWarehouses().catch(() => ({ data: [] })),
+        inventoryApiService.getCurrentStockLevels().catch(() => ({ data: [] })),
+        suppliersRes,
       ]);
 
       setSummary(summaryRes.data);
@@ -153,8 +171,14 @@ const InventoryScreen: React.FC<InventoryScreenProps> = ({ navigation }) => {
       }));
       setWarehouses(updatedWarehouses);
       
-      const formattedChartData = []; // Chart data not available from current API calls
-      setChartData(formattedChartData);
+      // Process stock data for chart - group by warehouse
+      const stockData = processStockDataForChart(warehouseRes.data || [], stockLevelsRes.data || []);
+      setChartData(stockData);
+      
+      // Process data for responsive bar chart - use time-based data initially
+      const initialTimeBasedData = generateTimeBasedChartData('week', []);
+      setBarChartData(initialTimeBasedData);
+      setIsChartLoading(false);
     } catch (error) {
       console.error('Error loading inventory data:', error);
       // Don't show alert, just set empty data
@@ -167,52 +191,97 @@ const InventoryScreen: React.FC<InventoryScreenProps> = ({ navigation }) => {
       console.log('❌ [InventoryScreen] Error loading data, all data reset to empty');
     } finally {
       setLoading(false);
-      console.log('🏁 [InventoryScreen] Finished loading inventory data');
     }
   };
 
   const getTopSellingProducts = () => products.slice(0, 4);
   const getRecentActivity = () => transactions.slice(0, 3);
-  const getTopSuppliers = () => suppliers.slice(0, 4);
 
   const handleProductPress = (product: Product) => {
     Alert.alert('Product Details', `Selected: ${product.name}`);
   };
 
+  const handleTimeframeChange = (newTimeframe: string) => {
+    setTimeframe(newTimeframe);
+    setIsChartLoading(true);
+    
+    // Generate time-based data for the new timeframe
+    const period = newTimeframe.toLowerCase().replace('in ', '') as 'day' | 'week' | 'month';
+    const timeBasedData = generateTimeBasedChartData(period, barChartData);
+    
+    // Add a small delay to show loading animation
+    setTimeout(() => {
+      setBarChartData(timeBasedData);
+      setIsChartLoading(false);
+    }, 300);
   const handleSupplierPress = (supplier: Supplier) => {
             navigation.navigate('SupplierDetailsScreen', { supplierId: supplier.id });
+>
   };
 
-  if (hasError) {
-    return (
-      <SafeAreaView style={styles.container}>
-        <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
-        <LinearGradient colors={COLORS.gradient.primary || ['#FF6B35', '#FF8C42']} style={styles.headerGradient}>
-          <View style={styles.errorHeader}>
-            <Text style={styles.errorTitle}>Inventory</Text>
+  const handleBarPress = (index: number, item: BarChartData) => {
+    console.log('Bar pressed:', index, item);
+    // You can add navigation or modal display here
+  };
+
+  // Professional Loading Skeleton Components
+
+  const ChartSkeleton: React.FC = () => (
+    <View style={styles.section}>
+      <LoadingSkeleton width="100%" height={200} borderRadius={BORDER_RADIUS.lg} />
+    </View>
+  );
+
+  const TopSellingProductsSkeleton: React.FC = () => (
+    <>
+      <SectionHeader title="Top Selling Products" />
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.productsScrollContainer}>
+        {[...Array(4)].map((_, i) => (
+          <View key={`product-skeleton-${i}`} style={styles.productSkeletonCard}>
+            <LoadingSkeleton width={140} height={160} borderRadius={BORDER_RADIUS.lg} />
           </View>
-        </LinearGradient>
-        <View style={styles.errorContainer}>
-          <Text style={styles.errorText}>Something went wrong</Text>
-          <TouchableOpacity 
-            style={styles.retryButton}
-            onPress={() => {
-              setHasError(false);
-              setLoading(true);
-              loadInventoryData();
-            }}
-          >
-            <Text style={styles.retryButtonText}>Retry</Text>
-          </TouchableOpacity>
-        </View>
-      </SafeAreaView>
-    );
-  }
+        ))}
+      </ScrollView>
+    </>
+  );
+
+  const WarehousesSkeleton: React.FC = () => (
+    <>
+      <SectionHeader title="Warehouses" />
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.warehousesScrollContainer}>
+        {[...Array(3)].map((_, i) => (
+          <View key={`warehouse-skeleton-${i}`} style={styles.warehouseSkeletonCard}>
+            <LoadingSkeleton width={280} height={200} borderRadius={BORDER_RADIUS.lg} />
+          </View>
+        ))}
+      </ScrollView>
+    </>
+  );
+
+  const RecentActivitySkeleton: React.FC = () => (
+    <>
+      <SectionHeader title="Recent Activity" />
+      <View style={styles.activityContainer}>
+        {[...Array(3)].map((_, i) => (
+          <View key={`activity-skeleton-${i}`} style={styles.activitySkeletonItem}>
+            <LoadingSkeleton width={40} height={40} borderRadius={20} />
+            <View style={styles.activitySkeletonContent}>
+              <LoadingSkeleton width="70%" height={16} />
+              <LoadingSkeleton width="40%" height={12} style={{ marginTop: SPACING.xs }} />
+            </View>
+            <LoadingSkeleton width={60} height={16} />
+          </View>
+        ))}
+      </View>
+    </>
+  );
+
+  // Professional Loading State - Keep header functional, only skeleton card content
   if (loading) {
     return (
       <SafeAreaView style={styles.container}>
         <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
-        <LinearGradient colors={COLORS.gradient.primary || ['#FF6B35', '#FF8C42']} style={styles.headerGradient}>
+        <LinearGradient colors={COLORS.gradient.primary} style={styles.headerGradient}>
           <InventoryHeader
             onSidebarPress={() => setSidebarVisible(true)}
             onSettingsPress={() => Alert.alert('Settings', 'Coming soon')}
@@ -229,55 +298,10 @@ const InventoryScreen: React.FC<InventoryScreenProps> = ({ navigation }) => {
         </LinearGradient>
 
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 80 }}>
-          {/* Stats Cards Skeleton */}
-          <View style={styles.section}>
-            <View style={styles.statsSkeletonContainer}>
-              {[...Array(4)].map((_, i) => (
-                <View key={i} style={styles.statsSkeletonCard}>
-                  <LoadingSkeleton width="100%" height={120} borderRadius={BORDER_RADIUS.lg} />
-                </View>
-              ))}
-            </View>
-          </View>
-
-          {/* Chart Skeleton */}
-          <View style={styles.section}>
-            <LoadingSkeleton width="100%" height={200} borderRadius={BORDER_RADIUS.lg} />
-          </View>
-
-          {/* Top Selling Products Skeleton */}
-          <SectionHeader title="Top Selling Products" />
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.productsScrollContainer}>
-            {[...Array(4)].map((_, i) => (
-              <View key={i} style={styles.productSkeletonCard}>
-                <LoadingSkeleton width={140} height={160} borderRadius={BORDER_RADIUS.lg} />
-              </View>
-            ))}
-          </ScrollView>
-
-          {/* Warehouses Skeleton */}
-          <SectionHeader title="Warehouses" />
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.warehousesScrollContainer}>
-            {[...Array(3)].map((_, i) => (
-              <View key={i} style={styles.warehouseSkeletonCard}>
-                <LoadingSkeleton width={280} height={200} borderRadius={BORDER_RADIUS.lg} />
-              </View>
-            ))}
-          </ScrollView>
-
-          <SectionHeader title="Recent Activity" />
-          <View style={styles.activityContainer}>
-            {[...Array(3)].map((_, i) => (
-              <View key={i} style={styles.activitySkeletonItem}>
-                <LoadingSkeleton width={40} height={40} borderRadius={20} />
-                <View style={styles.activitySkeletonContent}>
-                  <LoadingSkeleton width="70%" height={16} />
-                  <LoadingSkeleton width="40%" height={12} style={{ marginTop: SPACING.xs }} />
-                </View>
-                <LoadingSkeleton width={60} height={16} />
-              </View>
-            ))}
-          </View>
+          <ChartSkeleton />
+          <TopSellingProductsSkeleton />
+          <WarehousesSkeleton />
+          <RecentActivitySkeleton />
         </ScrollView>
       </SafeAreaView>
     );
@@ -286,14 +310,9 @@ const InventoryScreen: React.FC<InventoryScreenProps> = ({ navigation }) => {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
-      <LinearGradient colors={COLORS.gradient.primary || ['#FF6B35', '#FF8C42']} style={styles.headerGradient}>
+      <LinearGradient colors={COLORS.gradient.primary} style={styles.headerGradient}>
         <InventoryHeader
-          onSidebarPress={() => {
-            console.log('🔧 [DEBUG] Sidebar button pressed, setting visible to true');
-            console.log('🔧 [DEBUG] Current sidebarVisible state:', sidebarVisible);
-            setSidebarVisible(true);
-            console.log('🔧 [DEBUG] SidebarVisible set to true');
-          }}
+          onSidebarPress={() => setSidebarVisible(true)}
           onSettingsPress={() => Alert.alert('Settings', 'Coming soon')}
           onScanPress={() => setBarcodeScannerVisible(true)}
         />
@@ -308,13 +327,16 @@ const InventoryScreen: React.FC<InventoryScreenProps> = ({ navigation }) => {
       </LinearGradient>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 80 }}>
-        <View style={styles.section}>
-          {summary && <InventoryStats />}
-        </View>
+        <InventoryStats summary={summary} loading={loading} />
 
-        <View style={styles.section}>
-          <Chart title="Stock Report" data={chartData} height={200} showLegend />
-        </View>
+        <StockReportChart 
+          title="Stock Report"
+          timeframe={timeframe}
+          data={barChartData}
+          loading={isChartLoading}
+          onTimeframeChange={handleTimeframeChange}
+          onBarPress={handleBarPress}
+        />
 
         <View style={styles.section}>
           <TopSellingList />
@@ -341,40 +363,25 @@ const InventoryScreen: React.FC<InventoryScreenProps> = ({ navigation }) => {
           navigation.push('AllWarehouses');
       />
 
-        <SectionHeader title="Recent Activity" />
-        <View style={styles.activityContainer}>
-          {getRecentActivity().map((transaction, index) => (
-            <FadeSlideInView key={transaction.id} delay={index * 100}>
-              <RecentActivityCard transaction={transaction} />
-            </FadeSlideInView>
-          ))}
-        </View>
+        <RecentActivityList />
       </ScrollView>
 
       <Sidebar
         visible={sidebarVisible}
         onClose={() => setSidebarVisible(false)}
-        currentScreen="MainTabs"
-        onNavigate={(screen) => {
-          console.log('🔧 [DEBUG] InventoryScreen: Sidebar requesting navigation to:', screen);
-          try {
-            // Close sidebar first
-            setSidebarVisible(false);
-            // Navigate to the requested screen
-            navigation.navigate(screen as any);
-            console.log('✅ [DEBUG] InventoryScreen: Navigation successful to:', screen);
-          } catch (error) {
-            console.error('❌ [DEBUG] InventoryScreen: Navigation failed to:', screen, error);
-            // Show error alert to user
-            Alert.alert('Navigation Error', `Unable to navigate to ${screen}. Please try again.`);
-          }
-        }}
+        onNavigate={(screen) => navigation.navigate(screen as any)}
       />
 
       <BarcodeScanner
         visible={barcodeScannerVisible}
         onClose={() => setBarcodeScannerVisible(false)}
-        onScan={(barcode) => Alert.alert('Scanned', barcode)}
+        onScan={(barcode, product) => {
+          if (product) {
+            // Navigate to product details or show product info
+            console.log('Scanned product:', product);
+          }
+        }}
+        showProductDetails={true}
       />
     </SafeAreaView>
   );

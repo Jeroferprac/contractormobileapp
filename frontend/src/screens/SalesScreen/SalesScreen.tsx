@@ -295,12 +295,12 @@ const SalesScreen: React.FC<SalesScreenProps> = ({ navigation }) => {
           rightContent={(
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
               <TouchableOpacity style={{ padding: 8, borderRadius: 12, backgroundColor: '#E9ECEF', marginRight: 8 }} onPress={() => chartRef.current?.zoomIn()} activeOpacity={0.7}>
-                <Icon name="zoom-in" size={16} color="#FF6B35" />
+                <Icon name="zoom-in" size={16} color="#FB7504" />
               </TouchableOpacity>
               <TouchableOpacity style={{ padding: 8, borderRadius: 12, backgroundColor: '#E9ECEF', marginRight: 8 }} onPress={() => chartRef.current?.zoomOut()} activeOpacity={0.7}>
-                <Icon name="zoom-out" size={16} color="#FF6B35" />
+                <Icon name="zoom-out" size={16} color="#FB7504" />
               </TouchableOpacity>
-              <TouchableOpacity style={{ backgroundColor: '#FF6B35', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 16 }} onPress={() => chartRef.current?.share()} activeOpacity={0.7}>
+              <TouchableOpacity style={{ backgroundColor: '#FB7504', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 16 }} onPress={() => chartRef.current?.share()} activeOpacity={0.7}>
                 <Text style={{ color: '#FFFFFF', fontSize: 12, fontWeight: '600' }}>SHARE</Text>
               </TouchableOpacity>
             </View>

@@ -94,13 +94,13 @@ const SalesHeader: React.FC<SalesHeaderProps> = ({
 
   return (
     <View style={styles.container}>
-      {/* Top Navigation Bar with Orange Background and SVG Pattern */}
+      {/* Top Navigation Bar with Theme Color Background and SVG Pattern */}
       <View style={styles.navigationBackground}>
         <Svg style={styles.headerSvg} width="100%" height="100%">
           <Defs>
             <SvgGradient id="headerGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-              <Stop offset="0%" stopColor="#FF6B35" />
-              <Stop offset="100%" stopColor="#FF8E53" />
+              <Stop offset="0%" stopColor="#FB7504" />
+              <Stop offset="100%" stopColor="#C2252C" />
             </SvgGradient>
           </Defs>
           <Rect width="100%" height="100%" fill="url(#headerGradient)" />
@@ -166,15 +166,15 @@ const SalesHeader: React.FC<SalesHeaderProps> = ({
             <Svg width={60} height={40}>
               <Path
                 d="M10 30 L20 20 L30 25 L40 15 L50 20"
-                stroke="#FF6B35"
+                stroke="#FB7504"
                 strokeWidth={2}
                 fill="none"
               />
-              <Circle cx={10} cy={30} r={2} fill="#FF6B35" />
-              <Circle cx={20} cy={20} r={2} fill="#FF6B35" />
-              <Circle cx={30} cy={25} r={2} fill="#FF6B35" />
-              <Circle cx={40} cy={15} r={2} fill="#FF6B35" />
-              <Circle cx={50} cy={20} r={2} fill="#FF6B35" />
+              <Circle cx={10} cy={30} r={2} fill="#FB7504" />
+              <Circle cx={20} cy={20} r={2} fill="#FB7504" />
+              <Circle cx={30} cy={25} r={2} fill="#FB7504" />
+              <Circle cx={40} cy={15} r={2} fill="#FB7504" />
+              <Circle cx={50} cy={20} r={2} fill="#FB7504" />
             </Svg>
             <Text style={styles.trendText}>+12%</Text>
           </View>
@@ -183,7 +183,7 @@ const SalesHeader: React.FC<SalesHeaderProps> = ({
         <View style={styles.statsContainer}>
           <View style={styles.statRow}>
             <View style={styles.statItem}>
-              <Icon name="trending-up" size={16} color="#FF6B35" />
+              <Icon name="trending-up" size={16} color="#FB7504" />
               <Text style={styles.statNumber}>
                 {isVisible && <AnimatedCounter 
                   value={getSafeNumber(salesThisMonth)} 
@@ -195,7 +195,7 @@ const SalesHeader: React.FC<SalesHeaderProps> = ({
           </View>
           <View style={styles.statRow}>
             <View style={styles.statItem}>
-              <Icon name="event" size={16} color="#FF6B35" />
+              <Icon name="event" size={16} color="#FB7504" />
               <Text style={styles.statDate}>{formatDate(lastSaleDate)}</Text>
               <Text style={styles.statLabel}>Last sale</Text>
             </View>
@@ -327,7 +327,7 @@ const styles = StyleSheet.create({
   },
   welcomeBanner: {
     marginHorizontal: SPACING.lg,
-    marginTop: 100, // Increased to account for taller orange background
+    marginTop: 100, // Increased to account for taller theme color background
     borderRadius: 24,
     backgroundColor: '#FFFFFF',
     shadowColor: '#000',
@@ -400,7 +400,7 @@ const styles = StyleSheet.create({
   trendText: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#FF6B35',
+    color: '#FB7504',
     marginTop: SPACING.xs,
   },
   statsContainer: {

@@ -754,32 +754,8 @@ class InventoryApiService {
 
   async getSaleInvoice(id: string): Promise<AxiosResponse<InvoiceResponse>> {
     return this.api.get(`${this.basePath}/sales/${id}/invoice`);
-
-  async getMonthlySalesSummary(): Promise<AxiosResponse<SalesSummary>> {
-    try {
-      return await this.api.get(`${this.basePath}/sales/summary/monthly`);
-    } catch (error) {
-      console.log('🔄 [API] Using mock monthly sales data');
-      const mockSalesSummary: SalesSummary = {
-        total_sales: 125000,
-        total_revenue: 1875000,
-        average_order_value: 15000,
-        top_selling_products: mockProducts.slice(0, 3),
-        monthly_trends: [
-          { month: '2024-01', sales: 125000, revenue: 1875000 },
-          { month: '2024-02', sales: 138000, revenue: 2070000 },
-          { month: '2024-03', sales: 142000, revenue: 2130000 },
-        ]
-      };
-      return { 
-        data: mockSalesSummary,
-        status: 200,
-        statusText: 'OK',
-        headers: {},
-        config: {} as any
-      } as AxiosResponse<SalesSummary>;
-    }
   }
+
 
   // ===== PURCHASE ORDERS ENDPOINTS =====
 

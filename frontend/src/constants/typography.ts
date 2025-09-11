@@ -94,6 +94,16 @@ export const TEXT_STYLES = {
     fontWeight: TYPOGRAPHY.weights.regular,
     lineHeight: TYPOGRAPHY.sizes.md * TYPOGRAPHY.lineHeights.normal
   },
+  body1: {
+    fontSize: TYPOGRAPHY.sizes.md,
+    fontWeight: TYPOGRAPHY.weights.regular,
+    lineHeight: TYPOGRAPHY.sizes.md * TYPOGRAPHY.lineHeights.normal
+  },
+  body2: {
+    fontSize: TYPOGRAPHY.sizes.sm,
+    fontWeight: TYPOGRAPHY.weights.regular,
+    lineHeight: TYPOGRAPHY.sizes.sm * TYPOGRAPHY.lineHeights.normal
+  },
   bodyLarge: {
     fontSize: TYPOGRAPHY.sizes.lg,
     fontWeight: TYPOGRAPHY.weights.regular,
@@ -123,4 +133,15 @@ export const TEXT_STYLES = {
     fontWeight: TYPOGRAPHY.weights.semibold,
     lineHeight: TYPOGRAPHY.sizes.lg * TYPOGRAPHY.lineHeights.tight
   }
+};
+
+// Export typography constants for direct use
+export const TYPOGRAPHY_CONSTANTS = {
+  h1: TEXT_STYLES.h1,
+  h2: TEXT_STYLES.h2,
+  h3: TEXT_STYLES.h3,
+  h4: TEXT_STYLES.h4,
+  body1: TEXT_STYLES.body1,
+  body2: TEXT_STYLES.body2,
+  button: TEXT_STYLES.button,
 }; 

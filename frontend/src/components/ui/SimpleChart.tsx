@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, Dimensions } from 'react-native';
 import { COLORS } from '../../constants/colors';
 import { SPACING, BORDER_RADIUS } from '../../constants/spacing';
 import { TYPOGRAPHY } from '../../constants/typography';
+import BarChart, { BarChartData } from './BarChart';
 
 interface SimpleChartProps {
   data: number[];

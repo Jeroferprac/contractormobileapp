@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { View, ScrollView, SafeAreaView, StyleSheet, Alert, Text, TouchableOpacity, StatusBar } from 'react-native';
 import FastImage from 'react-native-fast-image';
 import Icon from 'react-native-vector-icons/Feather';
+import LinearGradient from 'react-native-linear-gradient';
 import { inventoryApiService } from '../../api/inventoryApi';
 import { Transaction, Warehouse, Transfer, Stock, Product } from '../../types/inventory';
 import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
@@ -241,7 +242,69 @@ const WarehouseDashboard: React.FC<WarehouseScreenProps> = ({ navigation }) => {
     }
   }, [navigation]);
 
-  // Loading state with professional skeleton - keep header functional
+  // Professional Loading Skeleton Components
+
+
+  const TransferActivityChartSkeleton: React.FC = () => (
+    <View style={styles.skeletonSection}>
+      <LoadingSkeleton width="100%" height={200} borderRadius={BORDER_RADIUS.lg} />
+    </View>
+  );
+
+  const StockTrendChartSkeleton: React.FC = () => (
+    <View style={styles.skeletonSection}>
+      <LoadingSkeleton width="100%" height={200} borderRadius={BORDER_RADIUS.lg} />
+    </View>
+  );
+
+  const StockByWarehouseChartSkeleton: React.FC = () => (
+    <View style={styles.skeletonSection}>
+      <LoadingSkeleton width="100%" height={200} borderRadius={BORDER_RADIUS.lg} />
+    </View>
+  );
+
+  const RecentTransfersSkeleton: React.FC = () => (
+    <View style={styles.skeletonSection}>
+      <View style={styles.transfersSkeletonList}>
+        {[...Array(3)].map((_, i) => (
+          <View key={`transfer-skeleton-${i}`} style={styles.transferSkeletonItem}>
+            <LoadingSkeleton width={40} height={40} borderRadius={20} />
+            <View style={styles.transferSkeletonContent}>
+              <LoadingSkeleton width="70%" height={16} />
+              <LoadingSkeleton width="50%" height={12} style={{ marginTop: SPACING.xs }} />
+            </View>
+            <LoadingSkeleton width={60} height={16} />
+          </View>
+        ))}
+      </View>
+    </View>
+  );
+
+  const LowStockInventorySkeleton: React.FC = () => (
+    <View style={styles.skeletonSection}>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.inventorySkeletonScroll}>
+        {[...Array(3)].map((_, i) => (
+          <View key={`inventory-skeleton-${i}`} style={styles.inventorySkeletonCard}>
+            <LoadingSkeleton width={120} height={100} borderRadius={BORDER_RADIUS.md} />
+          </View>
+        ))}
+      </ScrollView>
+    </View>
+  );
+
+  const WarehousesSkeleton: React.FC = () => (
+    <View style={styles.skeletonSection}>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.warehousesSkeletonScroll}>
+        {[...Array(3)].map((_, i) => (
+          <View key={`warehouse-skeleton-${i}`} style={styles.warehouseSkeletonCard}>
+            <LoadingSkeleton width={280} height={200} borderRadius={BORDER_RADIUS.lg} />
+          </View>
+        ))}
+      </ScrollView>
+    </View>
+  );
+
+  // Professional Loading State - Keep header functional
   if (loading && !refreshing) {
     return (
       <SafeAreaView style={styles.container}>
@@ -278,98 +341,15 @@ const WarehouseDashboard: React.FC<WarehouseScreenProps> = ({ navigation }) => {
           contentContainerStyle={styles.scrollContent}
         >
           <View style={styles.content}>
-            {/* Header Card Skeleton */}
-            <View style={styles.skeletonSection}>
-              <LoadingSkeleton width="100%" height={120} borderRadius={BORDER_RADIUS.lg} />
-            </View>
-            
-            {/* Stats Row Skeleton */}
-            <View style={styles.skeletonSection}>
-              <View style={styles.statsSkeletonContainer}>
-                {[...Array(4)].map((_, i) => (
-                  <View key={i} style={styles.statsSkeletonCard}>
-                    <LoadingSkeleton width="100%" height={100} borderRadius={BORDER_RADIUS.md} />
-                  </View>
-                ))}
-              </View>
-            </View>
-            
-            {/* Transfer Activity Chart Skeleton */}
-            <View style={styles.skeletonSection}>
-              <View style={styles.chartSkeletonHeader}>
-                <LoadingSkeleton width={150} height={20} borderRadius={BORDER_RADIUS.sm} />
-                <LoadingSkeleton width={80} height={32} borderRadius={BORDER_RADIUS.md} />
-              </View>
-              <LoadingSkeleton width="100%" height={200} borderRadius={BORDER_RADIUS.lg} />
-            </View>
-            
-            {/* Stock Trend Chart Skeleton */}
-            <View style={styles.skeletonSection}>
-              <View style={styles.chartSkeletonHeader}>
-                <LoadingSkeleton width={120} height={20} borderRadius={BORDER_RADIUS.sm} />
-                <LoadingSkeleton width={60} height={32} borderRadius={BORDER_RADIUS.md} />
-              </View>
-              <LoadingSkeleton width="100%" height={200} borderRadius={BORDER_RADIUS.lg} />
-            </View>
-            
-            {/* Stock by Warehouse Chart Skeleton */}
-            <View style={styles.skeletonSection}>
-              <View style={styles.chartSkeletonHeader}>
-                <LoadingSkeleton width={140} height={20} borderRadius={BORDER_RADIUS.sm} />
-                <LoadingSkeleton width={70} height={32} borderRadius={BORDER_RADIUS.md} />
-              </View>
-              <LoadingSkeleton width="100%" height={200} borderRadius={BORDER_RADIUS.lg} />
-            </View>
-            
-            {/* Recent Transfers Skeleton */}
-            <View style={styles.skeletonSection}>
-              <View style={styles.sectionSkeletonHeader}>
-                <LoadingSkeleton width={120} height={20} borderRadius={BORDER_RADIUS.sm} />
-                <LoadingSkeleton width={60} height={16} borderRadius={BORDER_RADIUS.sm} />
-              </View>
-              <View style={styles.transfersSkeletonList}>
-                {[...Array(3)].map((_, i) => (
-                  <View key={i} style={styles.transferSkeletonItem}>
-                    <LoadingSkeleton width={40} height={40} borderRadius={20} />
-                    <View style={styles.transferSkeletonContent}>
-                      <LoadingSkeleton width="70%" height={16} />
-                      <LoadingSkeleton width="50%" height={12} style={{ marginTop: SPACING.xs }} />
-                    </View>
-                    <LoadingSkeleton width={60} height={16} />
-                  </View>
-                ))}
-              </View>
-            </View>
-            
-            {/* Low Stock Inventory Skeleton */}
-            <View style={styles.skeletonSection}>
-              <View style={styles.sectionSkeletonHeader}>
-                <LoadingSkeleton width={140} height={20} borderRadius={BORDER_RADIUS.sm} />
-                <LoadingSkeleton width={60} height={16} borderRadius={BORDER_RADIUS.sm} />
-              </View>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.inventorySkeletonScroll}>
-                {[...Array(3)].map((_, i) => (
-                  <View key={i} style={styles.inventorySkeletonCard}>
-                    <LoadingSkeleton width={120} height={100} borderRadius={BORDER_RADIUS.md} />
-                  </View>
-                ))}
-              </ScrollView>
-            </View>
-            
-            {/* Warehouses Skeleton */}
-            <View style={styles.skeletonSection}>
-              <View style={styles.sectionSkeletonHeader}>
-                <LoadingSkeleton width={100} height={20} borderRadius={BORDER_RADIUS.sm} />
-                <LoadingSkeleton width={60} height={16} borderRadius={BORDER_RADIUS.sm} />
-              </View>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.warehousesSkeletonScroll}>
-                {[...Array(3)].map((_, i) => (
-                  <View key={i} style={styles.warehouseSkeletonCard}>
-                    <LoadingSkeleton width={280} height={200} borderRadius={BORDER_RADIUS.lg} />
-                  </View>
-                ))}
-              </ScrollView>
-            </View>
+            {/* Keep HeaderCard functional during loading */}
+            <HeaderCard username="Alex" />
+            <StatsRow loading={loading} />
+            <TransferActivityChartSkeleton />
+            <StockTrendChartSkeleton />
+            <StockByWarehouseChartSkeleton />
+            <RecentTransfersSkeleton />
+            <LowStockInventorySkeleton />
+            <WarehousesSkeleton />
           </View>
         </ScrollView>
       </SafeAreaView>
@@ -403,41 +383,47 @@ const WarehouseDashboard: React.FC<WarehouseScreenProps> = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
-      
-      {/* Header with back button */}
-      <View style={styles.header}>
-        <TouchableOpacity 
-          style={styles.backButton} 
-          onPress={handleBackPress}
-          activeOpacity={0.7}
-        >
-          <View style={styles.backButtonInner}>
-            <Icon name="arrow-left" size={24} color={COLORS.text.primary} />
+      <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
+      <LinearGradient colors={COLORS.gradient.primary} style={styles.headerGradient}>
+        {/* Header with back button */}
+        <View style={styles.header}>
+          <TouchableOpacity 
+            style={styles.backButton} 
+            onPress={handleBackPress}
+            activeOpacity={0.7}
+          >
+            <View style={styles.backButtonInner}>
+              <Icon name="arrow-left" size={24} color={COLORS.text.light} />
+            </View>
+          </TouchableOpacity>
+          
+          <View style={styles.titleContainer}>
+            <Text style={styles.headerTitle}>Warehouse Dashboard</Text>
+            <Text style={styles.headerSubtitle}>Manage your warehouses efficiently</Text>
           </View>
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Warehouse Dashboard</Text>
-        <View style={styles.headerActions}>
-          <TouchableOpacity 
-            style={styles.refreshButton} 
-            onPress={handleRefresh}
-            activeOpacity={0.7}
-          >
-            <View style={styles.refreshButtonInner}>
-              <Icon name="refresh-cw" size={20} color={COLORS.text.primary} />
-            </View>
-          </TouchableOpacity>
-          <TouchableOpacity 
-            style={styles.previewButton} 
-            onPress={() => navigation.navigate('WarehouseReports')}
-            activeOpacity={0.7}
-          >
-            <View style={styles.previewButtonInner}>
-              <Icon name="bar-chart-2" size={20} color={COLORS.primary} />
-            </View>
-          </TouchableOpacity>
+          
+          <View style={styles.headerActions}>
+            <TouchableOpacity 
+              style={styles.refreshButton} 
+              onPress={handleRefresh}
+              activeOpacity={0.7}
+            >
+              <View style={styles.refreshButtonInner}>
+                <Icon name="refresh-cw" size={20} color={COLORS.text.light} />
+              </View>
+            </TouchableOpacity>
+            <TouchableOpacity 
+              style={styles.previewButton} 
+              onPress={() => navigation.navigate('WarehouseReports')}
+              activeOpacity={0.7}
+            >
+              <View style={styles.previewButtonInner}>
+                <Icon name="bar-chart-2" size={20} color={COLORS.text.light} />
+              </View>
+            </TouchableOpacity>
+          </View>
         </View>
-      </View>
+      </LinearGradient>
 
       <ScrollView 
         style={styles.scrollView}
@@ -449,7 +435,7 @@ const WarehouseDashboard: React.FC<WarehouseScreenProps> = ({ navigation }) => {
           <HeaderCard username="Alex" />
           
           {/* Stats Row */}
-          <StatsRow />
+          <StatsRow loading={loading} />
           
           {/* Transfer Activity Chart */}
           <TransferActivityChart />
@@ -458,10 +444,7 @@ const WarehouseDashboard: React.FC<WarehouseScreenProps> = ({ navigation }) => {
           <StockTrendChart />
           
           {/* Stock by Warehouse Chart */}
-          <StockByWarehouseChart 
-            title="Stock by Warehouse"
-            data={processedWarehouseData}
-          />
+          <StockByWarehouseChart title="Stock by Warehouse" />
           
           {/* Recent Transfers */}
           <RecentTransfers 
@@ -502,18 +485,33 @@ const WarehouseDashboard: React.FC<WarehouseScreenProps> = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORS.background,
+  },
+  headerGradient: {
+    paddingTop: SPACING.xl,
+    paddingBottom: SPACING.lg,
+    borderBottomLeftRadius: BORDER_RADIUS.lg,
+    borderBottomRightRadius: BORDER_RADIUS.lg,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 8,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: SPACING.lg,
-    paddingTop: SPACING.xl, // Add extra top padding for status bar
-    paddingBottom: SPACING.md,
-    backgroundColor: '#FFFFFF',
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border.light,
+    paddingVertical: SPACING.md,
+  },
+  titleContainer: {
+    flex: 1,
+    alignItems: 'center',
+    marginHorizontal: SPACING.md,
   },
   headerActions: {
     flexDirection: 'row',
@@ -524,20 +522,36 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   backButtonInner: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 42,
+    height: 42,
+    borderRadius: 21,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: COLORS.surface,
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
     borderWidth: 1,
-    borderColor: COLORS.border.light,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   headerTitle: {
     fontSize: TYPOGRAPHY.sizes.xl,
-    fontWeight: '700',
-    color: COLORS.text.primary,
-    fontFamily: 'System',
+    fontWeight: TYPOGRAPHY.weights.bold,
+    color: COLORS.text.light,
+    textAlign: 'center',
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
+  },
+  headerSubtitle: {
+    fontSize: TYPOGRAPHY.sizes.sm,
+    color: 'rgba(255, 255, 255, 0.8)',
+    marginTop: SPACING.xs,
     textAlign: 'center',
   },
   refreshButton: {
@@ -545,14 +559,22 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   refreshButtonInner: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 42,
+    height: 42,
+    borderRadius: 21,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: COLORS.surface,
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
     borderWidth: 1,
-    borderColor: COLORS.border.light,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   previewButton: {
     borderRadius: 20,
@@ -560,14 +582,22 @@ const styles = StyleSheet.create({
     marginLeft: SPACING.sm,
   },
   previewButtonInner: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 42,
+    height: 42,
+    borderRadius: 21,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: COLORS.surface,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
     borderWidth: 1,
-    borderColor: COLORS.primary,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   scrollView: {
     flex: 1,
@@ -577,8 +607,8 @@ const styles = StyleSheet.create({
   },
   content: {
     paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.lg,
-    gap: SPACING.lg,
+    paddingVertical: SPACING.md,
+    gap: SPACING.md, // Reduced from SPACING.lg for more professional spacing
   },
   loadingContainer: {
     flex: 1,
@@ -681,18 +711,6 @@ const styles = StyleSheet.create({
   },
   statsSkeletonCard: {
     width: '48%',
-  },
-  chartSkeletonHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: SPACING.md,
-  },
-  sectionSkeletonHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: SPACING.md,
   },
   transfersSkeletonList: {
     gap: SPACING.sm,

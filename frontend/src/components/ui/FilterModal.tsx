@@ -115,7 +115,7 @@ const FilterModal: React.FC<FilterModalProps> = ({
         <View style={styles.modalContent}>
           {/* Header */}
           <LinearGradient
-            colors={[COLORS.gradient.primary[0], COLORS.gradient.primary[1]]}
+            colors={[(COLORS.gradient.primary && COLORS.gradient.primary[0]) || '#FB7504', (COLORS.gradient.primary && COLORS.gradient.primary[1]) || '#C2252C']}
             style={styles.header}
           >
             <View style={styles.headerContent}>

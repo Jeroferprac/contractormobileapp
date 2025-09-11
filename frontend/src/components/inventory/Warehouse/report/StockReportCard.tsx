@@ -173,13 +173,13 @@ const StockReportCard: React.FC<StockReportCardProps> = ({
                     color={stockStatus.color}
 
                   />
-                  <Text style={styles.statValue}>{Math.round(stockUtilization)}%</Text>
+                  <Text style={styles.statValue}>{Math.round(stockUtilization).toString()}%</Text>
                   <Text style={styles.statLabel}>Utilization</Text>
                 </View>
                 
                 <View style={styles.statItem}>
                   <Icon name="trending-up" size={24} color={COLORS.primary} />
-                  <Text style={styles.statValue}>{stock.available_quantity || 0}</Text>
+                  <Text style={styles.statValue}>{(stock.available_quantity || 0).toString()}</Text>
                   <Text style={styles.statLabel}>Available</Text>
                 </View>
                 
@@ -214,13 +214,13 @@ const StockReportCard: React.FC<StockReportCardProps> = ({
                 <View style={styles.detailItem}>
                   <Icon name="dollar-sign" size={16} color={COLORS.text.secondary} />
                   <Text style={styles.detailLabel}>Cost Price</Text>
-                  <Text style={styles.detailValue}>${product?.cost_price || 0}</Text>
+                  <Text style={styles.detailValue}>${(product?.cost_price || 0).toString()}</Text>
                 </View>
                 
                 <View style={styles.detailItem}>
                   <Icon name="tag" size={16} color={COLORS.text.secondary} />
                   <Text style={styles.detailLabel}>Selling Price</Text>
-                  <Text style={styles.detailValue}>${product?.selling_price || 0}</Text>
+                  <Text style={styles.detailValue}>${(product?.selling_price || 0).toString()}</Text>
                 </View>
               </View>
 

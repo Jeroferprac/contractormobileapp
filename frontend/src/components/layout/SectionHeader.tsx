@@ -45,11 +45,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: SPACING.sm,
-    marginTop: SPACING.sm,
+    paddingHorizontal: SPACING.lg,
+    marginBottom: SPACING.md,
+    marginTop: SPACING.lg,
   },
   titleContainer: {
-    flex: 1,
+    flex: 0,
   },
   rightContainer: {
     flexDirection: 'row',

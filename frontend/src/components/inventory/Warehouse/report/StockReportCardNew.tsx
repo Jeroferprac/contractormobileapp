@@ -115,12 +115,12 @@ const StockReportCard: React.FC<StockReportCardProps> = ({
             <View style={styles.statsGrid}>
               <View style={styles.statItem}>
                 <Icon name="trending-up" size={20} color={COLORS.status.success} />
-                <Text style={styles.statValue}>{Number(stock.quantity).toLocaleString()}</Text>
+                <Text style={styles.statValue}>{Number(stock.quantity).toLocaleString().toString()}</Text>
                 <Text style={styles.statLabel}>Current Stock</Text>
               </View>
               <View style={styles.statItem}>
                 <Icon name="alert-triangle" size={20} color={COLORS.status.warning} />
-                <Text style={styles.statValue}>{product ? Number(product.min_stock_level) : 0}</Text>
+                <Text style={styles.statValue}>{product ? Number(product.min_stock_level).toString() : '0'}</Text>
                 <Text style={styles.statLabel}>Min Level</Text>
               </View>
               <View style={styles.statItem}>

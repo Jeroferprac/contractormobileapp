@@ -28,7 +28,8 @@ import {
 } from '../../components/ui';
 import { InventorySummary, Product, Warehouse, Transaction, Stock } from '../../types/inventory';
 import inventoryApiService from '../../api/inventoryApi';
-import { LineChart, BarChart } from 'react-native-gifted-charts';
+import { LineChart } from 'react-native-gifted-charts';
+import BarChart, { BarChartData } from '../../components/ui/BarChart';
 
 const { width, height } = Dimensions.get('window');
 
@@ -549,57 +550,42 @@ const InventoryReportsScreen: React.FC<InventoryReportsScreenProps> = ({ navigat
     });
   };
 
-  const generateStockDistributionData = () => {
+  const generateStockDistributionData = (): BarChartData[] => {
     const categories = getUniqueCategories();
-    const colors = [
-      { frontColor: '#D97706', gradientColor: '#F59E0B' },
-      { frontColor: '#10B981', gradientColor: '#059669' },
-      { frontColor: '#6366F1', gradientColor: '#4F46E5' },
-      { frontColor: '#8B5CF6', gradientColor: '#7C3AED' },
-      { frontColor: '#EF4444', gradientColor: '#DC2626' }
-    ];
-    return categories.map((category, index) => ({
+    return categories.map((category) => ({
       value: category.count,
-      label: category.name,
-      frontColor: colors[index % colors.length].frontColor,
-      gradientColor: colors[index % colors.length].gradientColor,
-      topLabelComponent: () => (
-        <Text style={styles.chartValueLabel}>{category.count}</Text>
-      ),
+      label: category.name.substring(0, 3), // Abbreviate category names
+      fullLabel: category.name, // Full category name for tooltip
+      colorStart: '#EDA071', // Same as StockReportChart
+      colorEnd: '#F5F5F7', // Same as StockReportChart
     }));
   };
 
-  const generateMonthlyActivityData = () => {
+  const generateMonthlyActivityData = (): BarChartData[] => {
     const periodData = getPeriodSpecificData(selectedPeriod);
     const baseTransactions = periodData.transactionCount || 50;
     
     // Generate period-specific labels and data
     let labels: string[] = [];
-    let dataPoints = 6;
     
     switch (selectedPeriod) {
       case 'week':
         labels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-        dataPoints = 7;
         break;
       case 'month':
-        labels = ['Week 1', 'Week 2', 'Week 3', 'Week 4'];
-        dataPoints = 4;
+        labels = ['W1', 'W2', 'W3', 'W4'];
         break;
       case 'quarter':
         labels = ['Jan', 'Feb', 'Mar'];
-        dataPoints = 3;
         break;
       case 'year':
         labels = ['Q1', 'Q2', 'Q3', 'Q4'];
-        dataPoints = 4;
         break;
       default:
-        labels = ['Week 1', 'Week 2', 'Week 3', 'Week 4'];
-        dataPoints = 4;
+        labels = ['W1', 'W2', 'W3', 'W4'];
     }
     
-    return labels.map((label, index) => {
+    return labels.map((label) => {
       // Add period-specific variation
       let variation = 0.8 + Math.random() * 0.4; // 80-120% variation
       
@@ -623,13 +609,8 @@ const InventoryReportsScreen: React.FC<InventoryReportsScreenProps> = ({ navigat
       return {
         value: value,
         label: label,
-        frontColor: '#6366F1',
-        gradientColor: '#4F46E5',
-        topLabelComponent: () => (
-          <Text style={styles.chartValueLabel}>
-            {value}
-          </Text>
-        ),
+        colorStart: COLORS.primary,
+        colorEnd: COLORS.accent,
       };
     });
   };
@@ -1192,28 +1173,44 @@ const InventoryReportsScreen: React.FC<InventoryReportsScreenProps> = ({ navigat
               </View>
               <Icon name="pie-chart" size={20} color="#6366F1" />
             </View>
-            <View style={styles.chartContainer}>
-              <BarChart
-                data={generateStockDistributionData()}
-                width={width - 120}
-                height={160}
-                barWidth={35}
-                spacing={35}
-                roundedTop
-                roundedBottom
-                hideRules
-                xAxisThickness={0}
-                xAxisColor="transparent"
-                yAxisThickness={0}
-                yAxisTextStyle={styles.yAxisText}
-                noOfSections={4}
-                maxValue={Math.max(...getUniqueCategories().map(cat => cat.count)) * 1.2 || 100}
-                barBorderRadius={6}
-                isAnimated
-                animationDuration={800}
-                initialSpacing={15}
-                endSpacing={15}
-              />
+            <View style={styles.stockReportWrapper}>
+              <View style={styles.pageHeader}>
+                <View>
+                  <Text style={styles.pageTitle}>Stock Distribution</Text>
+                  <Text style={styles.pageSubtitle}>By category</Text>
+                </View>
+                <TouchableOpacity style={styles.timeframeButton} activeOpacity={0.85}>
+                  <Text style={styles.timeframeText}>This Month</Text>
+                </TouchableOpacity>
+              </View>
+              
+              <View style={styles.stockReportCard}>
+                <View style={styles.stockReportChartContainer}>
+                <BarChart
+                  data={generateStockDistributionData()}
+                  height={160}
+                  onBarPress={(i, item) => console.log('Stock distribution bar pressed:', i, item)}
+                />
+              </View>
+              
+                <View style={styles.stockReportFooterContainer}>
+                  <View style={styles.stockReportFooterLeft}>
+                    <Text style={styles.summaryText}>
+                      Stock is well distributed across categories. Monitor low-stock categories.
+                    </Text>
+                </View>
+                  
+                  <View style={styles.stockReportFooterRight}>
+                    <View style={styles.stockReportTotalItemsContainer}>
+                      <View style={[styles.stockReportLegendDot, { backgroundColor: '#FF8A65' }]} />
+                      <Text style={styles.stockReportLegendText}>Category distribution</Text>
+                    </View>
+                    <Text style={styles.stockReportTotalValue}>
+                    {getUniqueCategories().reduce((sum, cat) => sum + cat.count, 0)}
+                  </Text>
+                </View>
+              </View>
+              </View>
             </View>
           </Animated.View>
         </TouchableOpacity>
@@ -1257,28 +1254,41 @@ const InventoryReportsScreen: React.FC<InventoryReportsScreenProps> = ({ navigat
               </View>
               <Icon name="bar-chart" size={20} color="#8B5CF6" />
             </View>
-            <View style={styles.chartContainer}>
-              <BarChart
-                data={generateMonthlyActivityData()}
-                width={width - 120}
-                height={160}
-                barWidth={35}
-                spacing={35}
-                roundedTop
-                roundedBottom
-                hideRules
-                xAxisThickness={0}
-                xAxisColor="transparent"
-                yAxisThickness={0}
-                yAxisTextStyle={styles.yAxisText}
-                noOfSections={4}
-                maxValue={Math.max(...generateMonthlyActivityData().map(item => item.value)) * 1.2 || 100}
-                barBorderRadius={6}
-                isAnimated
-                animationDuration={800}
-                initialSpacing={15}
-                endSpacing={15}
-              />
+            <View style={styles.professionalChartCard}>
+              <View style={styles.professionalChartHeader}>
+                <View>
+                  <Text style={styles.professionalChartTitle}>Monthly Activity</Text>
+                  <Text style={styles.professionalChartSubtitle}>Transaction volume</Text>
+                </View>
+              </View>
+              
+              <View style={{ marginTop: 12 }}>
+                <BarChart
+                  data={generateMonthlyActivityData()}
+                  height={160}
+                  onBarPress={(i, item) => console.log('Monthly activity bar pressed:', i, item)}
+                />
+              </View>
+              
+              <View style={styles.professionalChartFooter}>
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <View style={[styles.legendDot, { backgroundColor: COLORS.primary }]} />
+                  <Text style={styles.legendText}>Activity volume</Text>
+                </View>
+                <View style={{ alignItems: 'flex-end' }}>
+                  <Text style={styles.totalLabel}>Total</Text>
+                  <Text style={styles.totalValue}>
+                    {generateMonthlyActivityData().reduce((sum, item) => sum + item.value, 0)}
+                  </Text>
+                </View>
+              </View>
+              
+              <View style={styles.summaryRow}>
+                <View style={styles.bullet} />
+                <Text style={styles.summaryText}>
+                  Activity shows consistent patterns. Monitor peak transaction periods.
+                </Text>
+              </View>
             </View>
           </Animated.View>
         </TouchableOpacity>
@@ -2242,6 +2252,152 @@ const styles = StyleSheet.create({
     color: COLORS.text.primary,
     marginTop: SPACING.sm,
     fontWeight: '600',
+  },
+  // Professional Chart Styles
+  professionalChartCard: {
+    backgroundColor: '#fff',
+    borderRadius: 14,
+    padding: 16,
+    margin: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.06,
+    shadowRadius: 30,
+    elevation: 8,
+    overflow: 'hidden',
+  },
+  professionalChartHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+  },
+  professionalChartTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#222',
+  },
+  professionalChartSubtitle: {
+    fontSize: 12,
+    color: '#7a7a7a',
+    marginTop: 4,
+  },
+  professionalChartFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 14,
+  },
+  legendDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 6,
+    marginRight: 8,
+  },
+  legendText: {
+    fontSize: 13,
+    color: '#555',
+    fontWeight: '600',
+  },
+  totalLabel: {
+    fontSize: 12,
+    color: '#888',
+  },
+  totalValue: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#222',
+  },
+  summaryRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginTop: 14,
+  },
+  bullet: {
+    width: 8,
+    height: 8,
+    backgroundColor: COLORS.primary,
+    borderRadius: 6,
+    marginRight: 8,
+    marginTop: 6,
+  },
+  summaryText: {
+    color: '#666',
+    fontSize: 13,
+    flex: 1,
+  },
+  // StockReportChart Style
+  stockReportWrapper: {
+    paddingHorizontal: 0, // Full width
+    paddingTop: 10,
+  },
+  pageHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 10,
+    paddingHorizontal: 16, // Add padding back to header
+  },
+  pageTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#222',
+  },
+  pageSubtitle: {
+    fontSize: 12,
+    color: '#7a7a7a',
+    marginTop: 4,
+  },
+  stockReportCard: {
+    backgroundColor: '#f8f9fa',
+    borderRadius: 14,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: '#e9ecef',
+    overflow: 'hidden',
+  },
+  stockReportChartContainer: {
+    marginBottom: 16,
+  },
+  stockReportFooterContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginTop: 5,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#e9ecef',
+  },
+  stockReportFooterLeft: {
+    flex: 1,
+    paddingRight: 10,
+  },
+  stockReportFooterRight: {
+    minWidth: 100,
+    alignItems: 'flex-end',
+    justifyContent: 'center',
+  },
+  stockReportTotalItemsContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 1,
+  },
+  stockReportLegendDot: {
+    width: 5,
+    height: 5,
+    borderRadius: 6,
+    marginRight: 8,
+  },
+  stockReportLegendText: {
+    fontSize: 12,
+    color: '#555',
+    fontWeight: '400',
+    marginLeft: 6,
+  },
+  stockReportTotalValue: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#222',
+    textAlign: 'left',
   },
 });
 

@@ -102,7 +102,8 @@ const styles = StyleSheet.create({
     elevation: 1,
   },
   activeTab: {
-    backgroundColor: '#FF6B35',
+    backgroundColor: '#FB7504',
+    borderWidth: 0,   
     borderColor: '#FF6B35',
     shadowColor: '#E55A2B',
     shadowOffset: {

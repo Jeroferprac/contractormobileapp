@@ -1,11 +1,17 @@
 export { default as Badge } from './Badge';
 export { default as BarcodeScanner } from './BarcodeScanner';
+export { default as BarChart } from './BarChart';
 export { default as Card } from './Card';
 export { default as Chart } from './Chart';
 export { default as FadeSlideInView } from './FadeSlideInView';
 export { default as FilterChips } from './FilterChips';
+export { default as FilterModal } from './FilterModal';
 export { default as HorizontalScroll } from './HorizontalScroll';
 export { default as LoadingSkeleton, StatsCardSkeleton, ChartSkeleton, ProductCardSkeleton, ListItemSkeleton } from './LoadingSkeleton';
+export { default as LogoutModal } from './LogoutModal';
+export { default as ProductFilterModal } from './ProductFilterModal';
+export { default as ProductSearchModal } from './ProductSearchModal';
 export { default as SearchBar } from './SearchBar';
+export { default as SearchModal } from './SearchModal';
 export { default as Sidebar } from './Sidebar';
 export { default as StatsCard } from './StatsCard'; 

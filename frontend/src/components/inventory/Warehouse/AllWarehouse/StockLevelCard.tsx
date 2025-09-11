@@ -68,7 +68,7 @@ const StockLevelCard: React.FC<StockLevelCardProps> = ({
     } else if (displayPercentage >= 75) {
       return '#2196F3'; // Blue - Good
     } else if (displayPercentage >= 50) {
-      return '#FF9800'; // Orange - Moderate
+      return '#FB7504'; // Theme color - Moderate
     } else {
       return '#F44336'; // Red - Low
     }
@@ -138,7 +138,7 @@ const StockLevelCard: React.FC<StockLevelCardProps> = ({
                 <Text style={styles.statText}>{Math.round(totalAvailable)}</Text>
               </View>
               <View style={styles.statItem}>
-                <Icon name="lock" size={14} color="#FF9800" />
+                <Icon name="lock" size={14} color="#FB7504" />
                 <Text style={styles.statText}>{Math.round(totalReserved)}</Text>
               </View>
               <View style={styles.statItem}>
@@ -164,13 +164,13 @@ const StockLevelCard: React.FC<StockLevelCardProps> = ({
               <Text style={styles.statLabel}>Total Bins</Text>
             </View>
             <View style={styles.statCard}>
-              <Icon name="activity" size={16} color="#FF6B35" />
-              <Text style={styles.statValue}>{warehouse?.activeBins || 0}</Text>
+              <Icon name="activity" size={16} color="#FB7504" />
+              <Text style={styles.statValue}>{(warehouse?.activeBins || 0).toString()}</Text>
               <Text style={styles.statLabel}>Active</Text>
             </View>
             <View style={styles.statCard}>
               <Icon name="trending-up" size={16} color="#2196F3" />
-              <Text style={styles.statValue}>{warehouse?.utilization || 0}%</Text>
+              <Text style={styles.statValue}>{(warehouse?.utilization || 0).toString()}%</Text>
               <Text style={styles.statLabel}>Utilization</Text>
             </View>
           </View>
@@ -180,7 +180,7 @@ const StockLevelCard: React.FC<StockLevelCardProps> = ({
         <View style={styles.contactSection}>
           <View style={styles.contactRow}>
             <View style={styles.contactItem}>
-              <Icon name="map-pin" size={14} color="#FF6B35" />
+              <Icon name="map-pin" size={14} color="#FB7504" />
               <Text style={styles.contactText} numberOfLines={1}>
                 {warehouse?.address || 'No address provided'}
               </Text>
@@ -212,7 +212,7 @@ const StockLevelCard: React.FC<StockLevelCardProps> = ({
           </TouchableOpacity>
           
           <TouchableOpacity style={styles.viewDetailsButton}>
-            <Icon name="arrow-right" size={16} color="#FF6B35" />
+            <Icon name="arrow-right" size={16} color="#FB7504" />
             <Text style={styles.viewDetailsText}>View Details</Text>
           </TouchableOpacity>
         </View>
@@ -426,7 +426,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#FF6B35',
+    backgroundColor: '#FB7504',
     paddingVertical: SPACING.sm,
     paddingHorizontal: SPACING.md,
     borderRadius: BORDER_RADIUS.lg,
@@ -447,7 +447,7 @@ const styles = StyleSheet.create({
     borderRadius: BORDER_RADIUS.lg,
   },
   viewDetailsText: {
-    color: '#FF6B35',
+    color: '#FB7504',
     fontSize: TYPOGRAPHY.sizes.sm,
     fontWeight: '600',
     marginLeft: SPACING.xs,

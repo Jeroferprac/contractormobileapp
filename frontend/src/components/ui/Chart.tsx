@@ -49,7 +49,7 @@ export default function StockLevelCard({
 
       <View style={{ marginTop: 10 }}>
         <AreaLineChart
-          data={chartData}
+            data={chartData}
           height={220}
           pointSpacing={34}
           minPointsToSample={10}

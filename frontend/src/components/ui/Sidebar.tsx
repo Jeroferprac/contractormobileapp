@@ -1,15 +1,18 @@
 import React, { useRef, useEffect, useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Modal, Animated, Dimensions, Platform } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Modal, Animated, Dimensions, Platform, Alert } from 'react-native';
 import Icon from 'react-native-vector-icons/Feather';
 import LinearGradient from 'react-native-linear-gradient';
 import { COLORS } from '../../constants/colors';
 import { SPACING } from '../../constants/spacing';
 import { BORDER_RADIUS } from '../../constants/spacing';
+import { useAuth } from '../../context/AuthContext';
+import LogoutModal from './LogoutModal';
 
 interface SidebarProps {
   visible: boolean;
   onClose: () => void;
   onNavigate: (screen: string) => void;
+  currentScreen?: string;
 }
 
 const MenuItem: React.FC<{
@@ -17,48 +20,24 @@ const MenuItem: React.FC<{
   label: string;
   icon: string;
   onPress: () => void;
-}> = ({ id, label, icon, onPress }) => {
-  const [isHovered, setIsHovered] = useState(false);
-  const scaleAnim = useRef(new Animated.Value(1)).current;
-  
-  const handleHoverIn = () => {
-    setIsHovered(true);
-    Animated.timing(scaleAnim, {
-      toValue: 1.03,
-      duration: 200,
-      useNativeDriver: true,
-    }).start();
-  };
-  
-  const handleHoverOut = () => {
-    setIsHovered(false);
-    Animated.timing(scaleAnim, {
-      toValue: 1,
-      duration: 200,
-      useNativeDriver: true,
-    }).start();
-  };
-  
+  isActive?: boolean;
+}> = ({ id, label, icon, onPress, isActive = false }) => {
   return (
-    <Animated.View
-      style={{
-        transform: [{ scale: scaleAnim }],
-      }}
+    <TouchableOpacity
+      style={[styles.menuItem, isActive && styles.activeMenuItem]}
+      onPress={onPress}
+      activeOpacity={0.7}
     >
-      <TouchableOpacity
-        style={[styles.menuItem, isHovered && styles.menuItemHovered]}
-        onPress={onPress}
-        onPressIn={handleHoverIn}
-        onPressOut={handleHoverOut}
-      >
-        <Icon name={icon as any} size={20} color="#FFFFFF" />
-        <Text style={styles.menuText}>{label}</Text>
-      </TouchableOpacity>
-    </Animated.View>
+      <Icon name={icon as any} size={20} color={isActive ? "#FF6B35" : "#FFFFFF"} />
+      <Text style={[styles.menuText, isActive && styles.activeMenuText]}>{label}</Text>
+    </TouchableOpacity>
   );
 };
 
-const Sidebar: React.FC<SidebarProps> = ({ visible, onClose, onNavigate }) => {
+const Sidebar: React.FC<SidebarProps> = ({ visible, onClose, onNavigate, currentScreen }) => {
+  const { logout, user } = useAuth();
+  const [isLogoutModalVisible, setLogoutModalVisible] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   // Animation values
   const slideAnim = useRef(new Animated.Value(-300)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -94,20 +73,58 @@ const Sidebar: React.FC<SidebarProps> = ({ visible, onClose, onNavigate }) => {
         })
       ]).start();
     }
+
+    return () => {
+      // Cleanup animations when component unmounts
+      // stopAnimation is not available on Animated.Value
+    };
   }, [visible, slideAnim, fadeAnim]);
 
   const menuItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: 'grid', screen: 'Dashboard' },
+    { id: 'dashboard', label: 'Dashboard', icon: 'grid', screen: 'MainTabs' },
     { id: 'products', label: 'Products', icon: 'box', screen: 'AllProducts' },
-    { id: 'warehouse', label: 'Warehouse', icon: 'home', screen: 'Warehouse' },
-    { id: 'sales', label: 'Sales', icon: 'trending-up', screen: 'Sales' },
-    { id: 'purchaseorders', label: 'Purchase Orders', icon: 'shopping-cart', screen: 'PurchaseOrders' },
-    { id: 'report', label: 'Report', icon: 'bar-chart-2', screen: 'Report' },
+    { id: 'warehouses', label: 'Warehouses', icon: 'home', screen: 'AllWarehouses' },
+    { id: 'suppliers', label: 'Suppliers', icon: 'users', screen: 'SuppliersScreen' },
+    { id: 'purchaseorders', label: 'Purchase Orders', icon: 'shopping-cart', screen: 'PurchaseOrdersScreen' },
+    { id: 'reports', label: 'Reports', icon: 'bar-chart-2', screen: 'InventoryReportsScreen' },
+    { id: 'pricelists', label: 'Price Lists', icon: 'dollar-sign', screen: 'PriceLists' },
   ];
 
   const handleMenuItemPress = (screen: string) => {
-    onNavigate(screen);
-    onClose();
+    console.log('🔧 [DEBUG] Sidebar: Attempting to navigate to screen:', screen);
+    try {
+      // Navigate immediately for faster response
+      onNavigate(screen);
+      // Close sidebar after navigation starts
+      onClose();
+      console.log('✅ [DEBUG] Sidebar: Navigation successful to:', screen);
+    } catch (error) {
+      console.error('❌ [DEBUG] Sidebar: Navigation failed to:', screen, error);
+    }
+  };
+
+  // Helper function to generate user initials
+  const getUserInitials = (fullName: string): string => {
+    if (!fullName) return 'U';
+    const names = fullName.trim().split(' ');
+    if (names.length === 1) {
+      return names[0].charAt(0).toUpperCase();
+    }
+    return (names[0].charAt(0) + names[names.length - 1].charAt(0)).toUpperCase();
+  };
+
+  const handleLogoutConfirm = async () => {
+    setIsLoggingOut(true);
+    onClose(); // Close the sidebar
+    try {
+      await logout();
+      // The component will unmount here due to auth state change.
+      // The "success" state of the modal might not be shown, but the logout will proceed.
+    } catch (error) {
+      console.error('Logout error:', error);
+      setIsLoggingOut(false);
+      Alert.alert('Logout Failed', 'An error occurred while logging out.');
+    }
   };
 
   return (
@@ -117,6 +134,13 @@ const Sidebar: React.FC<SidebarProps> = ({ visible, onClose, onNavigate }) => {
       animationType="none"
       onRequestClose={onClose}
     >
+      <LogoutModal
+        visible={isLogoutModalVisible}
+        isLoggingOut={isLoggingOut}
+        onClose={() => setLogoutModalVisible(false)}
+        onConfirm={handleLogoutConfirm}
+        username={user?.full_name}
+      />
       <Animated.View style={[styles.overlay, { opacity: fadeAnim }]}>
         <TouchableOpacity style={styles.backdrop} onPress={onClose} />
         
@@ -174,10 +198,10 @@ const Sidebar: React.FC<SidebarProps> = ({ visible, onClose, onNavigate }) => {
                 })}]
               }]}
             >
-              <Icon name="box" size={32} color="#FB7504" />
+              <Icon name="box" size={32} color="#FF6B35" />
             </Animated.View>
             <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-              <Icon name="x" size={24} color="#FB7504" />
+              <Icon name="x" size={24} color="#FF6B35" />
             </TouchableOpacity>
           </View>
 
@@ -190,6 +214,7 @@ const Sidebar: React.FC<SidebarProps> = ({ visible, onClose, onNavigate }) => {
                 label={item.label}
                 icon={item.icon}
                 onPress={() => handleMenuItemPress(item.screen)}
+                isActive={currentScreen === item.screen}
               />
             ))}
           </View>
@@ -205,18 +230,34 @@ const Sidebar: React.FC<SidebarProps> = ({ visible, onClose, onNavigate }) => {
             }]}
           >
             <View style={styles.userSection}>
-              <View style={styles.userAvatar}>
-                <Text style={styles.userInitials}>JD</Text>
-              </View>
-              <View style={styles.userInfo}>
-                <Text style={styles.userName}>Jhon Doe</Text>
-                <Text style={styles.viewProfile}>view profile</Text>
-              </View>
+              <TouchableOpacity 
+                style={styles.userInfoContainer}
+                activeOpacity={0.7}
+                onPress={() => {
+                  onClose();
+                  setTimeout(() => {
+                    onNavigate('ProfileEdit');
+                  }, 100);
+                }}
+              >
+                <View style={styles.userAvatar}>
+                  <Text style={styles.userInitials}>
+                    {user ? getUserInitials(user.full_name) : 'U'}
+                  </Text>
+                </View>
+                <View style={styles.userInfo}>
+                  <Text style={styles.userName}>
+                    {user?.full_name || 'User'}
+                  </Text>
+                  <Text style={styles.viewProfile}>view profile</Text>
+                </View>
+              </TouchableOpacity>
               <TouchableOpacity 
                 style={styles.logoutIcon}
                 activeOpacity={0.7}
+                onPress={() => setLogoutModalVisible(true)}
               >
-                <Icon name="power" size={20} color="#FB7504" />
+                <Icon name="power" size={20} color="#FF6B35" />
               </TouchableOpacity>
             </View>
           </Animated.View>
@@ -289,12 +330,6 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.sm,
     borderRadius: BORDER_RADIUS.md,
     backgroundColor: 'transparent',
-    transition: 'all 0.2s ease',
-  },
-  menuItemHovered: {
-    backgroundColor: 'rgba(255, 107, 53, 0.15)',
-    borderLeftWidth: 3,
-    borderLeftColor: '#FB7504',
   },
   menuText: {
     fontSize: 16,
@@ -302,6 +337,15 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     flex: 1,
     marginLeft: SPACING.md,
+  },
+  activeMenuItem: {
+    backgroundColor: 'rgba(255, 107, 53, 0.1)',
+    borderLeftWidth: 3,
+    borderLeftColor: '#FF6B35',
+  },
+  activeMenuText: {
+    color: '#FF6B35',
+    fontWeight: '600',
   },
   footer: {
     padding: SPACING.lg,
@@ -312,6 +356,11 @@ const styles = StyleSheet.create({
   userSection: {
     flexDirection: 'row',
     alignItems: 'center',
+  },
+  userInfoContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
   },
   userAvatar: {
     width: 40,

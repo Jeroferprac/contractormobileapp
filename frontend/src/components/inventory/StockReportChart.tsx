@@ -95,7 +95,7 @@ export default function StockReportChart({
               <View style={[styles.legendDot, { backgroundColor: '#FF8A65' }]} />
               <Text style={styles.legendText}>Total items</Text>
             </View>
-            <Text style={styles.totalValue}>{Math.round(total).toLocaleString()}</Text>
+            <Text style={styles.totalValue}>{String(Math.round(total).toLocaleString())}</Text>
           </View>
         </View>
       </AnimatedView>

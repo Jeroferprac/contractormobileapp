@@ -19,16 +19,19 @@ export type Point = {
 type Props = {
   data: Point[];
   height?: number;
+
   style?: ViewStyle;
   strokeColor?: string;
   gradientFrom?: string;
   gradientTo?: string;
   pointSpacing?: number; // px between points horizontally (used when scrollable)
   showGrid?: boolean;
+
   labelCount?: number; // how many labels to show evenly on the x axis
   minPointsToSample?: number; // sampling threshold for very large datasets
   maxPointsNoScroll?: number; // when data.length <= this, render compact without horizontal scroll
   onPointPress?: (index: number, point: Point) => void;
+  showFooter?: boolean; // whether to show the internal footer
 };
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -69,6 +72,7 @@ function approximateLength(points: { x: number; y: number }[]) {
 
 export default function AreaLineChart({
   data,
+
   height = 220,
   style,
   strokeColor = '#ff7a18',
@@ -76,10 +80,12 @@ export default function AreaLineChart({
   gradientTo = '#fff2ea',
   pointSpacing = 36,
   showGrid = true,
+
   labelCount = 5,
   minPointsToSample = 800,
   maxPointsNoScroll = 27,
   onPointPress,
+  showFooter = true,
 }: Props) {
   const animated = useRef(new Animated.Value(0)).current;
   const drawAnim = useRef(new Animated.Value(0)).current;
@@ -87,23 +93,23 @@ export default function AreaLineChart({
   const AnimatedPath = (Animated as any).createAnimatedComponent(Path);
   const AnimatedRect = (Animated as any).createAnimatedComponent(Rect);
   const scrollX = useRef(new Animated.Value(0)).current;
-  const [containerWidth, setContainerWidth] = useState<number>(SCREEN_WIDTH - 32);
+  const [containerWidth, setContainerWidth] = useState<number>(SCREEN_WIDTH);
   const [tooltip, setTooltip] = useState<null | { x: number; y: number; index: number }>(null);
 
   const processed = useMemo(() => {
     if (!data || data.length === 0) return [] as Point[];
-    if (data.length > minPointsToSample) return sampleData(data, minPointsToSample);
+    // Don't sample data - show all data points
     return data;
-  }, [data, minPointsToSample]);
+  }, [data]);
 
   // layout constants
-  const leftLabelWidth = 56; // fixed column for Y labels (does not scroll)
-  const innerPadding = 12; // padding inside svg
+  const leftLabelWidth = 30; // fixed column for Y labels (does not scroll)
+  const innerPadding = 15; // minimal padding inside svg
 
   const isScrollable = processed.length > maxPointsNoScroll;
 
   // inner width available for svg chart area (excluding left labels)
-  const innerAvailableWidth = Math.max(0, containerWidth - leftLabelWidth - 16);
+  const innerAvailableWidth = Math.max(0, containerWidth - leftLabelWidth);
 
   // decide spacing: if not scrollable, compute spacing to fit all points nicely in innerAvailableWidth
   const usedPointSpacing = useMemo(() => {
@@ -133,12 +139,12 @@ export default function AreaLineChart({
     return innerPadding + (1 - pct) * innerH;
   };
 
-  const points = processed.map((d, i) => ({ x: innerPadding + i * usedPointSpacing, y: toY(d.value), label: d.label, raw: d.value }));
+  const points = processed.map((d, i) => ({ x: 2 + i * usedPointSpacing, y: toY(d.value), label: d.label, raw: d.value }));
 
   const { area: areaRawPath, line: lineRawPath } = useMemo(() => buildSmoothPath(points), [points]);
   const baselineY = svgH - innerPadding;
   const areaPath = points.length > 0 
-    ? `${areaRawPath} L ${points[points.length - 1].x} ${baselineY} L ${points[0]?.x ?? innerPadding} ${baselineY} Z`
+    ? `${areaRawPath} L ${points[points.length - 1].x} ${baselineY} L ${points[0]?.x ?? 2} ${baselineY} Z`
     : '';
   const linePath = lineRawPath;
 
@@ -153,16 +159,57 @@ export default function AreaLineChart({
     ]).start();
   }, [animated, drawAnim, areaAnim, data]);
 
-  const handleTouchStart = () => {
-    // Simple touch handling - show tooltip for first point
-    if (points.length > 0) {
-      const firstPoint = points[0];
-      setTooltip({ x: firstPoint.x, y: firstPoint.y, index: 0 });
+  const handleTouchStart = (event: any) => {
+    const { locationX } = event.nativeEvent;
+    if (!points.length) return;
+
+    // Find nearest point
+    let nearest = 0;
+    let best = Math.abs(points[0].x - locationX);
+    for (let i = 1; i < points.length; i++) {
+      const d = Math.abs(points[i].x - locationX);
+      if (d < best) {
+        best = d;
+        nearest = i;
+      }
     }
+
+    const p = points[nearest];
+    setTooltip({ x: p.x, y: p.y, index: nearest });
   };
 
   const handleTouchEnd = () => {
-    setTimeout(() => setTooltip(null), 1200);
+    // Hide tooltip after a delay like bar chart
+    setTimeout(() => setTooltip(null), 1500);
+  };
+
+  // Calculate smart tooltip positioning
+  const getTooltipPosition = (tooltip: { x: number; y: number; index: number }) => {
+    const tooltipHeight = 60; // Approximate tooltip height
+    const tooltipWidth = 120; // Approximate tooltip width
+    const margin = 10;
+    
+    // Calculate horizontal position (center on point)
+    let left = tooltip.x - (tooltipWidth / 2);
+    left = Math.max(margin, Math.min(left, containerWidth - tooltipWidth - margin));
+    
+    // Calculate vertical position (smart positioning)
+    let top;
+    const isNearTop = tooltip.y < tooltipHeight + margin;
+    const isNearBottom = tooltip.y > height - tooltipHeight - margin;
+    
+    if (isNearTop) {
+      // Point is near top, show tooltip below
+      top = tooltip.y + 20;
+    } else if (isNearBottom) {
+      // Point is near bottom, show tooltip above
+      top = tooltip.y - tooltipHeight - 20;
+    } else {
+      // Point is in middle, show tooltip above
+      top = tooltip.y - tooltipHeight - 20;
+    }
+    
+    return { left, top, isAbove: !isNearTop };
   };
 
   const strokeDashoffset = drawAnim.interpolate({ inputRange: [0, 1], outputRange: [approxLen, 0] });
@@ -180,17 +227,31 @@ export default function AreaLineChart({
 
   const xLabels = useMemo(() => {
     if (!processed.length) return [] as string[];
-    const step = Math.max(1, Math.floor(processed.length / (labelCount - 1 || 1)));
-    const out: { idx: number; label: string }[] = [];
-    for (let i = 0; i < processed.length; i += step) out.push({ idx: i, label: processed[i].label || '' });
-    if (out[out.length - 1].idx !== processed.length - 1) out.push({ idx: processed.length - 1, label: processed[processed.length - 1].label || '' });
-    return out;
-  }, [processed, labelCount]);
+    
+    // Show all labels for all datasets
+    return processed.map((item, idx) => ({ idx, label: item.label || '' }));
+  }, [processed]);
+
+  // Debug logging
+  console.log('AreaChart Debug:', {
+    dataLength: data.length,
+    processedLength: processed.length,
+    containerWidth,
+    innerAvailableWidth,
+    isScrollable,
+    maxPointsNoScroll,
+    pointSpacing,
+    usedPointSpacing,
+    contentWidth,
+    svgW,
+    shouldShowScrollView: isScrollable,
+    firstFewLabels: xLabels?.slice(0, 5)?.map(l => l.label) || []
+  });
 
   // Early return if no data
   if (!processed.length) {
     return (
-      <View style={[styles.card, style]}>
+      <View style={[styles.container, style]}>
         <View style={{ padding: 20, alignItems: 'center' }}>
           <Text style={{ color: '#999', fontSize: 14 }}>No data available</Text>
         </View>
@@ -199,19 +260,20 @@ export default function AreaLineChart({
   }
 
   return (
+
     <Animated.View
-      style={[styles.card, style, { opacity: animated }]}
+      style={[styles.container, style, { opacity: animated }]}
       onLayout={(e: any) => {
-        // measure available width for the whole card
+        // measure available width for the whole container
         setContainerWidth(e.nativeEvent.layout.width);
       }}
     >
-      <View style={styles.chartContainer}>
+      <View style={styles.chartCard}>
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
           {/* Left fixed Y axis labels */}
-          <View style={{ width: leftLabelWidth, paddingLeft: 6 }}>
+          <View style={{ width: leftLabelWidth, paddingLeft: 0, paddingRight: 0, justifyContent: 'space-between', height: height - 20 }}>
             {yLabels.map((v, i) => (
-              <Text key={i} style={[styles.yLabel, { marginTop: i === 0 ? 6 : 0 }]}>{v >= 1000 ? `${(v / 1000).toFixed(1)}k` : v}</Text>
+              <Text key={i} style={styles.yLabel}>{v >= 1000 ? `${(v / 1000).toFixed(1)}k` : v.toString()}</Text>
             ))}
           </View>
 
@@ -225,14 +287,17 @@ export default function AreaLineChart({
               <TouchableOpacity 
                 style={{ width: svgW }} 
                 onPress={handleTouchStart}
+                onPressOut={handleTouchEnd}
                 activeOpacity={1}
               >
                 <Svg width={svgW} height={svgH}>
-                  <Defs>
+        <Defs>
+
                     <LinearGradient id="gradArea" x1="0" y1="0" x2="0" y2="1">
                       <Stop offset="0" stopColor={gradientFrom} stopOpacity="0.38" />
                       <Stop offset="1" stopColor={gradientTo} stopOpacity="0.02" />
-                    </LinearGradient>
+          </LinearGradient>
+
 
                     <Mask id="areaMask">
                       <AnimatedRect
@@ -243,19 +308,21 @@ export default function AreaLineChart({
                         fill="#fff"
                       />
                     </Mask>
-                  </Defs>
-                  
-                  <Rect x={0} y={0} width={svgW} height={svgH} rx={10} fill="#fff" />
+        </Defs>
+        
 
-                  {showGrid && (
+                  <Rect x={0} y={0} width={svgW} height={svgH} rx={10} fill="transparent" />
+
+        {showGrid && (
+
                     <G>
                       {yLabels.map((_, i) => {
                         const y = innerPadding + (i / (yLabels.length - 1)) * (svgH - innerPadding * 2);
                         return (
                           <Line
                             key={`g${i}`}
-                            x1={innerPadding}
-                            x2={svgW - innerPadding}
+                            x1={2}
+                            x2={svgW - 2}
                             y1={y}
                             y2={y}
                             stroke="#ECECEC"
@@ -282,30 +349,45 @@ export default function AreaLineChart({
                     strokeDashoffset={strokeDashoffset as any}
                   />
 
-                  {points.map((p, i) => (i % Math.ceil(points.length / 40) === 0 ? <Circle key={i} cx={p.x} cy={p.y} r={2.5} fill={'#fff'} stroke={strokeColor} strokeWidth={1} /> : null))}
+                  {points.map((p, i) => (
+                    <Circle 
+                      key={i} 
+                      cx={p.x} 
+                      cy={p.y} 
+                      r={2.5} 
+                      fill={'#fff'} 
+                      stroke={strokeColor} 
+                      strokeWidth={1} 
+              />
+            ))}
+
                 </Svg>
 
-                <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: innerPadding, marginTop: 10 }}>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 2, marginTop: 10 }}>
                   {xLabels.map((l, idx) => (
                     <Text key={idx} style={styles.xLabel}>{l.label}</Text>
                   ))}
                 </View>
 
-                {tooltip && (
-                  <View style={[styles.tooltipContainer, { left: Math.max(6, tooltip.x - 56), top: tooltip.y - 60 }]}>
-                    <View style={styles.tooltipBubble}>
-                      <Text style={styles.tooltipDate}>{processed[tooltip.index]?.label}</Text>
-                      <Text style={styles.tooltipValue}>{processed[tooltip.index]?.value}</Text>
+                {tooltip && (() => {
+                  const position = getTooltipPosition(tooltip);
+                  return (
+                    <View style={[styles.tooltipContainer, { left: position.left, top: position.top }]}>
+                      <View style={styles.tooltipBubble}>
+                        <Text style={styles.tooltipDate}>{processed[tooltip.index]?.label}</Text>
+                        <Text style={styles.tooltipValue}>{processed[tooltip.index]?.value?.toString()}</Text>
+                      </View>
+                      <View style={[styles.tooltipArrow, position.isAbove ? styles.tooltipArrowDown : styles.tooltipArrowUp]} />
                     </View>
-                    <View style={styles.tooltipArrow} />
-                  </View>
-                )}
+                  );
+                })()}
               </TouchableOpacity>
             </ScrollView>
           ) : (
             <TouchableOpacity 
               style={{ width: svgW }} 
               onPress={handleTouchStart}
+              onPressOut={handleTouchEnd}
               activeOpacity={1}
             >
               <Svg width={svgW} height={svgH}>
@@ -326,7 +408,7 @@ export default function AreaLineChart({
                   </Mask>
                 </Defs>
 
-                <Rect x={0} y={0} width={svgW} height={svgH} rx={10} fill="#fff" />
+                <Rect x={0} y={0} width={svgW} height={svgH} rx={10} fill="transparent" />
 
                 {showGrid && (
                   <G>
@@ -335,8 +417,8 @@ export default function AreaLineChart({
                       return (
                         <Line
                           key={`g${i}`}
-                          x1={innerPadding}
-                          x2={svgW - innerPadding}
+                          x1={2}
+                          x2={svgW - 2}
                           y1={y}
                           y2={y}
                           stroke="#ECECEC"
@@ -356,115 +438,76 @@ export default function AreaLineChart({
                   d={linePath}
                   stroke={strokeColor}
                   strokeWidth={3}
-                  fill="none"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
+          fill="none"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+
                   strokeDasharray={approxLen}
                   strokeDashoffset={strokeDashoffset as any}
-                />
+        />
 
-                {points.map((p, i) => (i % Math.ceil(points.length / 40) === 0 ? <Circle key={i} cx={p.x} cy={p.y} r={2.5} fill={'#fff'} stroke={strokeColor} strokeWidth={1} /> : null))}
-              </Svg>
+                {points.map((p, i) => (
+                  <Circle 
+                    key={i} 
+                    cx={p.x} 
+                    cy={p.y} 
+                    r={2.5} 
+                    fill={'#fff'} 
+                    stroke={strokeColor} 
+                    strokeWidth={1} 
+                  />
+                ))}
+      </Svg>
 
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: innerPadding, marginTop: 10 }}>
+
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 2, marginTop: 10 }}>
                 {xLabels.map((l, idx) => (
                   <Text key={idx} style={styles.xLabel}>{l.label}</Text>
                 ))}
               </View>
 
-              {tooltip && (
-                <View style={[styles.tooltipContainer, { left: Math.max(6, tooltip.x - 56), top: tooltip.y - 60 }]}>
-                  <View style={styles.tooltipBubble}>
-                    <Text style={styles.tooltipDate}>{processed[tooltip.index]?.label}</Text>
-                    <Text style={styles.tooltipValue}>{processed[tooltip.index]?.value}</Text>
-                  </View>
-                  <View style={styles.tooltipArrow} />
-                </View>
-              )}
+              {tooltip && (() => {
+                const position = getTooltipPosition(tooltip);
+                return (
+                  <View style={[styles.tooltipContainer, { left: position.left, top: position.top }]}>
+                    <View style={styles.tooltipBubble}>
+                      <Text style={styles.tooltipDate}>{processed[tooltip.index]?.label}</Text>
+                      <Text style={styles.tooltipValue}>{processed[tooltip.index]?.value?.toString()}</Text>
+                    </View>
+                    <View style={[styles.tooltipArrow, position.isAbove ? styles.tooltipArrowDown : styles.tooltipArrowUp]} />
+    </View>
+  );
+              })()}
             </TouchableOpacity>
           )}
         </View>
-      </View>
+    </View>
 
-      {/* Footer with legend description only (no total) */}
-      <View style={styles.footerContainer}>
-        <View style={styles.footerLeft}>
-          <Text style={styles.summaryText}>
-            Monthly stock level trends over the last 30 days.
-          </Text>
-        </View>
-
-        <View style={styles.footerRight}>
-          <View style={styles.totalItemsContainer}>
-            <View style={[styles.legendDot, { backgroundColor: '#FFD36A' }]} />
-            <Text style={styles.legendText}>Stock Trends</Text>
-          </View>
-        </View>
-      </View>
+  
     </Animated.View>
   );
 }
 
 const styles = StyleSheet.create({
-  // Same card styling as StockByWarehouseChart
-  card: {
-    backgroundColor: '#f8f9fa',
+  container: {
+
+    width: '100%',
+  },
+  chartCard: {
+    flexDirection: 'row',
+    backgroundColor: '#f2f2f2',
     borderRadius: 14,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: '#e9ecef',
+    padding: 5,
+    position: 'relative',
     overflow: 'hidden',
-  },
-  chartContainer: {
-    marginBottom: 16,
-  },
-  footerContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginTop: 5,
-    paddingTop: 16,
-    borderTopWidth: 1,
-    borderTopColor: '#e9ecef',
-  },
-  footerLeft: {
-    flex: 1,
-    paddingRight: 10,
-    justifyContent: 'center',
-  },
-  footerRight: {
-    minWidth: 100,
-    alignItems: 'flex-end',
-    justifyContent: 'center',
-  },
-  totalItemsContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 1,
-  },
-  legendDot: {
-    width: 5,
-    height: 5,
-    borderRadius: 6,
-  },
-  legendText: {
-    fontSize: 12,
-    color: '#555',
-    fontWeight: '400',
-    marginLeft: 6,
-  },
-  summaryText: {
-    color: '#666',
-    fontSize: 13,
-    flexShrink: 1,
-    textAlign: 'left',
   },
   // Chart-specific styles
   xLabel: { fontSize: 12, color: '#9a9a9a' },
-  yLabel: { fontSize: 12, color: '#b2b2b2', height: 28, textAlign: 'left' },
+  yLabel: { fontSize: 10, color: '#b2b2b2', textAlign: 'right', paddingRight: 2 },
   tooltipContainer: {
     position: 'absolute',
     alignItems: 'center',
+
   },
   tooltipBubble: {
     backgroundColor: '#222',
@@ -486,5 +529,13 @@ const styles = StyleSheet.create({
     borderTopColor: '#222',
     transform: [{ rotate: '180deg' }],
     marginTop: -2,
+  },
+  tooltipArrowUp: {
+    transform: [{ rotate: '180deg' }],
+    marginTop: -2,
+  },
+  tooltipArrowDown: {
+    transform: [{ rotate: '0deg' }],
+    marginTop: 2,
   },
 });

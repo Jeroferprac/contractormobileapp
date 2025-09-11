@@ -309,6 +309,7 @@ export const AppNavigator: React.FC = () => {
             <Stack.Screen name="AllWarehouses" component={AllWarehouseScreen} />
             <Stack.Screen name="BinManagement" component={BinManagementScreen} />
             <Stack.Screen name="ProfileEdit" component={ProfileEditScreen} />
+            
           </>
         ) : (
           // Unauthenticated user screens

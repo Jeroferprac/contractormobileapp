@@ -192,7 +192,7 @@ const RecentActivityList: React.FC = () => {
     <View style={styles.container}>
       {/* Custom header to match card alignment */}
       <View style={styles.header}>
-        <Text style={styles.title}>Recent Activity ({activities.length})</Text>
+        <Text style={styles.title}>Recent Activity ({activities.length.toString()})</Text>
       </View>
       <View style={styles.card}>
         {activities.map((activity, index) => (

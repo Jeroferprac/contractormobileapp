@@ -484,20 +484,34 @@ const AnalyticsCharts: React.FC<AnalyticsChartsProps> = ({ navigation }) => {
           </View>
           
           <View style={styles.stockReportCard}>
-            <View style={styles.stockReportChartContainer}>
-              {containerLayout && (
-                <AreaLineChart
-                  data={generateStockData(stockFilter)}
-                  height={220}
-                  pointSpacing={34}
-                  minPointsToSample={10}
-                  maxPointsNoScroll={27}
-                  gradientFrom={'#FF8A65'}
-                  gradientTo={'rgba(255,138,101,0.06)'}
-                  strokeColor={'#E7600E'}
-                  onPointPress={(i, pt) => console.log('Stock trend point', i, pt)}
-                />
-              )}
+            {containerLayout && (
+              <AreaLineChart
+                data={generateStockData(stockFilter)}
+                height={200}
+                pointSpacing={24}
+                minPointsToSample={10}
+                gradientFrom={'#FF8A65'}
+                gradientTo={'rgba(255,138,101,0.06)'}
+                strokeColor={'#E7600E'}
+                onPointPress={(i, pt) => console.log('Stock trend point', i, pt)}
+                style={styles.chartStyle}
+                showFooter={false}
+              />
+            )}
+            
+            {/* Footer: left description; right legend */}
+            <View style={styles.footerContainer}>
+              <View style={styles.footerLeft}>
+                <Text style={styles.summaryText}>
+                  Stock level trends over the selected timeframe.
+            </Text>
+              </View>
+              <View style={styles.footerRight}>
+                <View style={styles.totalItemsContainer}>
+                  <View style={[styles.legendDot, { backgroundColor: '#FFD36A' }]} />
+                  <Text style={styles.legendText}>Stock Trends</Text>
+                </View>
+              </View>
             </View>
           </View>
         </View>
@@ -1052,6 +1066,52 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '600',
     color: '#222',
+    textAlign: 'left',
+  },
+  chartStyle: {
+    margin: 0,
+    padding: 0,
+    width: '100%',
+  },
+  footerContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginTop: 5,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#e9ecef',
+  },
+  footerLeft: {
+    flex: 1,
+    paddingRight: 10,
+    justifyContent: 'center',
+  },
+  footerRight: {
+    minWidth: 100,
+    alignItems: 'flex-end',
+    justifyContent: 'center',
+  },
+  totalItemsContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 1,
+  },
+  legendDot: {
+    width: 5,
+    height: 5,
+    borderRadius: 6,
+  },
+  legendText: {
+    fontSize: 12,
+    color: '#555',
+    fontWeight: '400',
+    marginLeft: 6,
+  },
+  summaryText: {
+    color: '#666',
+    fontSize: 13,
+    flexShrink: 1,
     textAlign: 'left',
   },
 });

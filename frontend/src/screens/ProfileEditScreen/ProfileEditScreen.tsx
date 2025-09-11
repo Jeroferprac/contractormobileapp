@@ -167,7 +167,7 @@ export const ProfileEditScreen: React.FC<ProfileEditScreenProps> = ({ navigation
       <StatusBar barStyle="light-content" backgroundColor={COLORS.primary} translucent />
         {/* Header with Gradient */}
             <LinearGradient
-              colors={COLORS.gradient.primary || ['#FB7504', '#C2252C']}
+              colors={COLORS.gradient.primary}
           style={styles.header}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 0 }}

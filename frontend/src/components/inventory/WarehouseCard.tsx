@@ -8,6 +8,7 @@ import {
   Image as RNImage,
 } from 'react-native';
 import { LinearGradient } from 'react-native-linear-gradient';
+import { BlurView } from '@react-native-community/blur';
 import { Image } from 'react-native';
 import { Warehouse } from '../../types/inventory';
 import Icon from 'react-native-vector-icons/Feather';
@@ -17,7 +18,7 @@ import UnsplashImage from '../../components/ui/UnsplashImage';
 
 const CARD_WIDTH = 340;
 const CARD_HEIGHT = 220;
-const HEADER_HEIGHT = 110;
+const HEADER_HEIGHT = 120;
 
 interface WarehouseCardProps {
   warehouse: Warehouse;
@@ -77,13 +78,15 @@ const WarehouseCard: React.FC<WarehouseCardProps> = ({ warehouse, onPress, isLoa
       <Animated.View style={[styles.card, { transform: [{ scale }] }]}>
         {/* Header Image */}
         <View style={styles.headerContainer}>
-          <UnsplashImage
-            uri={imageUrl}
+          <RNImage
+            source={{ 
+              uri: imageUrl,
+              cache: 'force-cache'
+            }}
             style={styles.headerImage}
             resizeMode="cover"
             onLoad={() => setImageLoaded(true)}
             onError={() => setHasError(true)}
-            fallbackUri="https://images.unsplash.com/photo-1553413077-190dd305871c?w=400&h=300&fit=crop"
           />
           <LinearGradient
             colors={["rgba(0,0,0,0.0)", "rgba(0,0,0,0.25)"]}
@@ -94,55 +97,37 @@ const WarehouseCard: React.FC<WarehouseCardProps> = ({ warehouse, onPress, isLoa
           <View style={styles.categoryBadge}>
             <Text style={styles.categoryBadgeText}>{category}</Text>
           </View>
-            </View>
+        </View>
 
-        {/* Card Body */}
+        {/* Card Body with Blur Background */}
         <View style={styles.body}>
-          <View style={styles.titleRow}>
-            {/* Avatar overlapping */}
-            <View style={styles.avatarWrap}>
-              <RNImage
-                source={{ uri: `https://ui-avatars.com/api/?name=${encodeURIComponent(warehouse.name)}&background=ffffff&color=333333&rounded=true&size=128` }}
-                style={styles.avatar}
-              />
-              <View style={styles.onlineDot} />
-          </View>
-
-            <View style={styles.titleTextWrap}>
-              <View style={styles.titleRowTop}>
-                <Text numberOfLines={1} style={styles.title}>
-                  {warehouse.name}
-                </Text>
-                <View style={styles.verified}> 
-                  <Icon name="check" size={12} color="#fff" />
-                </View>
+          <View style={styles.blurCard}>
+            <View style={styles.titleRow}>
+              {/* Avatar overlapping */}
+              <View style={styles.avatarWrap}>
+                <RNImage
+                  source={{ uri: `https://ui-avatars.com/api/?name=${encodeURIComponent(warehouse.name)}&background=ffffff&color=333333&rounded=true&size=128` }}
+                  style={styles.avatar}
+                />
+                <View style={styles.onlineDot} />
               </View>
 
-              <Text numberOfLines={1} style={styles.subtitle}>
-                {warehouse.address}
+              <View style={styles.titleTextWrap}>
+                <View style={styles.titleRowTop}>
+                  <Text style={styles.title}>
+                    {warehouse.name}
                   </Text>
+                  <View style={styles.verified}> 
+                    <Icon name="check" size={12} color="#fff" />
+                  </View>
                 </View>
-              </View>
 
-          {/* Info chips row */}
-          <View style={styles.infoRow}>
-            <View style={styles.infoCard}>
-              <Text style={styles.infoLabel}>Location</Text>
-              <View style={styles.infoValueRow}>
-                <Icon name="map-pin" size={14} color="#6b7280" />
-                <Text style={styles.infoValueText}>{locationShort}</Text>
-              </View>
-            </View>
-
-            <View style={styles.infoCard}>
-              <Text style={styles.infoLabel}>Category</Text>
-              <View style={styles.infoValueRow}>
-                <Text style={styles.infoValueText}>{category}</Text>
+                <Text style={styles.subtitle}>
+                  {warehouse.address}
+                </Text>
               </View>
             </View>
           </View>
-
-          {/* No tag pills by default (removed unwanted tags) */}
         </View>
       </Animated.View>
     </TouchableOpacity>
@@ -152,8 +137,7 @@ const WarehouseCard: React.FC<WarehouseCardProps> = ({ warehouse, onPress, isLoa
 const styles = StyleSheet.create({
   wrapper: {
     width: CARD_WIDTH,
-    marginRight: 16,
-    marginHorizontal: 8,
+    marginRight: 12,
     marginVertical: 8,
   },
   card: {
@@ -176,6 +160,11 @@ const styles = StyleSheet.create({
     // ensure top corners match card so image reaches edge with no gaps
     borderTopLeftRadius: 14,
     borderTopRightRadius: 14,
+    // Add padding to create margin effect around the image
+    paddingTop: 10,
+    paddingLeft: 10,
+    paddingRight: 10,
+    paddingBottom: 0,
   },
   headerImage: {
     width: '100%',
@@ -183,7 +172,7 @@ const styles = StyleSheet.create({
     // round only top corners so the image fills header without white gaps
     borderTopLeftRadius: 12,
     borderTopRightRadius: 12,
-    margin: 2,
+    objectFit: 'cover',
   },
   headerGradient: {
     position: 'absolute',
@@ -213,6 +202,23 @@ const styles = StyleSheet.create({
     paddingTop: 8,
     paddingBottom: 14,
     marginHorizontal: 4,
+  },
+  blurCard: {
+    backgroundColor: 'rgba(245, 237, 237, 0.99)',
+    borderRadius: 12,
+    padding: 12,
+    marginTop: -40,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 6,
+    backdropFilter: 'blur(100px)',
   },
   titleRow: {
     flexDirection: 'row',
@@ -252,16 +258,19 @@ const styles = StyleSheet.create({
   titleTextWrap: {
     flex: 1,
     marginLeft: 12,
+    justifyContent: 'center',
   },
   titleRowTop: {
     flexDirection: 'row',
     alignItems: 'center',
+    marginBottom: 2,
   },
   title: {
     fontSize: 18,
     fontWeight: '700',
     color: '#0F172A',
     flex: 1,
+    lineHeight: 22,
   },
   verified: {
     marginLeft: 8,
@@ -273,48 +282,11 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     color: '#6B7280',
-    marginTop: 4,
     fontSize: 13,
+    lineHeight: 16,
+    flexWrap: 'wrap',
   },
-  infoRow: {
-    flexDirection: 'row',
-    marginTop: 6,
-    justifyContent: 'space-between',
-    marginHorizontal: 4,
-  },
-  infoCard: {
-    flex: 1,
-    backgroundColor: '#F3F4F6',
-    borderRadius: 8,
-    paddingHorizontal: 8,
-    paddingVertical: 6,
-    marginRight: 8,
-    marginHorizontal: 2,
-    borderWidth: 1,
-    borderColor: 'rgba(0,0,0,0.05)',
-  },
-  infoLabel: {
-    color: '#F97316',
-    fontSize: 11,
-    fontWeight: '700',
-    marginBottom: 4,
-  },
-  infoValueRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  infoValueText: {
-    fontWeight: '700',
-    color: '#111827',
-    marginLeft: 6,
-    fontSize: 13,
-  },
-  infoMuted: {
-    color: '#9CA3AF',
-    fontWeight: '600',
-    marginLeft: 6,
-    fontSize: 12,
-  },
+  // Removed info card styles - no longer needed
   // tag pills removed — styles cleaned up
 });
 

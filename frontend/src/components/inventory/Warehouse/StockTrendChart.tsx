@@ -247,18 +247,33 @@ const StockTrendChart = () => {
 
       {/* Card containing chart and footer */}
       <Animated.View style={[styles.card, { transform: [{ translateY }], opacity }]}>
-        <View style={styles.chartContainer}>
-          <AreaLineChart
-            data={chartData}
-            height={200}
-            pointSpacing={34}
-            minPointsToSample={10}
-            gradientFrom={'#FF8A65'}
-            gradientTo={'rgba(255,138,101,0.06)'}
-            strokeColor={'#E7600E'}
-            onPointPress={(i, pt) => console.log('Stock trend point', i, pt)}
-          />
+        <AreaLineChart
+          data={chartData}
+          height={200}
+          pointSpacing={24}
+          minPointsToSample={10}
+          gradientFrom={'#FF8A65'}
+          gradientTo={'rgba(255,138,101,0.06)'}
+          strokeColor={'#E7600E'}
+          onPointPress={(i, pt) => console.log('Stock trend point', i, pt)}
+          style={styles.chartStyle}
+          showFooter={false}
+        />
+
+        {/* Footer: left description; right legend */}
+        <View style={styles.footerContainer}>
+          <View style={styles.footerLeft}>
+        <Text style={styles.summaryText}>
+              Stock level trends over the selected timeframe.
+        </Text>
       </View>
+          <View style={styles.footerRight}>
+            <View style={styles.totalItemsContainer}>
+              <View style={[styles.legendDot, { backgroundColor: '#FFD36A' }]} />
+              <Text style={styles.legendText}>Stock Trends</Text>
+            </View>
+          </View>
+        </View>
       </Animated.View>
     </View>
   );
@@ -299,15 +314,58 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   card: {
-    backgroundColor: '#f8f9fa',
-    borderRadius: 14,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: '#e9ecef',
+    backgroundColor: '#ffffff',
+    borderRadius: 12,
+    padding: 12,
+    borderWidth: 0.5,
+    borderColor: 'rgba(155, 152, 152, 0.29)',
     overflow: 'hidden',
   },
-  chartContainer: {
-    marginBottom: 16,
+  chartStyle: {
+    margin: 0,
+    padding: 0,
+    width: '100%',
+  },
+  footerContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginTop: 5,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#e9ecef',
+  },
+  footerLeft: {
+    flex: 1,
+    paddingRight: 10,
+    justifyContent: 'center',
+  },
+  footerRight: {
+    minWidth: 100,
+    alignItems: 'flex-end',
+    justifyContent: 'center',
+  },
+  totalItemsContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 1,
+  },
+  legendDot: {
+    width: 5,
+    height: 5,
+    borderRadius: 6,
+  },
+  legendText: {
+    fontSize: 12,
+    color: '#555',
+    fontWeight: '400',
+    marginLeft: 6,
+  },
+  summaryText: {
+    color: '#666',
+    fontSize: 13,
+    flexShrink: 1,
+    textAlign: 'left',
   },
 });
 

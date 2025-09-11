@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { View, ScrollView, SafeAreaView, StyleSheet, Alert, Text, TouchableOpacity, StatusBar } from 'react-native';
 import FastImage from 'react-native-fast-image';
 import Icon from 'react-native-vector-icons/Feather';
+import LinearGradient from 'react-native-linear-gradient';
 import { inventoryApiService } from '../../api/inventoryApi';
 import { Transaction, Warehouse, Transfer, Stock, Product } from '../../types/inventory';
 import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
@@ -382,41 +383,47 @@ const WarehouseDashboard: React.FC<WarehouseScreenProps> = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
-      
-      {/* Header with back button */}
-      <View style={styles.header}>
-        <TouchableOpacity 
-          style={styles.backButton} 
-          onPress={handleBackPress}
-          activeOpacity={0.7}
-        >
-          <View style={styles.backButtonInner}>
-            <Icon name="arrow-left" size={24} color={COLORS.text.primary} />
+      <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
+      <LinearGradient colors={COLORS.gradient.primary} style={styles.headerGradient}>
+        {/* Header with back button */}
+        <View style={styles.header}>
+          <TouchableOpacity 
+            style={styles.backButton} 
+            onPress={handleBackPress}
+            activeOpacity={0.7}
+          >
+            <View style={styles.backButtonInner}>
+              <Icon name="arrow-left" size={24} color={COLORS.text.light} />
+            </View>
+          </TouchableOpacity>
+          
+          <View style={styles.titleContainer}>
+            <Text style={styles.headerTitle}>Warehouse Dashboard</Text>
+            <Text style={styles.headerSubtitle}>Manage your warehouses efficiently</Text>
           </View>
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Warehouse Dashboard</Text>
-        <View style={styles.headerActions}>
-          <TouchableOpacity 
-            style={styles.refreshButton} 
-            onPress={handleRefresh}
-            activeOpacity={0.7}
-          >
-            <View style={styles.refreshButtonInner}>
-              <Icon name="refresh-cw" size={20} color={COLORS.text.primary} />
-            </View>
-          </TouchableOpacity>
-          <TouchableOpacity 
-            style={styles.previewButton} 
-            onPress={() => navigation.navigate('WarehouseReports')}
-            activeOpacity={0.7}
-          >
-            <View style={styles.previewButtonInner}>
-              <Icon name="bar-chart-2" size={20} color={COLORS.primary} />
-            </View>
-          </TouchableOpacity>
+          
+          <View style={styles.headerActions}>
+            <TouchableOpacity 
+              style={styles.refreshButton} 
+              onPress={handleRefresh}
+              activeOpacity={0.7}
+            >
+              <View style={styles.refreshButtonInner}>
+                <Icon name="refresh-cw" size={20} color={COLORS.text.light} />
+              </View>
+            </TouchableOpacity>
+            <TouchableOpacity 
+              style={styles.previewButton} 
+              onPress={() => navigation.navigate('WarehouseReports')}
+              activeOpacity={0.7}
+            >
+              <View style={styles.previewButtonInner}>
+                <Icon name="bar-chart-2" size={20} color={COLORS.text.light} />
+              </View>
+            </TouchableOpacity>
+          </View>
         </View>
-      </View>
+      </LinearGradient>
 
       <ScrollView 
         style={styles.scrollView}
@@ -478,18 +485,33 @@ const WarehouseDashboard: React.FC<WarehouseScreenProps> = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORS.background,
+  },
+  headerGradient: {
+    paddingTop: SPACING.xl,
+    paddingBottom: SPACING.lg,
+    borderBottomLeftRadius: BORDER_RADIUS.lg,
+    borderBottomRightRadius: BORDER_RADIUS.lg,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 8,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: SPACING.lg,
-    paddingTop: SPACING.xl, // Add extra top padding for status bar
-    paddingBottom: SPACING.md,
-    backgroundColor: '#FFFFFF',
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border.light,
+    paddingVertical: SPACING.md,
+  },
+  titleContainer: {
+    flex: 1,
+    alignItems: 'center',
+    marginHorizontal: SPACING.md,
   },
   headerActions: {
     flexDirection: 'row',
@@ -500,20 +522,36 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   backButtonInner: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 42,
+    height: 42,
+    borderRadius: 21,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: COLORS.surface,
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
     borderWidth: 1,
-    borderColor: COLORS.border.light,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   headerTitle: {
     fontSize: TYPOGRAPHY.sizes.xl,
-    fontWeight: '700',
-    color: COLORS.text.primary,
-    fontFamily: 'System',
+    fontWeight: TYPOGRAPHY.weights.bold,
+    color: COLORS.text.light,
+    textAlign: 'center',
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
+  },
+  headerSubtitle: {
+    fontSize: TYPOGRAPHY.sizes.sm,
+    color: 'rgba(255, 255, 255, 0.8)',
+    marginTop: SPACING.xs,
     textAlign: 'center',
   },
   refreshButton: {
@@ -521,14 +559,22 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   refreshButtonInner: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 42,
+    height: 42,
+    borderRadius: 21,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: COLORS.surface,
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
     borderWidth: 1,
-    borderColor: COLORS.border.light,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   previewButton: {
     borderRadius: 20,
@@ -536,14 +582,22 @@ const styles = StyleSheet.create({
     marginLeft: SPACING.sm,
   },
   previewButtonInner: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 42,
+    height: 42,
+    borderRadius: 21,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: COLORS.surface,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
     borderWidth: 1,
-    borderColor: COLORS.primary,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   scrollView: {
     flex: 1,
@@ -553,8 +607,8 @@ const styles = StyleSheet.create({
   },
   content: {
     paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.lg,
-    gap: SPACING.lg,
+    paddingVertical: SPACING.md,
+    gap: SPACING.md, // Reduced from SPACING.lg for more professional spacing
   },
   loadingContainer: {
     flex: 1,

@@ -24,8 +24,8 @@ const TimeframePicker = ({ timeframe, onTimeframeChange }: { timeframe: string; 
   return (
     <TouchableOpacity style={styles.timeframeButton} onPress={handlePress} activeOpacity={0.85}>
       <Text style={styles.timeframeText}>{timeframe}</Text>
-    </TouchableOpacity>
-  );
+  </TouchableOpacity>
+);
 };
 
 const TransferActivityChart = () => {
@@ -53,8 +53,6 @@ const TransferActivityChart = () => {
     try {
       const response = await inventoryApiService.getTransfers();
       const transfers = response.data;
-      
-      // Process data to get transfer trends
       const trendData = processTransferData(transfers);
       setTransferData(trendData);
     } catch (err) {
@@ -123,14 +121,35 @@ const TransferActivityChart = () => {
     const data: TransferData[] = [];
     const today = new Date();
     
-    for (let i = 6; i >= 0; i--) {
+    // Generate 60 data points for testing with many data
+    const totalDataPoints = 60;
+    
+    for (let i = totalDataPoints - 1; i >= 0; i--) {
       const date = new Date(today);
       date.setDate(date.getDate() - i);
       const dateStr = date.toISOString().split('T')[0];
       
-      // Generate realistic transfer data
-      const inbound = Math.floor(Math.random() * 10) + 5;
-      const outbound = Math.floor(Math.random() * 8) + 3;
+      // Generate more varied and realistic transfer data
+      const dayOfWeek = date.getDay(); // 0 = Sunday, 6 = Saturday
+      const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+      
+      // Base values - lower on weekends
+      const baseValue = isWeekend ? 8 : 18;
+      
+      // Create multiple wave patterns for more interesting data
+      const wave1 = Math.sin(i * 0.15) * 6; // Long wave
+      const wave2 = Math.sin(i * 0.4) * 3;  // Medium wave
+      const wave3 = Math.sin(i * 0.8) * 2;  // Short wave
+      
+      // Add some trend (increasing over time)
+      const trend = i * 0.1;
+      
+      // Random noise
+      const randomNoise = (Math.random() - 0.5) * 8;
+      
+      // Combine all variations
+      const inbound = Math.max(1, Math.floor(baseValue + wave1 + wave2 + wave3 + trend + randomNoise));
+      const outbound = Math.max(1, Math.floor(inbound * (0.5 + Math.random() * 0.6)));
       
       data.push({
         date: dateStr,
@@ -150,6 +169,9 @@ const TransferActivityChart = () => {
     label: new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
   }));
 
+  // Debug: Log data points count
+  console.log('TransferActivityChart: Loaded', chartData.length, 'data points');
+
   const translateY = entry.interpolate({ inputRange: [0, 1], outputRange: [14, 0] });
   const opacity = entry;
 
@@ -163,18 +185,21 @@ const TransferActivityChart = () => {
           </View>
           <TimeframePicker timeframe={timeframe} onTimeframeChange={setTimeframe} />
         </View>
-        <View style={styles.card}>
-          <AreaLineChart
-            data={[]}
-            height={200}
-            pointSpacing={34}
-            minPointsToSample={10}
-            maxPointsNoScroll={27}
-            gradientFrom={'#FF8A65'}
-            gradientTo={'rgba(255,138,101,0.06)'}
-            strokeColor={'#E7600E'}
-            style={styles.fullWidthChart}
-          />
+      <View style={styles.card}>
+          <View style={styles.chartContainer}>
+            <AreaLineChart
+              data={[]}
+              height={200}
+              pointSpacing={34}
+              minPointsToSample={10}
+              maxPointsNoScroll={27}
+              gradientFrom={'#FF8A65'}
+              gradientTo={'rgba(255,138,101,0.06)'}
+              strokeColor={'#E7600E'}
+              style={styles.chartStyle}
+              showFooter={false}
+            />
+          </View>
         </View>
       </View>
     );
@@ -190,18 +215,21 @@ const TransferActivityChart = () => {
           </View>
           <TimeframePicker timeframe={timeframe} onTimeframeChange={setTimeframe} />
         </View>
-        <View style={styles.card}>
-          <AreaLineChart
-            data={[]}
-            height={200}
-            pointSpacing={34}
-            minPointsToSample={10}
-            maxPointsNoScroll={27}
-            gradientFrom={'#FF8A65'}
-            gradientTo={'rgba(255,138,101,0.06)'}
-            strokeColor={'#E7600E'}
-            style={styles.fullWidthChart}
-          />
+      <View style={styles.card}>
+          <View style={styles.chartContainer}>
+            <AreaLineChart
+              data={[]}
+              height={200}
+              pointSpacing={34}
+              minPointsToSample={10}
+              maxPointsNoScroll={27}
+              gradientFrom={'#FF8A65'}
+              gradientTo={'rgba(255,138,101,0.06)'}
+              strokeColor={'#E7600E'}
+              style={styles.chartStyle}
+              showFooter={false}
+            />
+          </View>
         </View>
       </View>
     );
@@ -217,18 +245,21 @@ const TransferActivityChart = () => {
           </View>
           <TimeframePicker timeframe={timeframe} onTimeframeChange={setTimeframe} />
         </View>
-        <View style={styles.card}>
-          <AreaLineChart
-            data={[]}
-            height={200}
-            pointSpacing={34}
-            minPointsToSample={10}
-            maxPointsNoScroll={27}
-            gradientFrom={'#FF8A65'}
-            gradientTo={'rgba(255,138,101,0.06)'}
-            strokeColor={'#E7600E'}
-            style={styles.fullWidthChart}
-          />
+      <View style={styles.card}>
+          <View style={styles.chartContainer}>
+            <AreaLineChart
+              data={[]}
+              height={200}
+              pointSpacing={34}
+              minPointsToSample={10}
+              maxPointsNoScroll={27}
+              gradientFrom={'#FF8A65'}
+              gradientTo={'rgba(255,138,101,0.06)'}
+              strokeColor={'#E7600E'}
+              style={styles.chartStyle}
+              showFooter={false}
+            />
+          </View>
         </View>
       </View>
     );
@@ -241,35 +272,36 @@ const TransferActivityChart = () => {
         <View>
           <Text style={styles.pageTitle}>Transfer Activity</Text>
           <Text style={styles.pageSubtitle}>Overview of transfer activity over time</Text>
-        </View>
+      </View>
 
-        <TimeframePicker 
+        <TimeframePicker
           timeframe={timeframe}
           onTimeframeChange={setTimeframe}
         />
       </View>
 
-      {/* Card containing chart and footer */}
+      {/* Card containing chart and footer - matching StockByWarehouseChart style */}
       <Animated.View style={[styles.card, { transform: [{ translateY }], opacity }]}>
         <AreaLineChart
           data={chartData}
           height={200}
-          pointSpacing={34}
+          pointSpacing={24}
           minPointsToSample={10}
           gradientFrom={'#FF8A65'}
           gradientTo={'rgba(255,138,101,0.06)'}
           strokeColor={'#E7600E'}
           onPointPress={(i, pt) => console.log('Transfer activity point', i, pt)}
-          style={styles.fullWidthChart}
+          style={styles.chartStyle}
+          showFooter={false}
         />
 
         {/* Footer: left description; right legend */}
         <View style={styles.footerContainer}>
           <View style={styles.footerLeft}>
-            <Text style={styles.summaryText}>
-              Monthly transfer activity trends over the last 30 days.
-            </Text>
-          </View>
+        <Text style={styles.summaryText}>
+              Transfer activity trends over the selected timeframe.
+        </Text>
+      </View>
 
           <View style={styles.footerRight}>
             <View style={styles.totalItemsContainer}>
@@ -325,12 +357,13 @@ const styles = StyleSheet.create({
     borderColor: '#e9ecef',
     overflow: 'hidden',
   },
-  fullWidthChart: {
+  chartContainer: {
     marginBottom: 16,
-    marginHorizontal: -14, // Extend to card edges
-    marginTop: -14, // Extend to card top
-    paddingHorizontal: 14, // Add padding back for content
-    paddingTop: 14, // Add padding back for content
+  },
+  chartStyle: {
+    margin: 0,
+    padding: 0,
+    width: '100%',
   },
   footerContainer: {
     flexDirection: 'row',

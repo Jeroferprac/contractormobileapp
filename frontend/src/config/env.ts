@@ -16,10 +16,10 @@ interface Environment {
 export const env: Environment = {
   GITHUB_CLIENT_ID: Config.GITHUB_CLIENT_ID || 'Ov23liUkvPd0zQtnSC55',
   GITHUB_CLIENT_SECRET: Config.GITHUB_CLIENT_SECRET || '1feba2fd580afb952c0f7d724c8aadffb498cf42',
-  API_URL: Config.API_URL || 'http://192.168.1.5:8000',
+  API_URL: Config.API_URL || 'http://192.168.31.45:8000',
   NEXTAUTH_SECRET: Config.NEXTAUTH_SECRET || 'h10jPavso9K+M4cnMz67mwun/x3o3/zABjGMeTSMTjc=',
   NEXTAUTH_URL: Config.NEXTAUTH_URL || 'http://localhost:3000',
-  NEXT_PUBLIC_API_BASE_URL: Config.NEXT_PUBLIC_API_BASE_URL || 'http://192.168.1.5:8000',
+  NEXT_PUBLIC_API_BASE_URL: Config.NEXT_PUBLIC_API_BASE_URL || 'http://192.168.31.45:8000',
   APP_NAME: Config.APP_NAME || 'Binyan',
   APP_ENV: Config.APP_ENV || 'development',
 };

@@ -629,7 +629,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   offlineIndicator: {
-    backgroundColor: '#FB7504',
+    backgroundColor: '#FFC107',
     padding: SPACING.sm,
     marginHorizontal: SPACING.lg,
     marginTop: SPACING.sm,

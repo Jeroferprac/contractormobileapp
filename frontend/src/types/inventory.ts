@@ -259,7 +259,7 @@ export type ChartDataPoint = {
 export type BarChartData = {
   value: number;
   label?: string;
-  fullLabel?: string; // Full name for tooltip
+  fullLabel?: string; 
   colorStart?: string;
   colorEnd?: string;
 };
@@ -501,4 +501,20 @@ export interface OverdueSalesResponse {
   total: number;
   message: string;
   status: number;
+}
+
+// ===== WAREHOUSE FILTER TYPES =====
+
+export interface WarehouseFilterOptions {
+  status: 'all' | 'active' | 'inactive';
+  location: string[];
+  contactInfo: 'all' | 'has_contact' | 'complete';
+  sortBy: 'name' | 'code' | 'created_at';
+  sortOrder: 'asc' | 'desc';
+  searchText: string;
+}
+
+export interface WarehouseSearchHistory {
+  searches: string[];
+  lastUpdated: string;
 }

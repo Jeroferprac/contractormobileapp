@@ -107,7 +107,7 @@ Expected response:
 ### 1. Start your backend:
 ```bash
 # In your backend directory
-python manage.py runserver 0.0.0.0:8000
+python run.py  0.0.0.0:8000
 ```
 
 ### 2. Start the React Native app:

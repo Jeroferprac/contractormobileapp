@@ -299,23 +299,23 @@ export default function BarChart({
           </View>
 
           {/* Labels row beneath bars - positioned to scroll with bars */}
-          <View style={{ 
-            flexDirection: 'row', 
-            marginTop: 8, 
-            paddingLeft: 2,
+      <View style={{ 
+        flexDirection: 'row', 
+        marginTop: 8, 
+        paddingLeft: 2,
             transform: [{ translateX: -scrollX }] // Move labels with scroll
-          }}>
+      }}>
             {data.map((item, i) => {
               const widthStyle = { width: barWidth, marginRight: i === data.length - 1 ? 0 : gap };
-              const absoluteX = i * (barWidth + gap) + barWidth / 2 + yAxisWidth - scrollX;
+          const absoluteX = i * (barWidth + gap) + barWidth / 2 + yAxisWidth - scrollX;
               return (
                 <TouchableOpacity
                   key={`press-${i}`}
                   style={[widthStyle, { alignItems: 'center' }]}
                   onPress={() => {
-                    lastClickedBarRef.current = i;
-                    const x = i * (barWidth + gap) + barWidth / 2;
-                    showTooltip(i, x, absoluteX);
+                lastClickedBarRef.current = i;
+                const x = i * (barWidth + gap) + barWidth / 2;
+                showTooltip(i, x, absoluteX);
                     onBarPress && onBarPress(i, item);
                   }}
                 >

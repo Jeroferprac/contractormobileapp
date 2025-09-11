@@ -284,11 +284,11 @@ const WarehouseCard: React.FC<WarehouseCardProps> = ({
             <View style={styles.bottomStats}>
             <View style={styles.statItem}>
                 <Icon name="box" size={14} color="#FFFFFF" />
-              <Text style={styles.statText}>{warehouse.binCount || 0} Bins</Text>
+              <Text style={styles.statText}>{(warehouse.binCount || 0).toString()} Bins</Text>
             </View>
             <View style={styles.statItem}>
                 <Icon name="activity" size={14} color="#FFFFFF" />
-                <Text style={styles.statText}>{warehouse.activeBins || 0} Active</Text>
+                <Text style={styles.statText}>{(warehouse.activeBins || 0).toString()} Active</Text>
             </View>
           </View>
         </View>

@@ -240,8 +240,8 @@ const styles = StyleSheet.create({
     height: 24,
     left: 8,
     top: 8,
-    fontSize: 9,
-    fontWeight: '400',
+    fontSize: 10,
+    fontWeight: '700',
     color: '#9B9898', // Exact color from Figma
     lineHeight: 12,
     flexWrap: 'wrap',
@@ -270,8 +270,8 @@ const styles = StyleSheet.create({
     paddingVertical: 0,
   },
   smallTrendText: {
-    fontSize: 8,
-    fontWeight: '400',
+    fontSize: 9,
+    fontWeight: '900',
     color: '#D26065', // Exact color from Figma
     lineHeight: 16,
     marginLeft: 3,

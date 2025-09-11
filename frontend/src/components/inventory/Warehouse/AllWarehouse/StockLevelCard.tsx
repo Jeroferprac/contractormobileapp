@@ -165,12 +165,12 @@ const StockLevelCard: React.FC<StockLevelCardProps> = ({
             </View>
             <View style={styles.statCard}>
               <Icon name="activity" size={16} color="#FB7504" />
-              <Text style={styles.statValue}>{warehouse?.activeBins || 0}</Text>
+              <Text style={styles.statValue}>{(warehouse?.activeBins || 0).toString()}</Text>
               <Text style={styles.statLabel}>Active</Text>
             </View>
             <View style={styles.statCard}>
               <Icon name="trending-up" size={16} color="#2196F3" />
-              <Text style={styles.statValue}>{warehouse?.utilization || 0}%</Text>
+              <Text style={styles.statValue}>{(warehouse?.utilization || 0).toString()}%</Text>
               <Text style={styles.statLabel}>Utilization</Text>
             </View>
           </View>

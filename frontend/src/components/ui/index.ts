@@ -12,5 +12,6 @@ export { default as LogoutModal } from './LogoutModal';
 export { default as ProductFilterModal } from './ProductFilterModal';
 export { default as ProductSearchModal } from './ProductSearchModal';
 export { default as SearchBar } from './SearchBar';
+export { default as SearchModal } from './SearchModal';
 export { default as Sidebar } from './Sidebar';
 export { default as StatsCard } from './StatsCard'; 

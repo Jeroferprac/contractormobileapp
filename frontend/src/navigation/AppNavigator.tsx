@@ -316,6 +316,26 @@ export const AppNavigator: React.FC = () => {
             <Stack.Screen name="BinManagement" component={BinManagementScreen} />
             <Stack.Screen name="ProfileEdit" component={ProfileEditScreen} />
             
+            {/* Inventory Management Screens */}
+            <Stack.Screen name="SuppliersScreen" component={SuppliersScreen} />
+            <Stack.Screen name="SupplierFormScreen" component={SupplierFormScreen} />
+            <Stack.Screen name="SupplierDetailsScreen" component={SupplierDetailsScreen} />
+            <Stack.Screen name="ProductSuppliersScreen" component={ProductSuppliersScreen} />
+            <Stack.Screen name="ProductSupplierFormScreen" component={ProductSupplierFormScreen} />
+            <Stack.Screen name="PurchaseOrdersScreen" component={PurchaseOrdersScreen} />
+            <Stack.Screen name="PurchaseOrderDetailsScreen" component={PurchaseOrderDetailsScreen} />
+            <Stack.Screen name="PurchaseOrderFormScreen" component={PurchaseOrderFormScreen} />
+            <Stack.Screen name="InventoryReportsScreen" component={InventoryReportsScreen} />
+            
+            {/* Price Lists and Batches */}
+            <Stack.Screen name="PriceLists" component={PriceListsScreen} />
+            <Stack.Screen name="PriceListDetailsScreen" component={PriceListDetailsScreen} />
+            <Stack.Screen name="PriceListProductsScreen" component={PriceListProductsScreen} />
+            <Stack.Screen name="EditPriceListScreen" component={EditPriceListScreen} />
+            <Stack.Screen name="BatchesScreen" component={BatchesScreen} />
+            <Stack.Screen name="BatchDetailsScreen" component={BatchDetailsScreen} />
+            <Stack.Screen name="EditBatchScreen" component={EditBatchScreen} />
+            
           </>
         ) : (
           // Unauthenticated user screens

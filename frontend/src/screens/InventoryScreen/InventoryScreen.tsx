@@ -31,6 +31,8 @@ import {
   RecentActivityList,
   WarehouseList,
   StockReportChart
+  SupplierList,
+  PriceListSection
 } from '../../components/inventory';
 import { SectionHeader } from '../../components/layout';
 
@@ -79,6 +81,21 @@ const InventoryScreen: React.FC<InventoryScreenProps> = ({ navigation }) => {
   useEffect(() => {
     loadInventoryData();
   }, []);
+
+
+  // Debug sidebar state changes
+  useEffect(() => {
+    console.log('🔧 [DEBUG] SidebarVisible state changed to:', sidebarVisible);
+  }, [sidebarVisible]);
+
+  // Refresh data when screen comes into focus
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', () => {
+      loadInventoryData();
+    });
+
+    return unsubscribe;
+  }, [navigation]);
 
   const getMonthName = (monthNumber: number): string =>
     new Date(2000, monthNumber - 1).toLocaleString('default', { month: 'short' });
@@ -136,14 +153,19 @@ const InventoryScreen: React.FC<InventoryScreenProps> = ({ navigation }) => {
         inventoryApiService.getTransactions({ limit: 3 }).catch(() => ({ data: [] })),
         inventoryApiService.getWarehouses().catch(() => ({ data: [] })),
         inventoryApiService.getCurrentStockLevels().catch(() => ({ data: [] })),
+        suppliersRes,
       ]);
 
       setSummary(summaryRes.data);
       setProducts(topSellingRes.data || []);
       setTransactions(transactionsRes.data || []);
+      setSuppliers(suppliersRes.data || []);
+      
+      console.log('📊 [InventoryScreen] Suppliers loaded:', suppliersRes.data?.length || 0);
 
       // Attach image URL to each warehouse
-      const updatedWarehouses = (warehouseRes.data || []).slice(0, 10).map((wh, idx) => ({
+      const warehouseData = Array.isArray(warehouseRes.data) ? warehouseRes.data : [];
+      const updatedWarehouses = warehouseData.map((wh, idx) => ({
         ...wh,
         imageUrl: `${UNSPLASH_IMAGES[idx % UNSPLASH_IMAGES.length]}&sig=${idx}`,
       }));
@@ -163,8 +185,10 @@ const InventoryScreen: React.FC<InventoryScreenProps> = ({ navigation }) => {
       setSummary(null);
       setProducts([]);
       setTransactions([]);
+      setSuppliers([]);
       setWarehouses([]);
       setChartData([]);
+      console.log('❌ [InventoryScreen] Error loading data, all data reset to empty');
     } finally {
       setLoading(false);
     }
@@ -190,6 +214,9 @@ const InventoryScreen: React.FC<InventoryScreenProps> = ({ navigation }) => {
       setBarChartData(timeBasedData);
       setIsChartLoading(false);
     }, 300);
+  const handleSupplierPress = (supplier: Supplier) => {
+            navigation.navigate('SupplierDetailsScreen', { supplierId: supplier.id });
+>
   };
 
   const handleBarPress = (index: number, item: BarChartData) => {
@@ -321,10 +348,12 @@ const InventoryScreen: React.FC<InventoryScreenProps> = ({ navigation }) => {
           console.log('🏢 [InventoryScreen] Pushing to AllWarehouses via SectionHeader View All');
           navigation.push('AllWarehouses');
         }}
+
       />
       <WarehouseList 
         warehouses={warehouses} 
         loading={loading}
+
         onWarehousePress={(warehouse) => {
           console.log('🏢 [InventoryScreen] Pushing to AllWarehouses with warehouse:', warehouse.name);
           navigation.push('AllWarehouses', { selectedWarehouse: warehouse });
@@ -332,7 +361,6 @@ const InventoryScreen: React.FC<InventoryScreenProps> = ({ navigation }) => {
         onViewAll={() => {
           console.log('🏢 [InventoryScreen] Pushing to AllWarehouses via View All');
           navigation.push('AllWarehouses');
-        }}
       />
 
         <RecentActivityList />

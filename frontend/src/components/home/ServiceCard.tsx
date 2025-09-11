@@ -26,7 +26,12 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
         isViewMore && styles.viewMoreContainer,
         style
       ]} 
-      onPress={onPress}
+      onPress={() => {
+        console.log('🎯 ServiceCard onPress triggered for:', service.title);
+        onPress();
+      }}
+      activeOpacity={0.7}
+      
     >
       {/* Image Container */}
       <View style={styles.imageContainer}>

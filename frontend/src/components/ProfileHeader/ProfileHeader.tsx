@@ -5,13 +5,12 @@ import {
   StyleSheet,
   TouchableOpacity,
   Image,
-  ActivityIndicator,
+  Dimensions,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import { COLORS } from '../../constants/colors';
 import { SPACING, BORDER_RADIUS } from '../../constants/spacing';
 
-
+const { width: screenWidth } = Dimensions.get('window');
 
 interface ProfileHeaderProps {
   user: {
@@ -38,76 +37,108 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
 }) => {
   return (
     <View style={styles.container}>
-      {/* Header Image */}
+      {/* Header Background Image */}
       <View style={styles.headerImageContainer}>
         <Image
-          source={user.headerImage ? { uri: user.headerImage } : { uri: 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=800' }}
+          source={{ uri: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=800&h=400&fit=crop' }}
           style={styles.headerImage}
           resizeMode="cover"
         />
-      </View>
-
-      {/* Profile Picture Overlay */}
-      <View style={styles.profilePictureContainer}>
+        
+        {/* Profile Picture */}
         <TouchableOpacity 
-          style={styles.profilePicture} 
+          style={styles.profilePicture}
           onPress={onAvatarPress}
-          activeOpacity={0.8}
           disabled={avatarLoading}
         >
-          {avatarLoading ? (
-            <View style={styles.loadingContainer}>
-              <ActivityIndicator size="small" color={COLORS.primary} />
-            </View>
-          ) : user.profileImage ? (
-            <Image
-              source={{ uri: user.profileImage }}
-              style={styles.profileImage}
-              resizeMode="cover"
-            />
+          {user.profileImage ? (
+            <Image source={{ uri: user.profileImage }} style={styles.profileImage} />
           ) : (
-            <Icon name="person" size={40} color={COLORS.text.secondary} />
-          )}
-          <View style={styles.verifiedBadge}>
-            <Icon name="verified" size={16} color={COLORS.status.info} />
-          </View>
-          {!avatarLoading && (
-            <View style={styles.addIcon}>
-              <Icon name="camera-alt" size={16} color={COLORS.primary} />
+            <View style={styles.profilePlaceholder}>
+              <Icon name="business" size={32} color="#FFFFFF" />
             </View>
           )}
+          
+          {/* Orange Add Button */}
+          <View style={styles.addIcon}>
+            <Icon name="add" size={16} color="#FFFFFF" />
+          </View>
         </TouchableOpacity>
+
+        {/* Header Action Buttons */}
+        <View style={styles.headerActions}>
+          <TouchableOpacity style={styles.headerActionIcon}>
+            <Icon name="notifications" size={20} color="#1A1A1A" />
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.headerActionIcon}>
+            <Icon name="settings" size={20} color="#1A1A1A" />
+          </TouchableOpacity>
+        </View>
       </View>
 
-      {/* User Information */}
-      <View style={styles.userInfoContainer}>
-        <Text style={styles.userName}>{user.name}</Text>
-        <Text style={styles.userHandle}>@john_builders</Text>
-        <Text style={styles.userTitle}>Construction Manager</Text>
-        <Text style={styles.userJoined}>Joined January 2023</Text>
-        <Text style={styles.userDescription}>{user.description}</Text>
-
-        {/* Stats */}
-        <View style={styles.statsContainer}>
-          <View style={styles.statItem}>
-            <Text style={styles.statNumber}>50</Text>
-            <Text style={styles.statLabel}>Following</Text>
-          </View>
-          <View style={styles.statDivider} />
-          <View style={styles.statItem}>
-            <Text style={styles.statNumber}>100</Text>
-            <Text style={styles.statLabel}>Followers</Text>
+      {/* Profile Information Card */}
+      <View style={styles.profileCard}>
+        {/* Company Name and Verification */}
+        <View style={styles.companyInfo}>
+          <Text style={styles.companyName}>{user.name}</Text>
+          <View style={styles.verificationBadge}>
+            <Icon name="verified" size={16} color="#007BFF" />
           </View>
         </View>
 
-        {/* Action Buttons */}
-        <View style={styles.actionButtonsContainer}>
-          <TouchableOpacity style={styles.editButton} onPress={onEditProfile}>
-            <Text style={styles.editButtonText}>Edit Profile</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.shareButton} onPress={onShare}>
-            <Text style={styles.shareButtonText}>Share</Text>
-          </TouchableOpacity>
+        {/* Rating Section */}
+        <View style={styles.ratingSection}>
+          <View style={styles.ratingItem}>
+            <Icon name="star" size={16} color="#FFD700" />
+            <Text style={styles.ratingText}>4.7</Text>
+            <Text style={styles.ratingSubtext}>93 reviews</Text>
+          </View>
+          <View style={styles.ratingItem}>
+            <Icon name="eco" size={16} color="#28A745" />
+            <Text style={styles.ratingText}>Grade: 1</Text>
+            <Text style={styles.ratingSubtext}>(Excellent!)</Text>
+          </View>
+        </View>
+
+        {/* Stats Section */}
+        <View style={styles.statsSection}>
+          <View style={styles.statsColumn}>
+            <View style={styles.statItem}>
+              <Icon name="handshake" size={16} color="#666666" />
+              <Text style={styles.statText}>12 Year of experience</Text>
+            </View>
+            <View style={styles.statItem}>
+              <Icon name="attach-money" size={16} color="#666666" />
+              <Text style={styles.statText}>Contact for Pricing</Text>
+            </View>
+          </View>
+          <View style={styles.statsColumn}>
+            <View style={styles.statItem}>
+              <Icon name="check-circle" size={16} color="#666666" />
+              <Text style={styles.statText}>64 (Projects)</Text>
+            </View>
+            <View style={styles.statItem}>
+              <Icon name="location-on" size={16} color="#666666" />
+              <Text style={styles.statText}>Abu Dhabi</Text>
+            </View>
+          </View>
+        </View>
+
+        {/* Edit Button */}
+        <TouchableOpacity style={styles.editButton} onPress={onEditProfile}>
+          <Icon name="edit" size={16} color="#FFFFFF" />
+        </TouchableOpacity>
+
+        {/* Followers/Following Stats */}
+        <View style={styles.followStats}>
+          <View style={styles.followItem}>
+            <Text style={styles.followNumber}>50</Text>
+            <Text style={styles.followLabel}>Following</Text>
+          </View>
+          <View style={styles.followItem}>
+            <Text style={styles.followNumber}>100</Text>
+            <Text style={styles.followLabel}>Followers</Text>
+          </View>
         </View>
       </View>
     </View>
@@ -116,150 +147,156 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: COLORS.background,
+    backgroundColor: '#FFFFFF',
   },
   headerImageContainer: {
-    height: 180,
+    height: 200,
     width: '100%',
+    position: 'relative',
   },
   headerImage: {
     width: '100%',
     height: '100%',
   },
-  profilePictureContainer: {
-    position: 'absolute',
-    top: 100,
-    left: SPACING.md,
-  },
   profilePicture: {
+    position: 'absolute',
+    bottom: 20,
+    left: 20,
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: COLORS.background,
+    backgroundColor: '#666666',
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 3,
-    borderColor: COLORS.background,
+    borderColor: '#FFFFFF',
   },
   profileImage: {
     width: '100%',
     height: '100%',
     borderRadius: 37,
   },
-  loadingContainer: {
+  profilePlaceholder: {
     width: '100%',
     height: '100%',
+    borderRadius: 37,
+    backgroundColor: '#666666',
     justifyContent: 'center',
     alignItems: 'center',
-    borderRadius: 37,
-    backgroundColor: COLORS.surface,
-  },
-  verifiedBadge: {
-    position: 'absolute',
-    bottom: -2,
-    left: -2,
-    backgroundColor: COLORS.background,
-    borderRadius: 10,
-    padding: 2,
   },
   addIcon: {
     position: 'absolute',
-    bottom: -2,
-    right: -2,
-    backgroundColor: COLORS.background,
-    borderRadius: 10,
-    padding: 2,
+    bottom: -5,
+    right: -5,
+    backgroundColor: '#FF6B35',
+    borderRadius: 12,
+    width: 24,
+    height: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  userInfoContainer: {
-    paddingHorizontal: SPACING.md,
+  headerActions: {
+    position: 'absolute',
+    top: 20,
+    right: 20,
+    gap: 10,
+  },
+  headerActionIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#FFFFFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  profileCard: {
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: SPACING.lg,
     paddingTop: SPACING.lg,
     paddingBottom: SPACING.md,
+    position: 'relative',
   },
-  userName: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: COLORS.text.primary,
-    marginBottom: SPACING.xs,
-  },
-  userHandle: {
-    fontSize: 12,
-    color: COLORS.text.secondary,
-    marginBottom: SPACING.xs,
-  },
-  userTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: COLORS.text.primary,
-    marginBottom: SPACING.xs,
-  },
-  userJoined: {
-    fontSize: 11,
-    color: COLORS.text.secondary,
+  companyInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
     marginBottom: SPACING.sm,
   },
-  userDescription: {
-    fontSize: 11,
-    color: COLORS.text.secondary,
-    lineHeight: 16,
-    marginBottom: SPACING.md,
+  companyName: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#1A1A1A',
+    marginRight: SPACING.xs,
   },
-  statsContainer: {
+  verificationBadge: {
+    marginLeft: SPACING.xs,
+  },
+  ratingSection: {
+    flexDirection: 'row',
+    marginBottom: SPACING.md,
+    gap: SPACING.lg,
+  },
+  ratingItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: SPACING.md,
+    gap: SPACING.xs,
   },
-  statItem: {
-    alignItems: 'center',
-    marginRight: SPACING.md,
-  },
-  statNumber: {
-    fontSize: 14,
+  ratingText: {
+    fontSize: 16,
     fontWeight: '600',
-    color: COLORS.text.primary,
+    color: '#1A1A1A',
   },
-  statLabel: {
-    fontSize: 10,
-    color: COLORS.text.secondary,
-    marginTop: 2,
+  ratingSubtext: {
+    fontSize: 14,
+    color: '#666666',
   },
-  statDivider: {
-    width: 1,
-    height: 20,
-    backgroundColor: COLORS.border,
-    marginRight: SPACING.md,
-  },
-  actionButtonsContainer: {
+  statsSection: {
     flexDirection: 'row',
-    alignItems: 'center',
+    marginBottom: SPACING.lg,
+    gap: SPACING.xl,
+  },
+  statsColumn: {
+    flex: 1,
     gap: SPACING.sm,
   },
+  statItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.xs,
+  },
+  statText: {
+    fontSize: 14,
+    color: '#666666',
+  },
   editButton: {
-    flex: 1,
-    backgroundColor: COLORS.primary,
-    borderRadius: BORDER_RADIUS.md,
-    paddingVertical: SPACING.sm,
-    paddingHorizontal: SPACING.md,
-    alignItems: 'center',
-    marginRight: SPACING.sm,
-  },
-  editButtonText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: COLORS.text.light,
-  },
-  shareButton: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-    borderWidth: 1,
-    borderColor: COLORS.primary,
-    borderRadius: BORDER_RADIUS.md,
-    paddingVertical: SPACING.sm,
-    paddingHorizontal: SPACING.md,
+    position: 'absolute',
+    top: SPACING.lg,
+    right: SPACING.lg,
+    backgroundColor: '#FF6B35',
+    borderRadius: 8,
+    width: 32,
+    height: 32,
+    justifyContent: 'center',
     alignItems: 'center',
   },
-  shareButtonText: {
+  followStats: {
+    flexDirection: 'row',
+    gap: SPACING.xl,
+  },
+  followItem: {
+    alignItems: 'center',
+  },
+  followNumber: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#1A1A1A',
+  },
+  followLabel: {
     fontSize: 14,
-    fontWeight: '600',
-    color: COLORS.primary,
+    color: '#666666',
   },
 });

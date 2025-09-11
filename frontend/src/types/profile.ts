@@ -16,6 +16,7 @@ export interface Post {
   likes: number;
   comments: number;
   shares: number;
+  hashtags?: string[];
 }
 
 export interface ActivityItem {

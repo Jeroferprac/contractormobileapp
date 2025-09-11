@@ -1,12 +1,5 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-} from 'react-native';
-import Icon from 'react-native-vector-icons/MaterialIcons';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { COLORS } from '../../constants/colors';
 import { SPACING, BORDER_RADIUS } from '../../constants/spacing';
 
@@ -17,83 +10,84 @@ interface AboutTabProps {
     phone: string;
     address: string;
     website: string;
-    socialMedia: {
-      linkedin?: string;
-      instagram?: string;
-      facebook?: string;
-    };
+    socialMedia: any;
     joinedDate: string;
   };
-  onContactPress: (type: string, value: string) => void;
+  onContactPress: () => void;
 }
 
 export const AboutTab: React.FC<AboutTabProps> = ({ user, onContactPress }) => {
-  const renderContactItem = (icon: string, label: string, value: string, type: string) => (
-    <TouchableOpacity
-      style={styles.contactItem}
-      onPress={() => onContactPress(type, value)}
-    >
-      <Icon name={icon} size={20} color={COLORS.text.secondary} />
-      <View style={styles.contactInfo}>
-        <Text style={styles.contactLabel}>{label}</Text>
-        <Text style={styles.contactValue}>{value}</Text>
-      </View>
-      <Icon name="chevron-right" size={20} color={COLORS.text.secondary} />
-    </TouchableOpacity>
-  );
-
-  const renderSocialMediaItem = (icon: string, platform: string, url?: string) => (
-    <TouchableOpacity
-      style={[styles.socialItem, !url && styles.disabledItem]}
-      onPress={() => url && onContactPress(platform, url)}
-    >
-      <Icon name={icon} size={24} color={url ? COLORS.primary : COLORS.text.secondary} />
-      <Text style={[styles.socialText, !url && styles.disabledText]}>{platform}</Text>
-    </TouchableOpacity>
-  );
-
   return (
     <View style={styles.container}>
-      <ScrollView showsVerticalScrollIndicator={false}>
-        <View style={styles.section}>
+      {/* About Section */}
+      <View style={styles.section}>
+        <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>About</Text>
-          
-          {/* Professional Description */}
-          <View style={styles.descriptionContainer}>
-            <Text style={styles.descriptionText}>{user.description}</Text>
-          </View>
+          <TouchableOpacity style={styles.editButton}>
+            <Text style={styles.editIcon}>✏️</Text>
+          </TouchableOpacity>
+        </View>
+        <Text style={styles.aboutText}>
+          BuildRight Constructions is a licensed contracting company specializing in residential and commercial projects across the UAE.
+        </Text>
+        <TouchableOpacity>
+          <Text style={styles.readMoreText}>Read more</Text>
+        </TouchableOpacity>
+      </View>
 
-          {/* Contact Information */}
-          <View style={styles.contactSection}>
-            <Text style={styles.subsectionTitle}>Contact Details</Text>
-            {renderContactItem('email', 'Email', user.email, 'email')}
-            {user.phone && user.phone !== 'No phone available' && 
-              renderContactItem('phone', 'Phone', user.phone, 'phone')}
-            {user.address && user.address !== 'No address available' && 
-              renderContactItem('location-on', 'Address', user.address, 'address')}
-            {user.website && user.website !== 'No website available' && 
-              renderContactItem('language', 'Website', user.website, 'website')}
+      {/* Services Section */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Services Offer:</Text>
+        <View style={styles.servicesGrid}>
+          <View style={styles.serviceItem}>
+            <Text style={styles.serviceIcon}>🍳</Text>
+            <Text style={styles.serviceText}>Complete Kitchen Remodeling</Text>
           </View>
-
-          {/* Social Media */}
-          <View style={styles.socialSection}>
-            <Text style={styles.subsectionTitle}>Social Media</Text>
-            <View style={styles.socialGrid}>
-              {renderSocialMediaItem('linkedin', 'LinkedIn', user.socialMedia.linkedin)}
-              {renderSocialMediaItem('camera-alt', 'Instagram', user.socialMedia.instagram)}
-              {renderSocialMediaItem('facebook', 'Facebook', user.socialMedia.facebook)}
-            </View>
-            {!user.socialMedia.linkedin && !user.socialMedia.instagram && !user.socialMedia.facebook && (
-              <Text style={styles.noSocialText}>No social media links added</Text>
-            )}
+          <View style={styles.serviceItem}>
+            <Text style={styles.serviceIcon}>🛁</Text>
+            <Text style={styles.serviceText}>Bathroom Renovation</Text>
           </View>
-
-          {/* Joined Date */}
-          <View style={styles.joinedSection}>
-            <Text style={styles.joinedText}>Joined {user.joinedDate}</Text>
+          <View style={styles.serviceItem}>
+            <Text style={styles.serviceIcon}>🏠</Text>
+            <Text style={styles.serviceText}>Home Additions & Extensions</Text>
+          </View>
+          <View style={styles.serviceItem}>
+            <Text style={styles.serviceIcon}>🗄️</Text>
+            <Text style={styles.serviceText}>Custom Cabinetry</Text>
+          </View>
+          <View style={styles.serviceItem}>
+            <Text style={styles.serviceIcon}>🎨</Text>
+            <Text style={styles.serviceText}>Interior Design Services</Text>
+          </View>
+          <View style={styles.serviceItem}>
+            <Text style={styles.serviceIcon}>🏗️</Text>
+            <Text style={styles.serviceText}>Structural Modifications</Text>
+          </View>
+          <View style={styles.serviceItem}>
+            <Text style={styles.serviceIcon}>📋</Text>
+            <Text style={styles.serviceText}>Permit Acquisition</Text>
           </View>
         </View>
-      </ScrollView>
+      </View>
+
+      {/* Highlights Section */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Highlights</Text>
+        <View style={styles.highlightsGrid}>
+          <View style={styles.highlightItem}>
+            <Text style={styles.highlightIcon}>💎</Text>
+            <Text style={styles.highlightText}>High-end</Text>
+          </View>
+          <View style={styles.highlightItem}>
+            <Text style={styles.highlightIcon}>👨‍👩‍👧‍👦</Text>
+            <Text style={styles.highlightText}>Family Owned</Text>
+          </View>
+          <View style={styles.highlightItem}>
+            <Text style={styles.highlightIcon}>⭐</Text>
+            <Text style={styles.highlightText}>Best of Binyaan Service</Text>
+          </View>
+        </View>
+      </View>
     </View>
   );
 };
@@ -101,92 +95,85 @@ export const AboutTab: React.FC<AboutTabProps> = ({ user, onContactPress }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.background,
+    backgroundColor: '#FFFFFF',
+    padding: SPACING.lg,
   },
   section: {
-    paddingHorizontal: SPACING.md,
-    paddingTop: SPACING.md,
+    marginBottom: SPACING.xl,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: SPACING.md,
   },
   sectionTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: COLORS.text.primary,
+    color: '#000000',
     marginBottom: SPACING.md,
   },
-  descriptionContainer: {
-    marginBottom: SPACING.lg,
+  editButton: {
+    padding: SPACING.xs,
   },
-  descriptionText: {
-    fontSize: 14,
-    color: COLORS.text.primary,
-    lineHeight: 20,
-  },
-  contactSection: {
-    marginBottom: SPACING.lg,
-  },
-  subsectionTitle: {
+  editIcon: {
     fontSize: 16,
-    fontWeight: '600',
-    color: COLORS.text.primary,
+    color: '#FF6B35',
+  },
+  aboutText: {
+    fontSize: 14,
+    color: '#666666',
+    lineHeight: 20,
     marginBottom: SPACING.sm,
   },
-  contactItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: SPACING.sm,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
-  },
-  contactInfo: {
-    flex: 1,
-    marginLeft: SPACING.sm,
-  },
-  contactLabel: {
-    fontSize: 12,
-    color: COLORS.text.secondary,
-    marginBottom: 2,
-  },
-  contactValue: {
+  readMoreText: {
     fontSize: 14,
-    color: COLORS.text.primary,
+    color: '#FF6B35',
     fontWeight: '500',
   },
-  socialSection: {
-    marginBottom: SPACING.lg,
+  servicesGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    gap: SPACING.sm,
   },
-  socialGrid: {
+  serviceItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F8F9FA',
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
+    borderRadius: 20,
+    width: '48%',
+    minHeight: 50,
+  },
+  serviceIcon: {
+    fontSize: 18,
+    marginRight: SPACING.sm,
+  },
+  serviceText: {
+    fontSize: 12,
+    color: '#000000',
+    flex: 1,
+    fontWeight: '500',
+  },
+  highlightsGrid: {
     flexDirection: 'row',
     justifyContent: 'space-around',
+    gap: SPACING.md,
   },
-  socialItem: {
+  highlightItem: {
     alignItems: 'center',
-    paddingVertical: SPACING.sm,
+    flex: 1,
   },
-  socialText: {
+  highlightIcon: {
+    fontSize: 24,
+    marginBottom: SPACING.xs,
+  },
+  highlightText: {
     fontSize: 12,
-    color: COLORS.primary,
-    marginTop: SPACING.xs,
-    fontWeight: '500',
-  },
-  disabledText: {
-    color: COLORS.text.secondary,
-  },
-  disabledItem: {
-    opacity: 0.5,
-  },
-  joinedSection: {
-    alignItems: 'center',
-    paddingVertical: SPACING.md,
-  },
-  joinedText: {
-    fontSize: 12,
-    color: COLORS.text.secondary,
-  },
-  noSocialText: {
-    fontSize: 12,
-    color: COLORS.text.secondary,
+    color: '#000000',
     textAlign: 'center',
-    fontStyle: 'italic',
-    marginTop: SPACING.sm,
+    fontWeight: '500',
   },
 });

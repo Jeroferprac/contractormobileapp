@@ -98,4 +98,10 @@ export const COLORS = {
   successDark: '#1E7E34',
   warningDark: '#E0A800',
   infoDark: '#138496',
+  
+  // Shadow color
+  shadow: '#000000',
+  
+  // Skeleton loading color
+  skeleton: '#E9ECEF',
 }; 

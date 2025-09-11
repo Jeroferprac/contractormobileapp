@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { StatusBar, useColorScheme, LogBox } from 'react-native';
+import { StatusBar, useColorScheme } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { AppNavigator } from './src/navigation/AppNavigator';
 import { AuthProvider } from './src/context/AuthContext';
@@ -7,11 +7,7 @@ import { NotificationProvider } from './src/context/NotificationContext';
 import { initializeNotifications, displayCurrentFCMToken } from './src/utils/notifications';
 import stockNotificationService from './src/utils/stockNotifications';
 
-// Ignore specific animation warnings that are safe to ignore
-LogBox.ignoreLogs([
-  'Attempting to run JS driven animation on animated node',
-  'Animated: `useNativeDriver` was not specified',
-]);
+// LogBox is not available in this React Native version
 
 const App: React.FC = () => {
   const isDarkMode = useColorScheme() === 'dark';
@@ -36,7 +32,7 @@ const App: React.FC = () => {
   }, []);
 
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
+    <GestureHandlerRootView style={styles.container}>
       <AuthProvider>
         <NotificationProvider>
           <StatusBar 
@@ -49,6 +45,12 @@ const App: React.FC = () => {
       </AuthProvider>
     </GestureHandlerRootView>
   );
+};
+
+const styles = {
+  container: {
+    flex: 1,
+  },
 };
 
 export default App;

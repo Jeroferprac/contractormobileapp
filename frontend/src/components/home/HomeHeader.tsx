@@ -63,7 +63,6 @@ const HomeHeader: React.FC<HomeHeaderProps> = ({
           onPress={handleNotificationPress}
           size="medium"
           variant="primary"
-          testID="notification-badge"
         />
         <TouchableOpacity style={styles.logoutButton} onPress={onLogoutPress}>
           <Icon name="log-out" size={20} color={COLORS.status.error} />

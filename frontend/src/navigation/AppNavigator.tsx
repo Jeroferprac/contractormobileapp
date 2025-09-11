@@ -41,6 +41,12 @@ import PurchaseOrderDetailsScreen from '../screens/PurchaseOrderDetails';
 import PurchaseOrderFormScreen from '../screens/PurchaseOrderForm';
 import InventoryReportsScreen from '../screens/InventoryReportsScreen/InventoryReportsScreen';
 import PriceListsScreen from '../screens/PriceListsScreen';
+import PriceListDetailsScreen from '../screens/PriceListDetailsScreen';
+import PriceListProductsScreen from '../screens/PriceListProductsScreen';
+import EditPriceListScreen from '../screens/EditPriceListScreen';
+import BatchesScreen from '../screens/BatchesScreen';
+import BatchDetailsScreen from '../screens/BatchDetailsScreen';
+import EditBatchScreen from '../screens/EditBatchScreen';
 import { useAuth } from '../context/AuthContext';
 
 
@@ -318,6 +324,23 @@ export const AppNavigator: React.FC = () => {
             <Stack.Screen name="Login" component={LoginScreen} />
             <Stack.Screen name="Signup" component={SignupScreen} />
             <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
+            <Stack.Screen name="PriceLists" component={PriceListsScreen} />
+            <Stack.Screen name="PriceListDetailsScreen" component={PriceListDetailsScreen} />
+            <Stack.Screen name="PriceListProductsScreen" component={PriceListProductsScreen} />
+            <Stack.Screen name="EditPriceListScreen" component={EditPriceListScreen} />
+            <Stack.Screen name="BatchesScreen" component={BatchesScreen} />
+            <Stack.Screen name="BatchDetailsScreen" component={BatchDetailsScreen} />
+            <Stack.Screen name="EditBatchScreen" component={EditBatchScreen} />
+            <Stack.Screen name="SupplierDetailsScreen" component={SupplierDetailsScreen} />
+            <Stack.Screen name="SuppliersScreen" component={SuppliersScreen} />
+            <Stack.Screen name="SupplierFormScreen" component={SupplierFormScreen} />
+            <Stack.Screen name="ProductSuppliersScreen" component={ProductSuppliersScreen} />
+            <Stack.Screen name="ProductSupplierFormScreen" component={ProductSupplierFormScreen} />
+            <Stack.Screen name="PurchaseOrdersScreen" component={PurchaseOrdersScreen} />
+            <Stack.Screen name="PurchaseOrderDetailsScreen" component={PurchaseOrderDetailsScreen} />
+            <Stack.Screen name="PurchaseOrderFormScreen" component={PurchaseOrderFormScreen} />
+            <Stack.Screen name="InventoryReportsScreen" component={InventoryReportsScreen} />
+
           </>
         )}
       </Stack.Navigator>

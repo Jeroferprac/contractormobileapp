@@ -9,7 +9,7 @@ import {
 import LinearGradient from 'react-native-linear-gradient';
 import FastImage from 'react-native-fast-image';
 import Icon from 'react-native-vector-icons/Feather';
-import Svg, { Circle, Rect, Star, Path } from 'react-native-svg';
+import Svg, { Circle, Rect, Path } from 'react-native-svg';
 import { COLORS } from '../../../../constants/colors';
 import { SPACING, BORDER_RADIUS, SHADOWS } from '../../../../constants/spacing';
 import { TYPOGRAPHY } from '../../../../constants/typography';

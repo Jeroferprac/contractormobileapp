@@ -18,20 +18,24 @@ const ServiceGrid: React.FC<ServiceGridProps> = ({
   return (
     <View style={styles.container}>
       <View style={styles.grid}>
-        {services.slice(0, 6).map((service) => (
-          <ServiceCard
-            key={service.id}
-            service={service}
-            onPress={() => {
-              if (service.title === 'View More') {
-                onViewMorePress();
-              } else {
-                onServicePress(service);
-              }
-            }}
-            style={styles.serviceCard}
-          />
-        ))}
+        {services.slice(0, 6).map((service) => {
+          console.log('🎯 Rendering service:', service.title, 'ID:', service.id);
+          return (
+            <ServiceCard
+              key={service.id}
+              service={service}
+              onPress={() => {
+                console.log('🎯 ServiceGrid onPress for:', service.title);
+                if (service.title === 'View More') {
+                  onViewMorePress();
+                } else {
+                  onServicePress(service);
+                }
+              }}
+              style={styles.serviceCard}
+            />
+          );
+        })}
       </View>
     </View>
   );

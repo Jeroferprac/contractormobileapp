@@ -1,4 +1,5 @@
-import messaging from '@react-native-firebase/messaging';
+import { getApp } from '@react-native-firebase/app';
+import { getMessaging, hasPermission, requestPermission, AuthorizationStatus, getToken, onMessage, setBackgroundMessageHandler, onNotificationOpenedApp, getInitialNotification, onTokenRefresh } from '@react-native-firebase/messaging';
 import PushNotification from 'react-native-push-notification';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { apiService } from '../api/api';
@@ -16,26 +17,60 @@ interface FCMTokenData {
 }
 
 /**
+ * Check if Firebase is properly initialized
+ */
+const isFirebaseAvailable = (): boolean => {
+  try {
+    const app = getApp();
+    return !!app;
+  } catch (error) {
+    console.log('⚠️ Firebase not available:', error);
+    return false;
+  }
+};
+
+/**
+ * Get Firebase messaging instance safely
+ */
+const getFirebaseMessaging = () => {
+  try {
+    if (!isFirebaseAvailable()) {
+      return null;
+    }
+    return getMessaging();
+  } catch (error) {
+    console.log('⚠️ Failed to get Firebase messaging:', error);
+    return null;
+  }
+};
+
+/**
  * Request notification permission from user
  */
 export const requestUserPermission = async (): Promise<boolean> => {
   try {
-    const authStatus = await messaging().hasPermission();
+    if (!isFirebaseAvailable()) {
+      console.log('⚠️ Firebase not available for permission request');
+      return false;
+    }
+
+    const authStatus = await hasPermission();
     const enabled =
-      authStatus === messaging.AuthorizationStatus.AUTHORIZED ||
-      authStatus === messaging.AuthorizationStatus.PROVISIONAL;
+      authStatus === AuthorizationStatus.AUTHORIZED ||
+      authStatus === AuthorizationStatus.PROVISIONAL;
 
     if (enabled) {
       return true;
     }
 
-    const permission = await messaging().requestPermission();
+    const permission = await requestPermission();
     const enabledAfterRequest =
-      permission === messaging.AuthorizationStatus.AUTHORIZED ||
-      permission === messaging.AuthorizationStatus.PROVISIONAL;
+      permission === AuthorizationStatus.AUTHORIZED ||
+      permission === AuthorizationStatus.PROVISIONAL;
 
     return enabledAfterRequest;
   } catch (error) {
+    console.log('⚠️ Error requesting notification permission:', error);
     return false;
   }
 };
@@ -45,12 +80,17 @@ export const requestUserPermission = async (): Promise<boolean> => {
  */
 export const getFcmToken = async (): Promise<string | null> => {
   try {
+    if (!isFirebaseAvailable()) {
+      console.log('⚠️ Firebase not available for FCM token');
+      return null;
+    }
+
     const hasPermission = await requestUserPermission();
     if (!hasPermission) {
       return null;
     }
 
-    const token = await messaging().getToken();
+    const token = await getToken();
     if (token) {
       console.log('🔑 FCM Token Retrieved:', token);
       await storeFCMToken(token);
@@ -58,6 +98,7 @@ export const getFcmToken = async (): Promise<string | null> => {
     }
     return null;
   } catch (error) {
+    console.log('⚠️ Error getting FCM token:', error);
     return null;
   }
 };
@@ -131,8 +172,13 @@ export const sendTokenToBackend = async (token: string, userId?: string): Promis
  */
 export const subscribeToTopics = async (topics: string[]): Promise<void> => {
   try {
+    const messagingInstance = getFirebaseMessaging();
+    if (!messagingInstance) {
+      console.warn('⚠️ Firebase messaging instance not available for topic subscription.');
+      return;
+    }
     for (const topic of topics) {
-      await messaging().subscribeToTopic(topic);
+      await messagingInstance.subscribeToTopic(topic);
     }
   } catch (error) {
     // Handle subscription error silently
@@ -144,8 +190,13 @@ export const subscribeToTopics = async (topics: string[]): Promise<void> => {
  */
 export const unsubscribeFromTopics = async (topics: string[]): Promise<void> => {
   try {
+    const messagingInstance = getFirebaseMessaging();
+    if (!messagingInstance) {
+      console.warn('⚠️ Firebase messaging instance not available for topic unsubscription.');
+      return;
+    }
     for (const topic of topics) {
-      await messaging().unsubscribeFromTopic(topic);
+      await messagingInstance.unsubscribeFromTopic(topic);
     }
   } catch (error) {
     // Handle unsubscription error silently
@@ -254,7 +305,7 @@ const onBackgroundMessageReceived = async (remoteMessage: any) => {
 /**
  * Handle app opened from notification
  */
-const onNotificationOpenedApp = (remoteMessage: any) => {
+const handleNotificationOpenedApp = (remoteMessage: any) => {
   console.log('📱 App Opened from Notification:', {
     title: remoteMessage.notification?.title,
     body: remoteMessage.notification?.body,
@@ -343,28 +394,66 @@ export const setupNotificationListeners = (): void => {
   );
 
   // Register foreground listener
-  messaging().onMessage(onMessageReceived);
+  try {
+    if (isFirebaseAvailable()) {
+      onMessage(onMessageReceived);
+      console.log('✅ Foreground message listener registered');
+    } else {
+      console.log('⚠️ Firebase not available, skipping foreground listener');
+    }
+  } catch (error) {
+    console.log('⚠️ Failed to register foreground listener:', error);
+  }
 
-  // Register background handler
-  messaging().setBackgroundMessageHandler(onBackgroundMessageReceived);
+  // Register background handler with error handling
+  try {
+    if (isFirebaseAvailable()) {
+      setBackgroundMessageHandler(onBackgroundMessageReceived);
+      console.log('✅ Background message handler registered');
+    } else {
+      console.log('⚠️ Firebase not available, skipping background handler');
+    }
+  } catch (error) {
+    console.log('⚠️ Failed to register background message handler:', error);
+  }
 
   // Register app opened listener
-  messaging().onNotificationOpenedApp(onNotificationOpenedApp);
+  try {
+    if (isFirebaseAvailable()) {
+      onNotificationOpenedApp(handleNotificationOpenedApp);
+      console.log('✅ App opened listener registered');
+    }
+  } catch (error) {
+    console.log('⚠️ Failed to register app opened listener:', error);
+  }
 
   // Check for initial notification
-  messaging()
-    .getInitialNotification()
-    .then((remoteMessage) => {
-      if (remoteMessage) {
-        onInitialNotification(remoteMessage);
-      }
-    });
+  try {
+    if (isFirebaseAvailable()) {
+      getInitialNotification()
+        .then((remoteMessage) => {
+          if (remoteMessage) {
+            onInitialNotification(remoteMessage);
+          }
+        });
+      console.log('✅ Initial notification check registered');
+    }
+  } catch (error) {
+    console.log('⚠️ Failed to check initial notification:', error);
+  }
 
   // Register token refresh listener
-  messaging().onTokenRefresh((token) => {
-    console.log('🔄 FCM Token Refreshed:', token);
-    storeFCMToken(token);
-  });
+  try {
+    if (isFirebaseAvailable()) {
+      onTokenRefresh((token) => {
+        console.log('🔄 FCM Token Refreshed:', token);
+        storeFCMToken(token);
+      });
+      console.log('✅ Token refresh listener registered');
+    }
+  } catch (error) {
+    console.log('⚠️ Failed to register token refresh listener:', error);
+  }
 
   console.log('✅ Notification Listeners Setup Complete');
 };
@@ -382,7 +471,7 @@ export const initializeNotifications = async (): Promise<boolean> => {
       return false;
     }
 
-    const token = await messaging().getToken();
+    const token = await getToken();
     if (!token) {
       console.log('❌ Failed to Get FCM Token');
       return false;

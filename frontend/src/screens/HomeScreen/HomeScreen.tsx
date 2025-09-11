@@ -55,7 +55,18 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
   };
 
   const handleServicePress = (service: any) => {
-    console.log('Service pressed:', service.title);
+    console.log('🎯 Service pressed:', service.title);
+    console.log('🎯 Service object:', service);
+    if (service.title === 'Batches') {
+      console.log('🚀 Navigating to BatchesScreen...');
+      try {
+        navigation.navigate('BatchesScreen');
+        console.log('✅ Navigation successful');
+      } catch (error) {
+        console.error('❌ Navigation error:', error);
+        Alert.alert('Navigation Error', 'Failed to navigate to Batches screen');
+      }
+    }
   };
 
   const handleViewMorePress = () => {
@@ -142,8 +153,12 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
         {activeFilters.length > 0 && FilterChips && (
           <FilterChips
             filters={activeFilters}
+
+            
             selectedFilters={selectedFilters}
             onFilterChange={handleFilterChange}
+            onRemoveFilter={handleRemoveFilter}
+            style={styles.filterChips}
           />
         )}
 

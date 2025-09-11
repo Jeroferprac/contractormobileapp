@@ -1032,7 +1032,7 @@ const AllWarehouseScreen: React.FC<AllWarehouseScreenProps> = ({ navigation, rou
           <WarehouseFilterModal
         visible={showFilterModal}
         onClose={() => setShowFilterModal(false)}
-        onApply={handleFilterApply}
+        onApply={() => handleFilterApply(filterOptions)}
         onClear={handleFilterReset}
         warehouses={warehouses}
             currentFilters={filterOptions}
